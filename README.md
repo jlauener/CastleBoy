@@ -1,38 +1,35 @@
 # castle
 
-## TODO
+Castlevania-like game for the Arduboy.
 
-### Game design
+A game by @ZappedCow and @Increment.
 
-- [ ] Stage 1
-- [ ] Stage 2
-- [ ] Stage 3
-- [ ] Boss (TBC)
+## Roadmap
 
-### Code
-
-- [x] Tilemap display and collision
-- [x] Scrolling
-- [ ] Parralax background (WIP)
-- [x] Player jump 
+- [x] Map display, scrolling and collision
+- [x] Player walk
+- [x] Player jump
 - [ ] Player attack (WIP)
-- [ ] Candle (WIP)
-- [ ] Pickups
-- [ ] Skeleton enemy
-- [ ] Skull enemy
-- [ ] Small enemy
-- [ ] Map pipeline
-- [ ] Boss (TBC)
-
-### Art
-
-- [ ] Exterior tileset (WIP)
-- [x] Interior tileset
-- [ ] Player sprite (WIP)
-- [ ] Candle sprite (WIP)
-- [ ] Pickup sprites
-- [ ] Skeleon enemy (WIP)
-- [ ] Skull enemy
-- [ ] Small enemy
-- [ ] Boss (TBC)
+- [ ] Player ducking (WIP)
+- [ ] Parralax background (WIP)
+- [ ] Candles and pickups (WIP)
+- [ ] Enemy 1: Dummy skeleton (WIP)
+- [ ] Enemy 2: Flying skull
+- [ ] Enemy 3: Small, maybe with jump (?)
+- [ ] Asset pipeline
+- [ ] SFXs
+- [ ] Font for displaying score and numbers
+- [ ] Stage 1: Exterior
+- [ ] Stage 2: Castle
+- [ ] Stage 3: Boss
+- [ ] Stage transition
 - [ ] Title
+- [ ] Game over screen
+- [ ] Game completed screen
+
+## Extra features
+
+- [ ] Falling tiles
+- [ ] Stairs
+- [ ] Enemy/player projectiles
+- [ ] Credit/help screen
