@@ -41,18 +41,23 @@ void Candles::add(int x, int y)
   LOG_WARNING("no free candles");
 }
 
+bool collideHLineRect(int lx, int ly, int lw, int rx, int ry, int rw, int rh)
+{
+  if (lx + lw < rx || lx > rx + rw)
+  {
+    return false;
+  }
+
+  return ly >= ry && ly <= ry + rh;
+}
+
 void Candles::hit(int x, int y, int w)
 {
   for (byte i = 0; i < CANDLE_MAX; i++)
   {
     if (candles[i].active)
     {
-      // hitbox 4x4
-      // left x + 2
-      // right x + 6
-      // top y + 4
-      // bottom y + 8
-      if(candles[i].x > x && candles[i].x + 8 < x + w && candles[i].y + 4 < y && y < candles[i].y + 8)
+      if (collideHLineRect(x, y, w, candles[i].x + 1, candles[i].y + 1, 6, 6))
       {
         candles[i].active = false;
       }
@@ -66,11 +71,11 @@ void Candles::draw()
   {
     if (candles[i].active)
     {
-      if(ab.everyXFrames(10))
+      if (ab.everyXFrames(8))
       {
         ++candles[i].frame %= 3;
       }
-      sprites.drawOverwrite(candles[i].x - cameraX, candles[i].y, candle, candles[i].frame);
+      sprites.drawPlusMask(candles[i].x - cameraX, candles[i].y - 2, candle_plus_mask, candles[i].frame);
     }
   }
 }

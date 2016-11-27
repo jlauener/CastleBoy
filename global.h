@@ -22,8 +22,7 @@ extern int16_t cameraX;
 #define MAP_DATA_EMPTY 0
 #define MAP_DATA_GROUND 1
 #define MAP_DATA_BLOCK 2
-#define MAP_DATA_STAIR 3
-#define MAP_DATA_CANDLE 4
+#define MAP_DATA_CANDLE 3
 
 #define CANDLE_MAX 8
 
@@ -35,7 +34,7 @@ extern int16_t cameraX;
 
 #define CAMERA_BUFFER 32
 
-#define SOLID_TILE_COUNT 6
+#define SOLID_TILE_COUNT 3
 
 // anim mode
 #define ONE_SHOT 0

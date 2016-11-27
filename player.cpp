@@ -1,41 +1,52 @@
 #include "player.h"
 
-#include "entity.h"
-#include "data.h"
 #include "map.h"
 #include "candle.h"
 #include "assets.h"
 
-// FIXME when ducking and under a tile, prevent player from standing
-// --> actually this makes walking while ducking easier
-// --> is there even a way to prevent player from having to press down + dir
+// FIXME Cannot fall in a single tile
 
-// FIXME candle collision is still buggy
+#define ATTACK_TOTAL_DURATION 20
+#define ATTACK_CHARGE 16
 
-// TODO refactor attack so that it freeze player when performing (stay in air, don't stand if duck, ...)
-// TODO refactor attack and animations
+#define SPRITE_ORIGIN_X 8
+#define SPRITE_ORIGIN_Y 16
+
+#define FRAME_IDLE 0
+#define FRAME_WALK_1 0
+#define FRAME_WALK_2 1
+#define FRAME_ATTACK_CHARGE 2
+#define FRAME_ATTACK 3
+#define FRAME_AIR 4
+#define FRAME_IDLE_DUCK 5
+#define FRAME_WALK_DUCK_1 5
+#define FRAME_WALK_DUCK_2 5
+#define FRAME_ATTACK_CHARGE_DUCK 6
+#define FRAME_ATTACK_DUCK 7
+
+#define FRAME_FLIPPED_OFFSET 8
+
+#define WALK_FRAME_RATE 12
 
 namespace
 {
-Entity p;
+int16_t playerX;
+int16_t playerY;
 int16_t velocityX;
 int16_t velocityY;
 // FIXME move flags to a single byte and use masking (is it worth it?)
 bool grounded;
+uint8_t attackCounter;
 bool attacking;
 bool jumping;
 bool ducking;
 int8_t levitateCounter;
+bool flipped;
+uint8_t walkFrameCounter;
+bool walkFrame;
 
 Rect normalHitbox;
 Rect duckHitbox;
-
-const uint8_t idleAnim[] = {LOOP, /* FRAME_RATE */ 0, /* FRAME_COUNT */ 1, /* FRAMES */ 0};
-const uint8_t walkAnim[] = {LOOP, /* FRAME_RATE */ 12, /* FRAME_COUNT */ 2, /* FRAMES */ 0, 1};
-const uint8_t attackAnim[] = {ONE_SHOT, /* FRAME_RATE */ 10, /* FRAME_COUNT */ 2, /* FRAMES */ 2, 3, 3};
-const uint8_t airAnim[] = {LOOP, /* FRAME_RATE */ 0, /* FRAME_COUNT */ 1, /* FRAMES */ 4};
-const uint8_t duckIdleAnim[] = {LOOP, /* FRAME_RATE */ 0, /* FRAME_COUNT */ 1, /* FRAMES */ 5};
-const uint8_t duckAttackAnim[] = {ONE_SHOT, /* FRAME_RATE */ 10, /* FRAME_COUNT */ 2, /* FRAMES */ 6, 7, 7};
 
 bool moveX(int16_t dx, const Rect& hitbox)
 {
@@ -44,11 +55,11 @@ bool moveX(int16_t dx, const Rect& hitbox)
     int8_t sign = dx > 0 ? 1 : -1;
     while (dx != 0)
     {
-      if(Map::collide(p.x + sign, p.y, hitbox))
+      if (Map::collide(playerX + sign, playerY, hitbox))
       {
         return true;
       }
-      p.x += sign;
+      playerX += sign;
       dx -= sign;
     }
   }
@@ -63,17 +74,27 @@ bool moveY(int16_t dy, const Rect& hitbox)
     int8_t sign = dy > 0 ? 1 : -1;
     while (dy != 0)
     {
-      if(Map::collide(p.x, p.y + sign, hitbox))
+      if (Map::collide(playerX, playerY + sign, hitbox))
       {
         return true;
       }
-      p.y += sign;
+      playerY += sign;
       dy -= sign;
     }
   }
 
   return false;
 }
+
+//void play(const uint8_t* anim_)
+//{
+//  if (anim != anim_ || anim[MODE] == ONE_SHOT)
+//  {
+//    anim = anim_;
+//    animFrame = 0;
+//    animCounter = anim[FRAME_RATE];
+//  }
+//}
 
 } // unamed
 
@@ -89,47 +110,35 @@ void Player::init(int16_t x, int16_t y)
   duckHitbox.height = 6;
   duckHitbox.x = 4;
   duckHitbox.y = 6;
+  ///
 
-  p.init(Data::player, x, y);
+  playerX = x;
+  playerY = y;
   grounded = false;
+  attackCounter = 0;
   attacking = false;
   jumping = false;
   ducking = false;
   levitateCounter = 0;
   velocityX = 0;
   velocityY = 0;
-  p.play(idleAnim);
 }
 
 void Player::update()
 {
-  // duck
-  ducking = grounded && ab.pressed(DOWN_BUTTON);
-
   // attack
-  if (!attacking && ab.justPressed(B_BUTTON))
+  if (attackCounter == 0 && ab.justPressed(B_BUTTON))
   {
-    attacking = true;
-    if (ducking)
-    {
-      p.play(duckAttackAnim);
-    }
-    else
-    {
-      p.play(attackAnim);
-    }
+    attackCounter = ATTACK_TOTAL_DURATION;
   }
 
-  if (attacking)
+  if (attackCounter > 0)
   {
-    if (!p.isPlaying())
-    {
-      attacking = false;
-    }
+    --attackCounter;
   }
 
-  // vertical movement
-  if (grounded && ab.justPressed(A_BUTTON))
+  // jump
+  if (attackCounter == 0 && grounded && ab.justPressed(A_BUTTON))
   {
     // start jumping
     grounded = false;
@@ -137,6 +146,7 @@ void Player::update()
     velocityY = -PLAYER_JUMP_FORCE_F;
   }
 
+  // vertical movement
   if (levitateCounter > 0)
   {
     --levitateCounter;
@@ -165,7 +175,7 @@ void Player::update()
     }
     else
     {
-      grounded = Map::collide(p.x, p.y + 1, ducking ? duckHitbox : normalHitbox);
+      grounded = Map::collide(playerX, playerY + 1, ducking ? duckHitbox : normalHitbox);
     }
 
     if (grounded)
@@ -174,80 +184,110 @@ void Player::update()
     }
   }
 
-  //LOG_DEBUG(grounded ? "GROUNDED" : "AIR");
-
   // horizontal movement
-  if (!attacking && ab.pressed(LEFT_BUTTON))
+  if (attackCounter == 0 && ab.pressed(LEFT_BUTTON))
   {
     velocityX = -1;
-    p.flipped = true;
+    flipped = true;
   }
-  else if (!attacking && ab.pressed(RIGHT_BUTTON))
+  else if (attackCounter == 0 && ab.pressed(RIGHT_BUTTON))
   {
     velocityX = 1;
-    p.flipped = false;
+    flipped = false;
   }
   else if (grounded)
   {
     velocityX = 0;
   }
 
+  // FIXME is it good to use every X frame? when jumpin it can make 3 tile jump fail maybe
+  // --> simply make is so that we have few pixels margin.. ?
   if (ab.everyXFrames(ducking ? 4 : 2) && velocityX != 0)
   {
     moveX(velocityX, ducking ? duckHitbox : normalHitbox);
   }
 
+  // duck
+  if (attackCounter == 0)
+  {
+    if(!ducking)
+    {
+       ducking = grounded && ab.pressed(DOWN_BUTTON);
+    }
+    else if(!ab.pressed(DOWN_BUTTON))
+    {
+      // only stop ducking if player can stand
+      ducking = Map::collide(playerX, playerY, normalHitbox);
+    }
+  }
+
+  // perform attack
+  if (attackCounter != 0 && attackCounter < ATTACK_CHARGE)
+  {
+    //ab.drawFastHLine(playerX + (flipped ? -24 : 8) - cameraX , playerY - (ducking ? 3 : 11), 16);
+    //Candles::hit(playerX + (flipped ? -20 : 4), playerY - (ducking ? 3 : 11), 20);
+    Candles::hit(playerX + (flipped ? -28 : 0), playerY - (ducking ? 3 : 11), 28);
+  }
+
   // update camera, if needed
-  if(p.x < cameraX + CAMERA_BUFFER)
+  if (playerX < cameraX + CAMERA_BUFFER)
   {
-    cameraX = p.x - CAMERA_BUFFER;
-    if(cameraX < 0) cameraX = 0;
+    cameraX = playerX - CAMERA_BUFFER;
+    if (cameraX < 0) cameraX = 0;
   }
-  else if(p.x > cameraX + 128 - CAMERA_BUFFER)
+  else if (playerX > cameraX + 128 - CAMERA_BUFFER)
   {
-    cameraX = p.x - 128 + CAMERA_BUFFER;
-    if(cameraX > Map::width() * TILE_WIDTH - 128) cameraX = Map::width() * TILE_WIDTH - 128;
+    cameraX = playerX - 128 + CAMERA_BUFFER;
+    if (cameraX > Map::width() * TILE_WIDTH - 128) cameraX = Map::width() * TILE_WIDTH - 128;
   }
+
 }
 
 void Player::draw()
 {
-  if (!attacking)
+  uint8_t frame = 0;
+
+  if (attackCounter == 0)
   {
     if (grounded)
     {
-      if (ducking)
+      if (velocityX == 0)
       {
-        p.play(duckIdleAnim);
-        LOG_DEBUG("DUCK");
+        frame = ducking ? FRAME_IDLE_DUCK : FRAME_IDLE;
+        LOG_DEBUG("IDLE");
       }
       else
       {
-        p.play(velocityX != 0 ? walkAnim : idleAnim);
-        LOG_DEBUG(velocityX != 0 ? "WALK" : "IDLE");
+        if (ab.everyXFrames(WALK_FRAME_RATE))
+        {
+          walkFrame = !walkFrame;
+        }
+        frame = ducking ? (walkFrame ? FRAME_WALK_DUCK_2 : FRAME_WALK_DUCK_1) : (walkFrame ? FRAME_WALK_2 : FRAME_WALK_1);
+        LOG_DEBUG("WALK");
       }
     }
     else
     {
-      p.play(airAnim);
+      frame = FRAME_AIR;
       LOG_DEBUG("AIR");
     }
   }
+  else if (attackCounter < ATTACK_CHARGE)
+  {
+    frame = ducking ? FRAME_ATTACK_DUCK : FRAME_ATTACK;
+    LOG_DEBUG("ATTACK");
+  }
   else
   {
-    LOG_DEBUG(ducking ? "DUCK ATTACK" : "ATTACK");
+    frame = ducking ? FRAME_ATTACK_CHARGE_DUCK : FRAME_ATTACK_CHARGE;
+    LOG_DEBUG("ATTACK CHARGE");
   }
 
-  p.draw();
+  sprites.drawPlusMask(playerX - SPRITE_ORIGIN_X - cameraX, playerY - SPRITE_ORIGIN_Y, player_plus_mask, frame + (flipped ? FRAME_FLIPPED_OFFSET : 0));
 
-  if(attacking)
+  if (attackCounter != 0 && attackCounter < ATTACK_CHARGE)
   {
-    if(p.animFrame > 0)
-    {
-      ab.drawFastHLine(p.x + (p.flipped ? -24 : 8) - cameraX , p.y - (ducking ? 3 : 11), 16);
-      // BAD BAD BAD
-      Candles::hit(p.x + (p.flipped ? -20 : 4), p.y - (ducking ? 3 : 11), 20);
-    }
+    ab.drawFastHLine(playerX + (flipped ? -24 : 8) - cameraX , playerY - (ducking ? 3 : 11), 16);
   }
 }
 

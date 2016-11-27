@@ -26,10 +26,11 @@ A game by @ZappedCow and @Increment.
 - [ ] Title
 - [ ] Game over screen
 - [ ] Game completed screen
+- [ ] Release before X-Mas
 
 ## Extra features
 
 - [ ] Falling tiles
-- [ ] Stairs
+- [ ] Stairs (most likely not)
 - [ ] Enemy/player projectiles
 - [ ] Credit/help screen

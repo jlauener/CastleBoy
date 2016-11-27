@@ -38,11 +38,13 @@ void Map::init(const uint8_t* source)
     {
       switch (data[iy * mapWidth + ix])
       {
+        case MAP_DATA_CANDLE:
+          Candles::add(ix * TILE_WIDTH, mapY + iy * TILE_HEIGHT);
         case MAP_DATA_EMPTY:
           if (isBlock)
           {
             isBlock = false;
-            data[iy * mapWidth + ix] = 7;
+            data[iy * mapWidth + ix] = 4;
           }
           else
           {
@@ -68,17 +70,6 @@ void Map::init(const uint8_t* source)
             data[iy * mapWidth + ix] = 3;
             isGround = true;
           }
-          isBlock = false;
-          break;
-//        case MAP_DATA_STAIR:
-//          data[iy * mapWidth + ix] = 3;
-//          isGround = true; // stair count as ground start
-//          isBlock = false;
-//          break;
-        case MAP_DATA_CANDLE:
-          Candles::add(ix * TILE_WIDTH, mapY + iy * TILE_HEIGHT);
-          data[iy * mapWidth + ix] = 0;
-          isGround = false;
           isBlock = false;
           break;
       }

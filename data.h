@@ -1,13 +1,13 @@
 #ifndef __DATA_H__
 #define __DATA_H__
 
-#include "entity.h"
+#include "global.h"
 
 namespace Data
 {
-  extern EntityData player;
+  //extern EntityData player;
   const uint8_t* mapData();
-  void init();
+  //void init();
 }
 
 #endif
