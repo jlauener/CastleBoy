@@ -6,7 +6,7 @@
 namespace Map
 {
 void init(const uint8_t* data);
-bool collide(int16_t x, int16_t y, int8_t w, int8_t h);
+bool collide(int16_t x, int16_t y, const Rect& hitbox);
 void draw();
 int16_t width();
 }

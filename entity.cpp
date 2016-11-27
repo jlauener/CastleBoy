@@ -12,48 +12,48 @@ void Entity::init(const EntityData& data, int16_t x, int16_t y, bool flipped)
   animCounter = 0;
 }
 
-bool Entity::collideWithMap(int16_t x, int16_t y)
-{
-  return Map::collide(x - data->originX, y - data->originY, data->width, data->height);
-}
-
-bool Entity::moveX(int16_t dx)
-{
-  if (dx != 0)
-  {
-    int8_t sign = dx > 0 ? 1 : -1;
-    while (dx != 0)
-    {
-      if(collideWithMap(x + sign, y))
-      {
-        return true;
-      }
-      x += sign;
-      dx -= sign;
-    }
-  }
-
-  return false;
-}
-
-bool Entity::moveY(int16_t dy)
-{
-  if (dy != 0)
-  {
-    int8_t sign = dy > 0 ? 1 : -1;
-    while (dy != 0)
-    {
-      if(collideWithMap(x, y + sign))
-      {
-        return true;
-      }
-      y += sign;
-      dy -= sign;
-    }
-  }
-
-  return false;
-}
+//bool Entity::collideWithMap(int16_t x, int16_t y)
+//{
+//  return Map::collide(x - data->originX, y - data->originY, data->width, data->height);
+//}
+//
+//bool Entity::moveX(int16_t dx)
+//{
+//  if (dx != 0)
+//  {
+//    int8_t sign = dx > 0 ? 1 : -1;
+//    while (dx != 0)
+//    {
+//      if(collideWithMap(x + sign, y))
+//      {
+//        return true;
+//      }
+//      x += sign;
+//      dx -= sign;
+//    }
+//  }
+//
+//  return false;
+//}
+//
+//bool Entity::moveY(int16_t dy)
+//{
+//  if (dy != 0)
+//  {
+//    int8_t sign = dy > 0 ? 1 : -1;
+//    while (dy != 0)
+//    {
+//      if(collideWithMap(x, y + sign))
+//      {
+//        return true;
+//      }
+//      y += sign;
+//      dy -= sign;
+//    }
+//  }
+//
+//  return false;
+//}
 
 void Entity::play(const uint8_t* anim)
 {

@@ -34,7 +34,6 @@ void Map::init(const uint8_t* source)
   {
     bool isGround = false;
     bool isBlock = false;
-    // uint8_t blockIndex = 0;
     for (int16_t iy = 0; iy < mapHeight; iy++)
     {
       switch (data[iy * mapWidth + ix])
@@ -53,12 +52,7 @@ void Map::init(const uint8_t* source)
           isGround = false;
           break;
         case MAP_DATA_BLOCK:
-          //if (!isBlock)
-          // {
-          //blockIndex = 0;
-          // isBlock = true;
-          // }
-          data[iy * mapWidth + ix] = 1 + iy % 2;
+          data[iy * mapWidth + ix] = 1;
           isBlock = true;
           isGround = false;
           break;
@@ -66,23 +60,23 @@ void Map::init(const uint8_t* source)
           if (isGround)
           {
             // already in ground, use inner ground tile
-            data[iy * mapWidth + ix] = 5 + iy % 2;  // alternate inner ground tiles
+            data[iy * mapWidth + ix] = 2;
           }
           else
           {
             // first ground tile
-            data[iy * mapWidth + ix] = 4;
+            data[iy * mapWidth + ix] = 3;
             isGround = true;
           }
           isBlock = false;
           break;
-        case MAP_DATA_STAIR:
-          data[iy * mapWidth + ix] = 3;
-          isGround = true; // stair count as ground start
-          isBlock = false;
-          break;
+//        case MAP_DATA_STAIR:
+//          data[iy * mapWidth + ix] = 3;
+//          isGround = true; // stair count as ground start
+//          isBlock = false;
+//          break;
         case MAP_DATA_CANDLE:
-          Candles::add(ix * TILE_WIDTH, mapY + iy * TILE_HEIGHT - 6);
+          Candles::add(ix * TILE_WIDTH, mapY + iy * TILE_HEIGHT);
           data[iy * mapWidth + ix] = 0;
           isGround = false;
           isBlock = false;
@@ -97,9 +91,12 @@ int16_t Map::width()
   return mapWidth;
 }
 
-bool Map::collide(int16_t x, int16_t y, int8_t w, int8_t h)
+bool Map::collide(int16_t x, int16_t y, const Rect& hitbox)
 {
-  if (x < 0 || x + w > mapWidth * TILE_WIDTH)
+  x -= hitbox.x;
+  y -= hitbox.y;
+  
+  if (x < 0 || x + hitbox.width > mapWidth * TILE_WIDTH)
   {
     // cannot get out on the sides, collide
     //LOG_DEBUG("side");
@@ -110,8 +107,8 @@ bool Map::collide(int16_t x, int16_t y, int8_t w, int8_t h)
 
   int16_t tx1 = x / TILE_WIDTH;
   int16_t ty1 = y / TILE_HEIGHT;
-  int16_t tx2 = (x + w - 1) / TILE_WIDTH;
-  int16_t ty2 = (y + h - 1) / TILE_HEIGHT;
+  int16_t tx2 = (x + hitbox.width - 1) / TILE_WIDTH;
+  int16_t ty2 = (y + hitbox.height - 1) / TILE_HEIGHT;
 
   if (ty2 < 0 || ty2 >= mapHeight)
   {
@@ -134,7 +131,7 @@ bool Map::collide(int16_t x, int16_t y, int8_t w, int8_t h)
       if (data[iy * mapWidth + ix] > 0 && data[iy * mapWidth + ix] <= SOLID_TILE_COUNT)
       {
         // check for rectangle intersection
-        if (ix * TILE_WIDTH + TILE_WIDTH > x && iy * TILE_HEIGHT + TILE_HEIGHT > y && ix * TILE_WIDTH < x + w && iy * TILE_HEIGHT < y + h)
+        if (ix * TILE_WIDTH + TILE_WIDTH > x && iy * TILE_HEIGHT + TILE_HEIGHT > y && ix * TILE_WIDTH < x + hitbox.width && iy * TILE_HEIGHT < y + hitbox.height)
         {
           //LOG_DEBUG("hit");
           return true;

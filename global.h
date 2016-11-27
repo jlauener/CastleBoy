@@ -29,9 +29,9 @@ extern int16_t cameraX;
 
 // size stuffs
 #define TILE_WIDTH 8
-#define TILE_HEIGHT 4
+#define TILE_HEIGHT 8
 #define MAP_WIDTH_MAX 32
-#define MAP_HEIGHT_MAX 10
+#define MAP_HEIGHT_MAX 6
 
 #define CAMERA_BUFFER 32
 

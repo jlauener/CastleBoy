@@ -10,7 +10,7 @@ struct Candle
   int16_t y;
   // TODO use bitmask
   bool active;
-  bool frame;
+  uint8_t frame;
 };
 
 Candle candles[CANDLE_MAX];
@@ -33,7 +33,7 @@ void Candles::add(int x, int y)
       candles[i].x = x;
       candles[i].y = y;
       candles[i].active = true;
-      candles[i].frame = false;
+      candles[i].frame = 0;
       return;
     }
   }
@@ -68,7 +68,7 @@ void Candles::draw()
     {
       if(ab.everyXFrames(10))
       {
-        candles[i].frame = !candles[i].frame;
+        ++candles[i].frame %= 3;
       }
       sprites.drawOverwrite(candles[i].x - cameraX, candles[i].y, candle, candles[i].frame);
     }

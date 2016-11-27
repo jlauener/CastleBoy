@@ -6,6 +6,15 @@
 #include "candle.h"
 #include "assets.h"
 
+// FIXME when ducking and under a tile, prevent player from standing
+// --> actually this makes walking while ducking easier
+// --> is there even a way to prevent player from having to press down + dir
+
+// FIXME candle collision is still buggy
+
+// TODO refactor attack so that it freeze player when performing (stay in air, don't stand if duck, ...)
+// TODO refactor attack and animations
+
 namespace
 {
 Entity p;
@@ -18,6 +27,9 @@ bool jumping;
 bool ducking;
 int8_t levitateCounter;
 
+Rect normalHitbox;
+Rect duckHitbox;
+
 const uint8_t idleAnim[] = {LOOP, /* FRAME_RATE */ 0, /* FRAME_COUNT */ 1, /* FRAMES */ 0};
 const uint8_t walkAnim[] = {LOOP, /* FRAME_RATE */ 12, /* FRAME_COUNT */ 2, /* FRAMES */ 0, 1};
 const uint8_t attackAnim[] = {ONE_SHOT, /* FRAME_RATE */ 10, /* FRAME_COUNT */ 2, /* FRAMES */ 2, 3, 3};
@@ -25,10 +37,59 @@ const uint8_t airAnim[] = {LOOP, /* FRAME_RATE */ 0, /* FRAME_COUNT */ 1, /* FRA
 const uint8_t duckIdleAnim[] = {LOOP, /* FRAME_RATE */ 0, /* FRAME_COUNT */ 1, /* FRAMES */ 5};
 const uint8_t duckAttackAnim[] = {ONE_SHOT, /* FRAME_RATE */ 10, /* FRAME_COUNT */ 2, /* FRAMES */ 6, 7, 7};
 
+bool moveX(int16_t dx, const Rect& hitbox)
+{
+  if (dx != 0)
+  {
+    int8_t sign = dx > 0 ? 1 : -1;
+    while (dx != 0)
+    {
+      if(Map::collide(p.x + sign, p.y, hitbox))
+      {
+        return true;
+      }
+      p.x += sign;
+      dx -= sign;
+    }
+  }
+
+  return false;
+}
+
+bool moveY(int16_t dy, const Rect& hitbox)
+{
+  if (dy != 0)
+  {
+    int8_t sign = dy > 0 ? 1 : -1;
+    while (dy != 0)
+    {
+      if(Map::collide(p.x, p.y + sign, hitbox))
+      {
+        return true;
+      }
+      p.y += sign;
+      dy -= sign;
+    }
+  }
+
+  return false;
+}
+
 } // unamed
 
 void Player::init(int16_t x, int16_t y)
 {
+  // FIXME init only once
+  normalHitbox.width = 8;
+  normalHitbox.height = 14;
+  normalHitbox.x = 4;
+  normalHitbox.y = 14;
+
+  duckHitbox.width = 8;
+  duckHitbox.height = 6;
+  duckHitbox.x = 4;
+  duckHitbox.y = 6;
+
   p.init(Data::player, x, y);
   grounded = false;
   attacking = false;
@@ -91,7 +152,7 @@ void Player::update()
     }
     else
     {
-      p.moveY(velocityY / F_PRECISION);
+      moveY(velocityY / F_PRECISION, ducking ? duckHitbox : normalHitbox);
     }
   }
   else
@@ -100,11 +161,11 @@ void Player::update()
     int16_t offsetY = velocityY / F_PRECISION;
     if (offsetY > 0)
     {
-      grounded = p.moveY(offsetY);
+      grounded = moveY(offsetY, ducking ? duckHitbox : normalHitbox);
     }
     else
     {
-      grounded = p.collideWithMap(p.x, p.y + 1);
+      grounded = Map::collide(p.x, p.y + 1, ducking ? duckHitbox : normalHitbox);
     }
 
     if (grounded)
@@ -116,12 +177,12 @@ void Player::update()
   //LOG_DEBUG(grounded ? "GROUNDED" : "AIR");
 
   // horizontal movement
-  if (!attacking && !ducking && ab.pressed(LEFT_BUTTON))
+  if (!attacking && ab.pressed(LEFT_BUTTON))
   {
     velocityX = -1;
     p.flipped = true;
   }
-  else if (!attacking && !ducking && ab.pressed(RIGHT_BUTTON))
+  else if (!attacking && ab.pressed(RIGHT_BUTTON))
   {
     velocityX = 1;
     p.flipped = false;
@@ -131,9 +192,9 @@ void Player::update()
     velocityX = 0;
   }
 
-  if (ab.everyXFrames(2) && velocityX != 0)
+  if (ab.everyXFrames(ducking ? 4 : 2) && velocityX != 0)
   {
-    p.moveX(velocityX);
+    moveX(velocityX, ducking ? duckHitbox : normalHitbox);
   }
 
   // update camera, if needed
@@ -183,9 +244,9 @@ void Player::draw()
   {
     if(p.animFrame > 0)
     {
-      ab.drawFastHLine(p.x + (p.flipped ? -24 : 8) - cameraX , p.y - (ducking ? 4 : 8), 16);
+      ab.drawFastHLine(p.x + (p.flipped ? -24 : 8) - cameraX , p.y - (ducking ? 3 : 11), 16);
       // BAD BAD BAD
-      Candles::hit(p.x + (p.flipped ? -24 : 8), p.y - (ducking ? 4 : 8), 16);
+      Candles::hit(p.x + (p.flipped ? -20 : 4), p.y - (ducking ? 3 : 11), 20);
     }
   }
 }
