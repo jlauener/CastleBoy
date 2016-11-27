@@ -3,6 +3,7 @@
 #include "entity.h"
 #include "data.h"
 #include "map.h"
+#include "candle.h"
 #include "assets.h"
 
 namespace
@@ -144,7 +145,7 @@ void Player::update()
   else if(p.x > cameraX + 128 - CAMERA_BUFFER)
   {
     cameraX = p.x - 128 + CAMERA_BUFFER;
-    if(cameraX > Map::width() * TILE_SIZE - 128) cameraX = Map::width() * TILE_SIZE - 128;
+    if(cameraX > Map::width() * TILE_WIDTH - 128) cameraX = Map::width() * TILE_WIDTH - 128;
   }
 }
 
@@ -183,6 +184,8 @@ void Player::draw()
     if(p.animFrame > 0)
     {
       ab.drawFastHLine(p.x + (p.flipped ? -24 : 8) - cameraX , p.y - (ducking ? 4 : 8), 16);
+      // BAD BAD BAD
+      Candles::hit(p.x + (p.flipped ? -24 : 8), p.y - (ducking ? 4 : 8), 16);
     }
   }
 }

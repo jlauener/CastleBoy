@@ -6,7 +6,7 @@
 namespace Data
 {
   extern EntityData player;
-  
+  const uint8_t* mapData();
   void init();
 }
 

@@ -11,6 +11,7 @@ class Scene
 };
 
 #define LOG_DEBUG(x) Engine::log(x)
+#define LOG_WARNING(x) Engine::log(x) // TODO
 
 namespace Engine
 {

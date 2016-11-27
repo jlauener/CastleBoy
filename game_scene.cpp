@@ -1,13 +1,16 @@
 #include "game_scene.h"
 
+#include "data.h"
 #include "assets.h"
 #include "map.h"
 #include "player.h"
+#include "candle.h"
 
 void GameScene::init()
 {
-  Map::init();
-  Player::init(40, 56);
+  Candles::clear();
+  Map::init(Data::mapData());
+  Player::init(10, 0);
 }
 
 void GameScene::update()
@@ -23,13 +26,16 @@ void GameScene::update()
 
 void GameScene::draw()
 {
-   for (uint8_t i = 0u; i < 16u; i++)
+  //int backgroundOffset = (((cameraX * 1000) / ((Map::width() * TILE_WIDTH) / 1000)) - 500) / 20;
+  int backgroundOffset = 8 - cameraX / 8; // FIXME
+  for (uint8_t i = 0; i < 16; i++)
   {
     // FIXME
-    sprites.drawOverwrite(i * 8u, 0, background_bottom, i);
-    sprites.drawOverwrite(i * 8u, 8, background_top, i);
+    sprites.drawOverwrite(backgroundOffset + i * 8, 0, background_bottom, i);
+    sprites.drawOverwrite(backgroundOffset + i * 8, 8, background_top, i);
   }
   Map::draw();
+  Candles::draw();
   Player::draw();
 }
 
