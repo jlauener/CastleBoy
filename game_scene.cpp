@@ -26,14 +26,8 @@ void GameScene::update()
 
 void GameScene::draw()
 {
-  //int backgroundOffset = (((cameraX * 1000) / ((Map::width() * TILE_WIDTH) / 1000)) - 500) / 20;
-  int backgroundOffset = 8 - cameraX / 8; // FIXME
-  for (uint8_t i = 0; i < 16; i++)
-  {
-    // FIXME
-    sprites.drawOverwrite(backgroundOffset + i * 8, 0, background_bottom, i);
-    sprites.drawOverwrite(backgroundOffset + i * 8, 8, background_top, i);
-  }
+  int backgroundOffset = 8 - cameraX / 8; // FIXME properly calculate parralax
+  sprites.drawOverwrite(16 + backgroundOffset, 0, background, 0);
   Map::draw();
   Candles::draw();
   Player::draw();

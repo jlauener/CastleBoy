@@ -7,24 +7,19 @@
 // FIXME Cannot fall in a single tile
 
 #define ATTACK_TOTAL_DURATION 20
-#define ATTACK_CHARGE 16
+#define ATTACK_CHARGE 12
 
 #define SPRITE_ORIGIN_X 8
 #define SPRITE_ORIGIN_Y 16
 
 #define FRAME_IDLE 0
 #define FRAME_WALK_1 0
-#define FRAME_WALK_2 1
-#define FRAME_ATTACK_CHARGE 2
-#define FRAME_ATTACK 3
-#define FRAME_AIR 4
-#define FRAME_IDLE_DUCK 5
-#define FRAME_WALK_DUCK_1 5
-#define FRAME_WALK_DUCK_2 5
-#define FRAME_ATTACK_CHARGE_DUCK 6
-#define FRAME_ATTACK_DUCK 7
+#define FRAME_WALK_2 2
+#define FRAME_ATTACK_CHARGE 4
+#define FRAME_ATTACK 6
+#define FRAME_AIR 8
 
-#define FRAME_FLIPPED_OFFSET 8
+#define FRAME_FLIPPED_OFFSET 9
 
 #define WALK_FRAME_RATE 12
 
@@ -86,16 +81,6 @@ bool moveY(int16_t dy, const Rect& hitbox)
   return false;
 }
 
-//void play(const uint8_t* anim_)
-//{
-//  if (anim != anim_ || anim[MODE] == ONE_SHOT)
-//  {
-//    anim = anim_;
-//    animFrame = 0;
-//    animCounter = anim[FRAME_RATE];
-//  }
-//}
-
 } // unamed
 
 void Player::init(int16_t x, int16_t y)
@@ -138,7 +123,7 @@ void Player::update()
   }
 
   // jump
-  if (attackCounter == 0 && grounded && ab.justPressed(A_BUTTON))
+  if (!ducking && attackCounter == 0 && grounded && ab.justPressed(A_BUTTON))
   {
     // start jumping
     grounded = false;
@@ -210,11 +195,11 @@ void Player::update()
   // duck
   if (attackCounter == 0)
   {
-    if(!ducking)
+    if (!ducking)
     {
-       ducking = grounded && ab.pressed(DOWN_BUTTON);
+      ducking = grounded && ab.pressed(DOWN_BUTTON);
     }
-    else if(!ab.pressed(DOWN_BUTTON))
+    else if (!ab.pressed(DOWN_BUTTON))
     {
       // only stop ducking if player can stand
       ducking = Map::collide(playerX, playerY, normalHitbox);
@@ -224,8 +209,6 @@ void Player::update()
   // perform attack
   if (attackCounter != 0 && attackCounter < ATTACK_CHARGE)
   {
-    //ab.drawFastHLine(playerX + (flipped ? -24 : 8) - cameraX , playerY - (ducking ? 3 : 11), 16);
-    //Candles::hit(playerX + (flipped ? -20 : 4), playerY - (ducking ? 3 : 11), 20);
     Candles::hit(playerX + (flipped ? -28 : 0), playerY - (ducking ? 3 : 11), 28);
   }
 
@@ -247,47 +230,53 @@ void Player::draw()
 {
   uint8_t frame = 0;
 
-  if (attackCounter == 0)
+  if (attackCounter == 0 && !grounded)
   {
-    if (grounded)
-    {
-      if (velocityX == 0)
-      {
-        frame = ducking ? FRAME_IDLE_DUCK : FRAME_IDLE;
-        LOG_DEBUG("IDLE");
-      }
-      else
-      {
-        if (ab.everyXFrames(WALK_FRAME_RATE))
-        {
-          walkFrame = !walkFrame;
-        }
-        frame = ducking ? (walkFrame ? FRAME_WALK_DUCK_2 : FRAME_WALK_DUCK_1) : (walkFrame ? FRAME_WALK_2 : FRAME_WALK_1);
-        LOG_DEBUG("WALK");
-      }
-    }
-    else
-    {
-      frame = FRAME_AIR;
-      LOG_DEBUG("AIR");
-    }
-  }
-  else if (attackCounter < ATTACK_CHARGE)
-  {
-    frame = ducking ? FRAME_ATTACK_DUCK : FRAME_ATTACK;
-    LOG_DEBUG("ATTACK");
+    frame = FRAME_AIR;
+    LOG_DEBUG("AIR");
   }
   else
   {
-    frame = ducking ? FRAME_ATTACK_CHARGE_DUCK : FRAME_ATTACK_CHARGE;
-    LOG_DEBUG("ATTACK CHARGE");
+    if (attackCounter == 0)
+    {
+        if (velocityX == 0)
+        {
+          frame = FRAME_IDLE;
+          LOG_DEBUG("IDLE");
+        }
+        else
+        {
+          if (ab.everyXFrames(WALK_FRAME_RATE))
+          {
+            walkFrame = !walkFrame;
+          }
+          frame = walkFrame ? FRAME_WALK_2 : FRAME_WALK_1;
+          LOG_DEBUG("WALK");
+        }
+    }
+    else if (attackCounter < ATTACK_CHARGE)
+    {
+      frame = FRAME_ATTACK;
+      LOG_DEBUG("ATTACK");
+    }
+    else
+    {
+      frame = FRAME_ATTACK_CHARGE;
+      LOG_DEBUG("ATTACK CHARGE");
+    }
+
+    if(ducking)
+    {
+      frame++;
+    }
   }
 
   sprites.drawPlusMask(playerX - SPRITE_ORIGIN_X - cameraX, playerY - SPRITE_ORIGIN_Y, player_plus_mask, frame + (flipped ? FRAME_FLIPPED_OFFSET : 0));
 
   if (attackCounter != 0 && attackCounter < ATTACK_CHARGE)
   {
-    ab.drawFastHLine(playerX + (flipped ? -24 : 8) - cameraX , playerY - (ducking ? 3 : 11), 16);
+    //ab.drawFastHLine(playerX + (flipped ? -24 : 8) - cameraX , playerY - (ducking ? 3 : 11), 16);
+    sprites.drawPlusMask(playerX + (flipped ? -24 : 8) - cameraX , playerY - (ducking ? 4 : 12), flipped ? player_attack_left_plus_mask : player_attack_right_plus_mask, 0);
   }
 }
 
