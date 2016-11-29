@@ -1,14 +1,37 @@
 #include "global.h"
 
+#include "game.h"
+
+typedef void (*FunctionPointer) ();
+
+const FunctionPointer PROGMEM stateLoopFunction[] = {
+  Game::loop  
+};
+
 void setup()
 {
-  Engine::setup(60);
+  ab.begin();
+  ab.setFrameRate(FPS);
 
-  gameScene.init();
-  Engine::show(gameScene);
+  Game::init();
+  gameState = STATE_GAME;
 }
 
 void loop()
 {
-  Engine::loop();
+  if (!ab.nextFrame())
+  {
+    return;
+  }
+
+  ab.pollButtons(); 
+  ab.clear();
+
+  ((FunctionPointer) pgm_read_word (&stateLoopFunction[gameState]))();  
+  
+#ifdef DEBUG
+  drawDebug();
+#endif
+
+  ab.display();
 }

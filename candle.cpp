@@ -16,7 +16,7 @@ struct Candle
 Candle candles[CANDLE_MAX];
 }
 
-void Candles::clear()
+void Candles::init()
 {
   for (byte i = 0; i < CANDLE_MAX; i++)
   {
@@ -38,7 +38,7 @@ void Candles::add(int x, int y)
     }
   }
 
-  LOG_WARNING("no free candles");
+  // FIXME assert?
 }
 
 bool collideHLineRect(int lx, int ly, int lw, int rx, int ry, int rw, int rh)

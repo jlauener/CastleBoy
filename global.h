@@ -1,13 +1,19 @@
-#ifndef __GLOBAL_H__
-#define __GLOBAL_H__
+#ifndef GLOBAL_H
+#define GLOBAL_H
 
-#include "game_scene.h"
+#include <Arduboy2.h>
+#include "game.h"
 
 extern Arduboy2 ab;
 extern Sprites sprites;
-extern GameScene gameScene;
-
+extern uint8_t gameState;
 extern int16_t cameraX;
+
+#define DEBUG
+
+#define FPS 60
+
+#define STATE_GAME 0
 
 // divider for fixed fractional numbers
 #define F_PRECISION 1000
@@ -45,5 +51,20 @@ extern int16_t cameraX;
 #define FRAME_RATE 1
 #define FRAME_COUNT 2
 #define FRAMES 3
+
+#ifdef DEBUG
+extern bool hasDebugValue;
+extern int16_t debugValue;
+extern const char* debugText;
+
+#define LOG_DEBUG(x) logDebug(x)
+
+void logDebug(const char* text);
+void logDebug(int16_t value);
+void drawDebug();
+#else
+#define LOG_DEBUG(x)
+#endif
+
 
 #endif

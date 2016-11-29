@@ -148,7 +148,5 @@ void Map::draw()
       }
     }
   }
-
-  LOG_DEBUG(mapWidth);
 }
 

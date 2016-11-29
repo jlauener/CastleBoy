@@ -1,4 +1,4 @@
-#include "game_scene.h"
+#include "game.h"
 
 #include "data.h"
 #include "assets.h"
@@ -6,26 +6,23 @@
 #include "player.h"
 #include "candle.h"
 
-void GameScene::init()
+void Game::init()
 {
-  Candles::clear();
+  Candles::init();
   Map::init(Data::mapData());
   Player::init(10, 0);
 }
 
-void GameScene::update()
+void Game::loop()
 {
   if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.pressed(DOWN_BUTTON))
   {
-    gameScene.init();
+    Game::init();
     return;
   }
 
   Player::update();
-}
 
-void GameScene::draw()
-{
   int backgroundOffset = 8 - cameraX / 8; // FIXME properly calculate parralax
   sprites.drawOverwrite(16 + backgroundOffset, 0, background, 0);
   Map::draw();
