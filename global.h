@@ -9,7 +9,8 @@ extern Sprites sprites;
 extern uint8_t gameState;
 extern int16_t cameraX;
 
-#define DEBUG
+//#define DEBUG // enable to show log and CPU load
+//#define DEBUG_HITBOX // enable to show hitboxes
 
 #define FPS 60
 
@@ -33,6 +34,8 @@ extern int16_t cameraX;
 // size stuffs
 #define TILE_WIDTH 8
 #define TILE_HEIGHT 8
+#define HALF_TILE_WIDTH 4
+#define HALF_TILE_HEIGHT 4
 #define MAP_WIDTH_MAX 32
 #define MAP_HEIGHT_MAX 6
 

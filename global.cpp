@@ -7,8 +7,8 @@ int16_t cameraX = 0;
 
 bool Util::collideHLine(int16_t lx, int16_t ly, int16_t lw, int16_t x, int16_t y, const Rect& hitbox)
 {
-  x += hitbox.x;
-  y += hitbox.y;
+  x -= hitbox.x;
+  y -= hitbox.y;
   
   if (lx + lw < x || lx > x + hitbox.width)
   {

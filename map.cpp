@@ -20,13 +20,14 @@ int16_t mapHeight;
 
 void createEntity(uint8_t tile, int16_t x, int16_t y)
 {
+  // FIXME refactor placement of entities
   switch (tile)
   {
     case MAP_DATA_CANDLE:
-      Candles::add(x * TILE_WIDTH, mapY + y * TILE_HEIGHT);
+      Candles::add(x, y);
       break;
     case MAP_DATA_SKELETON:
-      Enemies::add(ENEMY_SKELETON, x * TILE_WIDTH, mapY + y * TILE_HEIGHT);
+      Enemies::add(ENEMY_SKELETON, x, y);
       break;
   }
 }
@@ -94,7 +95,7 @@ void Map::init(const uint8_t* source)
           isBlock = false;
           break;
         default:
-          createEntity(tile, ix, iy);
+          createEntity(tile, ix * TILE_WIDTH + HALF_TILE_WIDTH, mapY + iy * TILE_HEIGHT + TILE_HEIGHT);
           if (isBlock)
           {
             isBlock = false;
@@ -123,9 +124,11 @@ bool Map::collide(int16_t x, int16_t y, const Rect& hitbox)
   x -= hitbox.x;
   y -= hitbox.y;
 
-  if (x < 0 || x + hitbox.width > mapWidth * TILE_WIDTH)
+  if (x < 0 /*|| x + hitbox.width > mapWidth * TILE_WIDTH*/)
   {
     // cannot get out on the sides, collide
+    // WARNING can get out of right side, if we use this for projectile 
+    // we might need to change this..
     //LOG_DEBUG("side");
     return true;
   }
@@ -150,6 +153,7 @@ bool Map::collide(int16_t x, int16_t y, const Rect& hitbox)
   if (ty1 < 0) ty1 = 0;
   if (ty2 >= mapHeight) ty2 = mapHeight - 1;
 
+  // perform hit test on selected tiles
   for (int16_t ix = tx1; ix <= tx2; ix++)
   {
     for (int16_t iy = ty1; iy <= ty2; iy++)

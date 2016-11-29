@@ -12,7 +12,7 @@ void Game::init()
   Candles::init();
   Enemies::init();
   Map::init(Data::mapData());
-  Player::init(10, 0);
+  Player::init(8, 56);
 }
 
 void Game::loop()

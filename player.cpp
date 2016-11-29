@@ -7,8 +7,8 @@
 
 // FIXME Cannot fall in a single tile
 
-#define ATTACK_TOTAL_DURATION 20
-#define ATTACK_CHARGE 12
+#define ATTACK_TOTAL_DURATION 16
+#define ATTACK_CHARGE 10
 
 #define SPRITE_ORIGIN_X 8
 #define SPRITE_ORIGIN_Y 16
@@ -32,7 +32,7 @@ const Rect normalHitbox =
   8, 14  // width, height
 };
 
-const Rect duckHitbox = 
+const Rect duckHitbox =
 {
   4, 6, // x, y
   8, 6  // width, height
@@ -94,7 +94,7 @@ bool moveY(int16_t dy, const Rect& hitbox)
 } // unamed
 
 void Player::init(int16_t x, int16_t y)
-{ 
+{
   playerX = x;
   playerY = y;
   grounded = false;
@@ -207,10 +207,10 @@ void Player::update()
   // perform attack
   if (attackCounter != 0 && attackCounter < ATTACK_CHARGE)
   {
-    int16_t x = playerX + (flipped ? -28 : 0);
+    int16_t x = playerX + (flipped ? -24 : 0);
     int16_t y = playerY - (ducking ? 3 : 11);
-    Enemies::hit(x, y, 28);
-    Candles::hit(x, y, 28);
+    Enemies::hit(x, y, 24);
+    Candles::hit(x, y, 24);
   }
 
   // update camera, if needed
@@ -225,6 +225,15 @@ void Player::update()
     if (cameraX > Map::width() * TILE_WIDTH - 128) cameraX = Map::width() * TILE_WIDTH - 128;
   }
 
+  // check for out of map conditions
+  if(playerX - normalHitbox.x > Map::width() * TILE_WIDTH)
+  {
+    Game::init(); // TODO
+  }
+  else if(playerY - SPRITE_ORIGIN_Y > 64)
+  {
+    Game::init(); // TODO
+  }
 }
 
 void Player::draw()
@@ -279,5 +288,11 @@ void Player::draw()
     //ab.drawFastHLine(playerX + (flipped ? -24 : 8) - cameraX , playerY - (ducking ? 3 : 11), 16);
     sprites.drawPlusMask(playerX + (flipped ? -24 : 8) - cameraX , playerY - (ducking ? 4 : 12), flipped ? player_attack_left_plus_mask : player_attack_right_plus_mask, 0);
   }
+
+#ifdef DEBUG_HITBOX
+  Rect hitbox = ducking ? duckHitbox : normalHitbox;
+  ab.fillRect(playerX - hitbox.x - cameraX, playerY - hitbox.y, hitbox.width, hitbox.height);
+#endif
+
 }
 

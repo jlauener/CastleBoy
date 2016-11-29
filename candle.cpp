@@ -2,8 +2,21 @@
 
 #include "assets.h"
 
+// TODO merge with enemy and create generic entity!
 namespace
 {
+
+Point spriteOrigin =
+{
+  4, 10
+};
+
+Rect candleHitbox =
+{
+  2, 8, // x, y
+  4, 6, // width, height
+};
+
 struct Candle
 {
   int16_t x;
@@ -41,23 +54,13 @@ void Candles::add(int x, int y)
   // FIXME assert?
 }
 
-bool collideHLineRect(int lx, int ly, int lw, int rx, int ry, int rw, int rh)
-{
-  if (lx + lw < rx || lx > rx + rw)
-  {
-    return false;
-  }
-
-  return ly >= ry && ly <= ry + rh;
-}
-
 void Candles::hit(int x, int y, int w)
 {
   for (byte i = 0; i < CANDLE_MAX; i++)
   {
     if (candles[i].active)
     {
-      if (collideHLineRect(x, y, w, candles[i].x + 1, candles[i].y + 1, 6, 6))
+      if(Util::collideHLine(x, y, w, candles[i].x, candles[i].y, candleHitbox))
       {
         candles[i].active = false;
       }
@@ -75,7 +78,11 @@ void Candles::draw()
       {
         ++candles[i].frame %= 3;
       }
-      sprites.drawPlusMask(candles[i].x - cameraX, candles[i].y - 2, candle_plus_mask, candles[i].frame);
+      sprites.drawPlusMask(candles[i].x - spriteOrigin.x - cameraX, candles[i].y - spriteOrigin.y, candle_plus_mask, candles[i].frame);
+
+#ifdef DEBUG_HITBOX
+     ab.fillRect(candles[i].x - candleHitbox.x - cameraX, candles[i].y - candleHitbox.y, candleHitbox.width, candleHitbox.height);
+#endif
     }
   }
 }

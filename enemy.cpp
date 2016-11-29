@@ -4,10 +4,11 @@
 
 namespace
 {
-  
+
 struct EnemyData
 {
   Rect hitbox;
+  Point spriteOrigin;
   const uint8_t* sprite;
 };
 
@@ -15,12 +16,10 @@ const EnemyData data[] =
 {
   // skeleton
   {
-      // hitbox
-      {
-        4, 14, // x, y
-        8, 14  // width, height
-      },
-      skeleton_plus_mask // sprite
+    3, 14, // hitbox x, y
+    6, 14, // hitbox width, height
+    8, 16, // sprite origin x, y
+    skeleton_plus_mask // sprite
   }
 };
 
@@ -32,6 +31,8 @@ struct Enemy
   // TODO use bitmask
   bool active;
   uint8_t frame;
+  int8_t dir;
+  uint8_t moveDist;
 };
 
 Enemy enemies[ENEMY_MAX];
@@ -57,14 +58,14 @@ void Enemies::add(uint8_t type, int16_t x, int16_t y)
       enemies[i].y = y;
       enemies[i].active = true;
       enemies[i].frame = 0;
+      enemies[i].dir = -1;
+      enemies[i].moveDist = 0;
       return;
     }
   }
 
   // FIXME assert?
 }
-
-Rect skeletonHitbox;
 
 void Enemies::hit(int16_t x, int16_t y, int16_t w)
 {
@@ -80,9 +81,17 @@ void Enemies::hit(int16_t x, int16_t y, int16_t w)
   }
 }
 
-void updateSkeleton(Enemy& skeleton)
+void updateSkeleton(Enemy& enemy)
 {
-  // TODO  
+  if(ab.everyXFrames(4))
+  {
+    enemy.x += enemy.dir;
+    if(++enemy.moveDist == 23)
+    {
+      enemy.moveDist = 0;
+      enemy.dir = enemy.dir == -1 ? 1 : -1;
+    }
+  }
 }
 
 void Enemies::update()
@@ -95,7 +104,7 @@ void Enemies::update()
       {
         case ENEMY_SKELETON:
           updateSkeleton(enemies[i]);
-        break;
+          break;
       }
     }
   }
@@ -107,11 +116,15 @@ void Enemies::draw()
   {
     if (enemies[i].active)
     {
-      if (ab.everyXFrames(8))
+      if (ab.everyXFrames(6))
       {
         ++enemies[i].frame %= 2;
       }
-      sprites.drawPlusMask(enemies[i].x - cameraX, enemies[i].y - 2, data[enemies[i].type].sprite, enemies[i].frame);
+      sprites.drawPlusMask(enemies[i].x - data[enemies[i].type].spriteOrigin.x - cameraX, enemies[i].y - data[enemies[i].type].spriteOrigin.y, data[enemies[i].type].sprite, enemies[i].frame);
+
+#ifdef DEBUG_HITBOX
+     ab.fillRect(enemies[i].x - data[enemies[i].type].hitbox.x - cameraX, enemies[i].y - data[enemies[i].type].hitbox.y, data[enemies[i].type].hitbox.width, data[enemies[i].type].hitbox.height);
+#endif
     }
   }
 }
