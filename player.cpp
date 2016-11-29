@@ -2,6 +2,7 @@
 
 #include "map.h"
 #include "candle.h"
+#include "enemy.h"
 #include "assets.h"
 
 // FIXME Cannot fall in a single tile
@@ -25,6 +26,18 @@
 
 namespace
 {
+const Rect normalHitbox =
+{
+  4, 14, // x, y
+  8, 14  // width, height
+};
+
+const Rect duckHitbox = 
+{
+  4, 6, // x, y
+  8, 6  // width, height
+};
+
 int16_t playerX;
 int16_t playerY;
 int16_t velocityX;
@@ -39,9 +52,6 @@ int8_t levitateCounter;
 bool flipped;
 uint8_t walkFrameCounter;
 bool walkFrame;
-
-Rect normalHitbox;
-Rect duckHitbox;
 
 bool moveX(int16_t dx, const Rect& hitbox)
 {
@@ -84,19 +94,7 @@ bool moveY(int16_t dy, const Rect& hitbox)
 } // unamed
 
 void Player::init(int16_t x, int16_t y)
-{
-  // FIXME init only once
-  normalHitbox.width = 8;
-  normalHitbox.height = 14;
-  normalHitbox.x = 4;
-  normalHitbox.y = 14;
-
-  duckHitbox.width = 8;
-  duckHitbox.height = 6;
-  duckHitbox.x = 4;
-  duckHitbox.y = 6;
-  ///
-
+{ 
   playerX = x;
   playerY = y;
   grounded = false;
@@ -209,7 +207,10 @@ void Player::update()
   // perform attack
   if (attackCounter != 0 && attackCounter < ATTACK_CHARGE)
   {
-    Candles::hit(playerX + (flipped ? -28 : 0), playerY - (ducking ? 3 : 11), 28);
+    int16_t x = playerX + (flipped ? -28 : 0);
+    int16_t y = playerY - (ducking ? 3 : 11);
+    Enemies::hit(x, y, 28);
+    Candles::hit(x, y, 28);
   }
 
   // update camera, if needed
@@ -239,20 +240,20 @@ void Player::draw()
   {
     if (attackCounter == 0)
     {
-        if (velocityX == 0)
+      if (velocityX == 0)
+      {
+        frame = FRAME_IDLE;
+        LOG_DEBUG("IDLE");
+      }
+      else
+      {
+        if (ab.everyXFrames(WALK_FRAME_RATE))
         {
-          frame = FRAME_IDLE;
-          LOG_DEBUG("IDLE");
+          walkFrame = !walkFrame;
         }
-        else
-        {
-          if (ab.everyXFrames(WALK_FRAME_RATE))
-          {
-            walkFrame = !walkFrame;
-          }
-          frame = walkFrame ? FRAME_WALK_2 : FRAME_WALK_1;
-          LOG_DEBUG("WALK");
-        }
+        frame = walkFrame ? FRAME_WALK_2 : FRAME_WALK_1;
+        LOG_DEBUG("WALK");
+      }
     }
     else if (attackCounter < ATTACK_CHARGE)
     {
@@ -265,7 +266,7 @@ void Player::draw()
       LOG_DEBUG("ATTACK CHARGE");
     }
 
-    if(ducking)
+    if (ducking)
     {
       frame++;
     }

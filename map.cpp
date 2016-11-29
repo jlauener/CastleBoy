@@ -2,6 +2,14 @@
 
 #include "assets.h"
 #include "candle.h"
+#include "enemy.h"
+
+// map data
+#define MAP_DATA_EMPTY 0
+#define MAP_DATA_GROUND 1
+#define MAP_DATA_BLOCK 2
+#define MAP_DATA_CANDLE 3
+#define MAP_DATA_SKELETON 4
 
 namespace
 {
@@ -9,7 +17,21 @@ uint8_t data[MAP_WIDTH_MAX * MAP_HEIGHT_MAX];
 int16_t mapY;
 int16_t mapWidth;
 int16_t mapHeight;
+
+void createEntity(uint8_t tile, int16_t x, int16_t y)
+{
+  switch (tile)
+  {
+    case MAP_DATA_CANDLE:
+      Candles::add(x * TILE_WIDTH, mapY + y * TILE_HEIGHT);
+      break;
+    case MAP_DATA_SKELETON:
+      Enemies::add(ENEMY_SKELETON, x * TILE_WIDTH, mapY + y * TILE_HEIGHT);
+      break;
+  }
 }
+
+}  // unamed
 
 void Map::init(const uint8_t* source)
 {
@@ -36,10 +58,9 @@ void Map::init(const uint8_t* source)
     bool isBlock = false;
     for (int16_t iy = 0; iy < mapHeight; iy++)
     {
-      switch (data[iy * mapWidth + ix])
+      uint8_t tile = data[iy * mapWidth + ix];
+      switch (tile)
       {
-        case MAP_DATA_CANDLE:
-          Candles::add(ix * TILE_WIDTH, mapY + iy * TILE_HEIGHT);
         case MAP_DATA_EMPTY:
           if (isBlock)
           {
@@ -72,6 +93,21 @@ void Map::init(const uint8_t* source)
           }
           isBlock = false;
           break;
+        default:
+          createEntity(tile, ix, iy);
+          if (isBlock)
+          {
+            isBlock = false;
+            data[iy * mapWidth + ix] = 4;
+          }
+          else
+          {
+            data[iy * mapWidth + ix] = 0;
+          }
+
+          isGround = false;
+          break;
+
       }
     }
   }
@@ -86,7 +122,7 @@ bool Map::collide(int16_t x, int16_t y, const Rect& hitbox)
 {
   x -= hitbox.x;
   y -= hitbox.y;
-  
+
   if (x < 0 || x + hitbox.width > mapWidth * TILE_WIDTH)
   {
     // cannot get out on the sides, collide

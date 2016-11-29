@@ -13,6 +13,9 @@ extern int16_t cameraX;
 
 #define FPS 60
 
+#define CANDLE_MAX 16
+#define ENEMY_MAX 16
+
 #define STATE_GAME 0
 
 // divider for fixed fractional numbers
@@ -24,13 +27,8 @@ extern int16_t cameraX;
 #define PLAYER_JUMP_FORCE_F 3100 // 3.0
 #define PLAYER_JUMP_LEVITATE 3;
 
-// map data
-#define MAP_DATA_EMPTY 0
-#define MAP_DATA_GROUND 1
-#define MAP_DATA_BLOCK 2
-#define MAP_DATA_CANDLE 3
-
-#define CANDLE_MAX 8
+// enemy types
+#define ENEMY_SKELETON 0
 
 // size stuffs
 #define TILE_WIDTH 8
@@ -51,6 +49,11 @@ extern int16_t cameraX;
 #define FRAME_RATE 1
 #define FRAME_COUNT 2
 #define FRAMES 3
+
+namespace Util
+{
+  bool collideHLine(int16_t lx, int16_t ly, int16_t lw, int16_t x, int16_t y, const Rect& hitbox);
+}
 
 #ifdef DEBUG
 extern bool hasDebugValue;

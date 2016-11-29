@@ -14,7 +14,7 @@ struct Candle
 };
 
 Candle candles[CANDLE_MAX];
-}
+} // unamed
 
 void Candles::init()
 {
