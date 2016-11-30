@@ -1,8 +1,7 @@
 #include "map.h"
 
 #include "assets.h"
-#include "candle.h"
-#include "enemy.h"
+#include "entity.h"
 
 // map data
 #define MAP_DATA_EMPTY 0
@@ -17,21 +16,6 @@ uint8_t data[MAP_WIDTH_MAX * MAP_HEIGHT_MAX];
 int16_t mapY;
 int16_t mapWidth;
 int16_t mapHeight;
-
-void createEntity(uint8_t tile, int16_t x, int16_t y)
-{
-  // FIXME refactor placement of entities
-  switch (tile)
-  {
-    case MAP_DATA_CANDLE:
-      Candles::add(x, y);
-      break;
-    case MAP_DATA_SKELETON:
-      Enemies::add(ENEMY_SKELETON, x, y);
-      break;
-  }
-}
-
 }  // unamed
 
 void Map::init(const uint8_t* source)
@@ -95,7 +79,10 @@ void Map::init(const uint8_t* source)
           isBlock = false;
           break;
         default:
-          createEntity(tile, ix * TILE_WIDTH + HALF_TILE_WIDTH, mapY + iy * TILE_HEIGHT + TILE_HEIGHT);
+          if(tile > 2)
+          {
+            Entities::add(tile - 3, ix * TILE_WIDTH + HALF_TILE_WIDTH, mapY + iy * TILE_HEIGHT + TILE_HEIGHT);
+          }
           if (isBlock)
           {
             isBlock = false;

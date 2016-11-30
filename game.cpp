@@ -4,13 +4,11 @@
 #include "assets.h"
 #include "map.h"
 #include "player.h"
-#include "candle.h"
-#include "enemy.h"
+#include "entity.h"
 
 void Game::init()
 {
-  Candles::init();
-  Enemies::init();
+  Entities::init();
   Map::init(Data::mapData());
   Player::init(8, 56);
 }
@@ -24,13 +22,12 @@ void Game::loop()
   }
 
   Player::update();
-  Enemies::update();
+  Entities::update();
 
   int backgroundOffset = 8 - cameraX / 8; // FIXME properly calculate parralax
   sprites.drawOverwrite(16 + backgroundOffset, 0, background, 0);
   Map::draw();
-  Candles::draw();
-  Enemies::draw();
+  Entities::draw();
   Player::draw();
 }
 
