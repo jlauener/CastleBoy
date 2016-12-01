@@ -1,0 +1,29 @@
+level format
+
+-- tilemap ---------------------------
+
+8 bit map width
+4 bit map height
+4 bit reserved
+
+each chunk is 8 bit
+6 bit RLE
+2 bit for type
+  00 empty
+  01 ground
+  10 wall
+  11 reserved
+
+-- entities ---------------------------
+
+each entity is 16 bit
+8 bit for x pos
+4 bit for y pos
+2 bit for type
+  00 candle
+  01 monster1
+  10 monster2
+  11 monster3
+2 bit reserved
+
+

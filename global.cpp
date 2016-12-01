@@ -2,6 +2,7 @@
 
 Arduboy2 ab;
 Sprites sprites;
+ArduboyTones sound(ab.audio.enabled);
 uint8_t gameState;
 int16_t cameraX = 0;
 

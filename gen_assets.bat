@@ -1,2 +1,2 @@
-ruby img2ard.rb
+ruby gen_assets.rb
 pause

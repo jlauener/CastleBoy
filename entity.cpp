@@ -87,7 +87,7 @@ void Entities::update()
             }
             break;
           case ENTITY_SKELETON:
-            if (ab.everyXFrames(4))
+            if (ab.everyXFrames(3))
             {
               entities[i].x += entities[i].dir;
               if (++entities[i].counter == 23)

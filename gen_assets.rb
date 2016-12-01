@@ -1,6 +1,11 @@
 #!/usr/bin/env ruby
 require 'rubygems'
+require 'json'
 require 'chunky_png'
+
+#
+# ---------------------- asset file ------------------------------------------------------
+#
 
 class AssetFile
   attr :name
@@ -27,6 +32,151 @@ class AssetFile
   end
 end
 
+assets = AssetFile.new("assets")
+
+#
+# ---------------------- map2ard ------------------------------------------------------
+#
+
+class MapData
+  MAX_WIDTH = 256
+  MAX_HEIGHT = 8
+  MAX_ENTITIES = 32
+  PER_LINE = 8
+
+  attr :name
+  attr :width
+  attr :height
+  attr :data
+  attr :size
+
+  def initialize(fileName)    
+    jsonHash = JSON.parse(File.read(fileName))
+    @name = File.basename(fileName,".*")    
+    @width = jsonHash["width"]
+    @height = jsonHash["height"]
+    @data = jsonHash["layers"][0]["data"]
+	@size = 0
+	
+	if @width > MAX_WIDTH
+		raise "Map #{@name} is too wide, max is #{MAX_WIDTH}, current is #{@width}."
+	end
+	
+	if @height > MAX_HEIGHT
+		raise "Map #{@name} is too high, max is #{MAX_HEIGHT}, current is #{@height}."
+	end
+  end
+
+  def code_header
+    o = "// #{@name}\n"
+    o << "// #{@width}x#{@height}\n"
+    o << "//\n"
+    @data.each_with_index do |tile, i|
+      o << "// " if i % @width == 0
+      o << tile.to_s
+      o << "\n" if (i + 1) % @width == 0
+    end
+    o << "\n"
+    o
+  end
+  
+  def add_byte(o, byte)
+    hex = byte.to_s(16).upcase
+	hex = "0x" + (hex.length == 1 ? "0" : "") + hex + ","
+    o << hex
+	@size += 1
+	self
+  end
+  
+  def tilemap_data
+    o = ""
+	total = 0
+	byte = 0
+	count = 0
+	for ix in 0...@width
+		for iy in 0...@height
+			tile = data[iy * @width + ix]
+			if tile < 4
+				byte += tile << count;
+			end
+			count += 2
+			
+			if count == 8
+				add_byte(o, byte)
+				total += 1
+				o << "\n" if total % PER_LINE == 0
+				count = 0
+				byte = 0
+			end
+		end
+    end
+	if count != 0
+		raise "Map #{@name} has wrong size, must be a multiple of 8."		
+	end
+	o << "\n"
+    o
+  end
+  
+  def entity_count
+	count = 0
+	for i in 0...@width * @height
+		if data[i] > 7
+			count += 1
+		end
+	end
+	if count > MAX_ENTITIES
+		raise "Map #{@name} has too many entities, max is #{MAX_ENTITIES}, current is #{@count}."
+	end
+	count
+  end
+  
+  def entity_data
+    o = ""	
+	total = 0
+	for ix in 0...@width
+		for iy in 0...@height
+			tile = data[iy * @width + ix]
+			if tile > 8
+				entity = tile - 9;				
+				add_byte(o, iy + (entity << 4)).add_byte(o, ix);
+				total += 2
+				o << "\n" if total % PER_LINE == 0
+			end				
+		end
+    end
+	o << "\n"
+    o
+  end
+
+  def to_s
+    o = code_header
+    o << "PROGMEM const byte #{@name}[] = {\n"
+	o << "// width, height\n"
+	o << "#{@width}, #{@height},\n"
+    o << "// tilemap data\n"
+    o << tilemap_data
+	o << "// entity count\n"
+	o << "#{entity_count},\n"
+    o << "// entities data\n"
+    o << entity_data
+    o << "\n};\n\n"
+    o
+  end
+end
+
+puts "generating maps..."
+files = Dir.glob("./map/**/*.json")
+files.each do |fileName|
+  mapData = MapData.new(fileName)
+  out = mapData.to_s
+  puts "#{mapData.name}: #{mapData.width}x#{mapData.height} tiles #{mapData.entity_count} entities #{mapData.size} bytes"
+  assets.files << out
+end
+puts "\n"
+
+#
+# ---------------------- img2ard ------------------------------------------------------
+#
 
 class ImageCharArray
   PER_LINE = 10
@@ -161,9 +311,8 @@ class ImageCharArray
   end
 end
 
-resource = AssetFile.new("assets")
-
-files = Dir.glob("./assets/**/*.png")
+puts "generating bitmaps..."
+files = Dir.glob("./gfx/**/*.png")
 files.each do |file|
   img = ChunkyPNG::Image.from_file(file)
   # puts img.inspect
@@ -204,10 +353,14 @@ files.each do |file|
     end
   end
   # puts out.inspect
-  resource.files << out
+  assets.files << out
 end
 
-File.open(resource.filename,"w") do |f|
-  f.write resource.to_s
+#
+# ---------------------- write assets ------------------------------------------------------
+#
+
+File.open(assets.filename,"w") do |f|
+  f.write assets.to_s
 end
-puts "\n#{resource.filename} compiled."
+puts "\n#{assets.filename} compiled."

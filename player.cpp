@@ -228,6 +228,10 @@ void Player::update()
   // perform attack
   if (attackCounter != 0 && attackCounter < ATTACK_CHARGE)
   {
+    if(attackCounter == ATTACK_CHARGE - 1)
+    {
+      sound.tone(NOTE_GS5H, 10);
+    }
     Entities::attack(playerX + (flipped ? -24 : 0), playerY - (ducking ? 3 : 11), 24);
   }
 
@@ -265,6 +269,7 @@ void Player::update()
       jumping = false;
       levitateCounter = 0;
       attackCounter = 0;
+      sound.tone(NOTE_CS4H, 25);
     }
   }
 }

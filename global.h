@@ -2,14 +2,16 @@
 #define GLOBAL_H
 
 #include <Arduboy2.h>
+#include <ArduboyTones.h>
 #include "game.h"
 
 extern Arduboy2 ab;
+extern ArduboyTones sound;
 extern Sprites sprites;
 extern uint8_t gameState;
 extern int16_t cameraX;
 
-#define DEBUG // enable to show log and CPU load
+//#define DEBUG // enable to show log and CPU load
 //#define DEBUG_HITBOX // enable to show hitboxes
 
 #define FPS 60
@@ -45,7 +47,7 @@ extern int16_t cameraX;
 #define MAP_WIDTH_MAX 16
 #define MAP_HEIGHT_MAX 6
 
-#define CAMERA_BUFFER 32
+#define CAMERA_BUFFER 64
 
 #define SOLID_TILE_COUNT 3
 

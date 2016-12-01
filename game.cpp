@@ -1,6 +1,6 @@
 #include "game.h"
 
-#include "data.h"
+#include "global.h"
 #include "assets.h"
 #include "map.h"
 #include "player.h"
@@ -9,7 +9,7 @@
 void Game::init()
 {
   Entities::init();
-  Map::init(Data::mapData());
+  Map::init(test);
   Player::init(8, 56);
 }
 
@@ -25,7 +25,7 @@ void Game::loop()
   Entities::update();
 
   int backgroundOffset = 8 - cameraX / 8; // FIXME properly calculate parralax
-  sprites.drawOverwrite(16 + backgroundOffset, 0, background, 0);
+  sprites.drawOverwrite(16 + backgroundOffset, 4, background, 0);
   Map::draw();
   Entities::draw();
   Player::draw();
