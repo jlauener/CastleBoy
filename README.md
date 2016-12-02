@@ -20,25 +20,33 @@ gem sources -r http://rubygems.org/
 ```
 This is unfortunatly needed to go around this problem https://gist.github.com/luislavena/f064211759ee0f806c88
 
-## Roadmap
+## Demo roadmap
 
 - [x] Map display, scrolling and collision
 - [x] Player walk
 - [x] Player jump
-- [ ] Player attack (WIP)
-- [ ] Player ducking (WIP)
+- [x] Player attack
+- [x] Player ducking
+- [x] Player knockback when hit
+- [ ] Player HP and death
 - [ ] Parralax background (WIP)
-- [ ] Candles and pickups (WIP)
-- [ ] Enemy 1: Dummy skeleton (WIP)
-- [ ] Enemy 2: Flying skull
-- [ ] Enemy 3: Small, maybe with jump (?)
-- [ ] Asset pipeline
-- [ ] SFXs
+- [x] Candles
+- [ ] Pickups (WIP)
+- [x] Enemy 1: Simple skeleton
+- [ ] Falling tiles
+- [x] Asset pipeline
+- [ ] SFXs (WIP)
+- [ ] Stage theme: Exterior (WIP)
+
+## Final roadmap
+
+- [ ] Enemy 2: Skeleton that throws axe
+- [ ] Enemy 3: Flying skull
+- [ ] Boss
 - [ ] Font for displaying score and numbers
-- [ ] Stage 1: Exterior
-- [ ] Stage 2: Castle
-- [ ] Stage 3: Boss
-- [ ] Stage transition
+- [ ] Stage theme: Castle
+- [ ] Level design
+- [ ] Overall transition between scenes
 - [ ] Title
 - [ ] Game over screen
 - [ ] Game completed screen
@@ -46,7 +54,14 @@ This is unfortunatly needed to go around this problem https://gist.github.com/lu
 
 ## Extra features
 
-- [ ] Falling tiles
+- [ ] Stage theme: Garden
+- [ ] Enemy that can be killed only with duck attack
+- [ ] Jumping enemy (most likely not)
+- [ ] Enemy that shoot fireballs
+- [ ] Harmful object that fall from top
 - [ ] Stairs (most likely not)
-- [ ] Enemy/player projectiles
-- [ ] Credit/help screen
+- [ ] Player ability to throw projecties (most likely not)
+- [ ] Option screen
+- [ ] Credit screen
+- [ ] Help screen (most likely not)
+- [ ] Save progress/high score to EPROM (most likely not)
