@@ -10,6 +10,7 @@ extern ArduboyTones sound;
 extern Sprites sprites;
 extern uint8_t gameState;
 extern int16_t cameraX;
+extern uint8_t playerHp;
 
 //#define DEBUG // enable to show log and CPU load
 //#define DEBUG_HITBOX // enable to show hitboxes

@@ -25,9 +25,14 @@ void Game::loop()
   Entities::update();
 
   int backgroundOffset = 8 - cameraX / 8; // FIXME properly calculate parralax
-  sprites.drawOverwrite(16 + backgroundOffset, 4, background, 0);
+  sprites.drawOverwrite(16 + backgroundOffset, 4, background_mountain, 0);
   Map::draw();
   Entities::draw();
   Player::draw();
+  
+  for(uint8_t i = 0; i < playerHp; i++)
+  {
+    sprites.drawPlusMask(i * 7, 0, ui_heart_plus_mask, 0);
+  }
 }
 

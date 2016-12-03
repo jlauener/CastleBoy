@@ -25,7 +25,7 @@ const EntityData data[] =
     4, 6, // hitbox width, height
     4, 10, // sprite origin x, y
     false, // false
-    candle_plus_mask // sprite
+    entity_candle_plus_mask // sprite
   },
   // skeleton
   {
@@ -33,7 +33,7 @@ const EntityData data[] =
     6, 14, // hitbox width, height
     8, 16, // sprite origin x, y
     true, // collidable
-    skeleton_plus_mask // sprite
+    entity_skeleton_plus_mask // sprite
   }
 };
 
@@ -129,6 +129,7 @@ void Entities::attack(int16_t x, int16_t y, int16_t w)
         entities[i].alive = false;
         entities[i].frame = 0;
         entities[i].counter = 0;
+        sound.tone(NOTE_CS3, 25);
       }
     }
   }
@@ -165,7 +166,7 @@ void Entities::draw()
       }
       else
       {
-        sprites.drawPlusMask(entities[i].x - DIE_ANIM_ORIGIN_X - cameraX, entities[i].y - DIE_ANIM_ORIGIN_Y, entity_destroy_plus_mask, entities[i].frame);
+        sprites.drawPlusMask(entities[i].x - DIE_ANIM_ORIGIN_X - cameraX, entities[i].y - DIE_ANIM_ORIGIN_Y, fx_destroy_plus_mask, entities[i].frame);
       }
     }
   }

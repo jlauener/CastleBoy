@@ -53,6 +53,7 @@ uint8_t knockbackCounter;
 int8_t levitateCounter;
 bool flipped;
 bool walkFrame;
+bool dead;
 
 bool moveX(int16_t dx, const Rect& hitbox)
 {
@@ -98,11 +99,13 @@ void Player::init(int16_t x, int16_t y)
 {
   playerX = x;
   playerY = y;
+  playerHp = 5;
   grounded = false;
   attackCounter = 0;
   attacking = false;
   jumping = false;
   ducking = false;
+  dead = false;
   knockbackCounter = 0;
   levitateCounter = 0;
   velocityX = 0;
@@ -117,13 +120,23 @@ void Player::update()
     if(--knockbackCounter == 0)
     {
       velocityX = 0;
+      if(playerHp == 0)
+      {
+        dead = true;
+      }
     }
+  }
+
+  if(dead)
+  {
+    return;
   }
 
   // attack
   if (knockbackCounter == 0 && attackCounter == 0 && ab.justPressed(B_BUTTON))
   {
     attackCounter = ATTACK_TOTAL_DURATION;
+    sound.tone(NOTE_GS4, 10);
   }
 
   if (attackCounter > 0)
@@ -228,10 +241,6 @@ void Player::update()
   // perform attack
   if (attackCounter != 0 && attackCounter < ATTACK_CHARGE)
   {
-    if(attackCounter == ATTACK_CHARGE - 1)
-    {
-      sound.tone(NOTE_GS5H, 10);
-    }
     Entities::attack(playerX + (flipped ? -24 : 0), playerY - (ducking ? 3 : 11), 24);
   }
 
@@ -269,7 +278,8 @@ void Player::update()
       jumping = false;
       levitateCounter = 0;
       attackCounter = 0;
-      sound.tone(NOTE_CS4H, 25);
+      --playerHp;
+      sound.tone(NOTE_CS5H, 25);
     }
   }
 }
@@ -278,7 +288,11 @@ void Player::draw()
 {
   uint8_t frame = 0;
 
-  if (knockbackCounter > 0)
+  if (dead)
+  {
+    frame = FRAME_DEAD;
+  }
+  else if (knockbackCounter > 0)
   {
     frame = FRAME_KNOCKBACK;
   }
