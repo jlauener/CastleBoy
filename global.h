@@ -9,8 +9,6 @@ extern Arduboy2 ab;
 extern ArduboyTones sound;
 extern Sprites sprites;
 extern uint8_t gameState;
-extern int16_t cameraX;
-extern uint8_t playerHp;
 
 //#define DEBUG // enable to show log and CPU load
 //#define DEBUG_HITBOX // enable to show hitboxes
@@ -39,6 +37,12 @@ extern uint8_t playerHp;
 // entity types
 #define ENTITY_CANDLE 0
 #define ENTITY_SKELETON 1
+#define ENTITY_COIN 2
+
+// entity score
+#define SCORE_CANDLE 5
+#define SCORE_SKELETON 10
+#define SCORE_COIN 50
 
 // size stuffs
 #define TILE_WIDTH 8

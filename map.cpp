@@ -8,29 +8,30 @@
 #define TILE_WALL 1
 #define TILE_GROUND 2
 
+int16_t Map::width;
+
 namespace
 {
 const uint8_t* tilemap;
-int16_t mapWidth;
-int16_t mapHeight;
+int16_t height;
 
 uint8_t getTileAt(int16_t x, int16_t y)
 {
   uint8_t mask = 0x03 << (y % 4) * 2;
-  return (pgm_read_byte(tilemap + (x * mapHeight + y) / 4) & mask) >> (y % 4) * 2;
+  return (pgm_read_byte(tilemap + (x * height + y) / 4) & mask) >> (y % 4) * 2;
 }
 
 }  // unamed
 
 void Map::init(const uint8_t* source)
 {
-  mapWidth = pgm_read_byte(source);
-  mapHeight = pgm_read_byte(++source);
+  width = pgm_read_byte(source);
+  height = pgm_read_byte(++source);
   tilemap = ++source;
   cameraX = 0;
 
   // load entities
-  source += mapWidth * mapHeight / 4;
+  source += width * height / 4;
   uint8_t entityCount = pgm_read_byte(source);
   for (uint8_t i = 0; i < entityCount; i++)
   {
@@ -42,17 +43,12 @@ void Map::init(const uint8_t* source)
   }
 }
 
-int16_t Map::width()
-{
-  return mapWidth;
-}
-
 bool Map::collide(int16_t x, int16_t y, const Rect& hitbox)
 {
   x -= hitbox.x;
   y -= hitbox.y;
 
-  if (x < 0 /*|| x + hitbox.width > mapWidth * TILE_WIDTH*/)
+  if (x < 0 /*|| x + hitbox.width > width * TILE_WIDTH*/)
   {
     // cannot get out on the sides, collide
     // WARNING can get out of right side, if we use this for projectile
@@ -66,7 +62,7 @@ bool Map::collide(int16_t x, int16_t y, const Rect& hitbox)
   int16_t tx2 = (x + hitbox.width - 1) / TILE_WIDTH;
   int16_t ty2 = (y + hitbox.height - 1) / TILE_HEIGHT;
 
-  if (ty2 < 0 || ty2 >= mapHeight)
+  if (ty2 < 0 || ty2 >= height)
   {
     // either higher or lower than map, no collision
     //LOG_DEBUG("higher or lower");
@@ -75,9 +71,9 @@ bool Map::collide(int16_t x, int16_t y, const Rect& hitbox)
 
   // clamp positions
   if (tx1 < 0) tx1 = 0;
-  if (tx2 >= mapWidth) tx2 = mapWidth - 1;
+  if (tx2 >= width) tx2 = width - 1;
   if (ty1 < 0) ty1 = 0;
-  if (ty2 >= mapHeight) ty2 = mapHeight - 1;
+  if (ty2 >= height) ty2 = height - 1;
 
   // perform hit test on selected tiles
   for (int16_t ix = tx1; ix <= tx2; ix++)
@@ -100,6 +96,25 @@ bool Map::collide(int16_t x, int16_t y, const Rect& hitbox)
   return false;
 }
 
+bool Map::moveY(int16_t x, int16_t& y, int16_t dy, const Rect& hitbox)
+{
+  if (dy != 0)
+  {
+    int8_t sign = dy > 0 ? 1 : -1;
+    while (dy != 0)
+    {
+      if (Map::collide(x, y + sign, hitbox))
+      {
+        return true;
+      }
+      y += sign;
+      dy -= sign;
+    }
+  }
+
+  return false;
+}
+
 void Map::draw()
 {
   uint8_t start = cameraX / 8;
@@ -111,7 +126,7 @@ void Map::draw()
   {
     isGround = false;
     isBlock = false;
-    for (uint8_t iy = 0; iy < mapHeight; iy++)
+    for (uint8_t iy = 0; iy < height; iy++)
     {
       uint8_t tile = getTileAt(ix, iy);
       switch (tile)

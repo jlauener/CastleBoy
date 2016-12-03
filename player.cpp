@@ -25,6 +25,9 @@
 
 #define WALK_FRAME_RATE 12
 
+uint8_t Player::hp;
+uint16_t Player::score;
+
 namespace
 {
 const Rect normalHitbox =
@@ -74,24 +77,24 @@ bool moveX(int16_t dx, const Rect& hitbox)
   return false;
 }
 
-bool moveY(int16_t dy, const Rect& hitbox)
-{
-  if (dy != 0)
-  {
-    int8_t sign = dy > 0 ? 1 : -1;
-    while (dy != 0)
-    {
-      if (Map::collide(playerX, playerY + sign, hitbox))
-      {
-        return true;
-      }
-      playerY += sign;
-      dy -= sign;
-    }
-  }
-
-  return false;
-}
+//bool moveY(int16_t dy, const Rect& hitbox)
+//{
+//  if (dy != 0)
+//  {
+//    int8_t sign = dy > 0 ? 1 : -1;
+//    while (dy != 0)
+//    {
+//      if (Map::collide(playerX, playerY + sign, hitbox))
+//      {
+//        return true;
+//      }
+//      playerY += sign;
+//      dy -= sign;
+//    }
+//  }
+//
+//  return false;
+//}
 
 } // unamed
 
@@ -99,7 +102,6 @@ void Player::init(int16_t x, int16_t y)
 {
   playerX = x;
   playerY = y;
-  playerHp = 5;
   grounded = false;
   attackCounter = 0;
   attacking = false;
@@ -117,17 +119,17 @@ void Player::update()
   // knockback
   if (knockbackCounter > 0)
   {
-    if(--knockbackCounter == 0)
+    if (--knockbackCounter == 0)
     {
       velocityX = 0;
-      if(playerHp == 0)
+      if (hp == 0)
       {
         dead = true;
       }
     }
   }
 
-  if(dead)
+  if (dead)
   {
     return;
   }
@@ -169,7 +171,7 @@ void Player::update()
     }
     else
     {
-      moveY(velocityY / F_PRECISION, ducking ? duckHitbox : normalHitbox);
+      Map::moveY(playerX, playerY, velocityY / F_PRECISION, ducking ? duckHitbox : normalHitbox);
     }
   }
   else
@@ -178,7 +180,7 @@ void Player::update()
     int16_t offsetY = velocityY / F_PRECISION;
     if (offsetY > 0)
     {
-      grounded = moveY(offsetY, ducking ? duckHitbox : normalHitbox);
+      grounded = Map::moveY(playerX, playerY, offsetY, ducking ? duckHitbox : normalHitbox);
     }
     else
     {
@@ -213,11 +215,11 @@ void Player::update()
   }
 
   if (velocityX != 0 &&
-       (
-         knockbackCounter == 0 && ab.everyXFrames(ducking ? PLAYER_SPEED_DUCK : PLAYER_SPEED_NORMAL) ||
-         knockbackCounter > 0 && ab.everyXFrames(knockbackCounter < PLAYER_KNOCKBACK_FAST ? PLAYER_SPEED_KNOCKBACK_NORMAL : PLAYER_SPEED_KNOCKBACK_FAST)
-       )
-       )
+      (
+        knockbackCounter == 0 && ab.everyXFrames(ducking ? PLAYER_SPEED_DUCK : PLAYER_SPEED_NORMAL) ||
+        knockbackCounter > 0 && ab.everyXFrames(knockbackCounter < PLAYER_KNOCKBACK_FAST ? PLAYER_SPEED_KNOCKBACK_NORMAL : PLAYER_SPEED_KNOCKBACK_FAST)
+      )
+     )
   {
     moveX(velocityX, ducking ? duckHitbox : normalHitbox);
   }
@@ -253,11 +255,11 @@ void Player::update()
   else if (playerX > cameraX + 128 - CAMERA_BUFFER)
   {
     cameraX = playerX - 128 + CAMERA_BUFFER;
-    if (cameraX > Map::width() * TILE_WIDTH - 128) cameraX = Map::width() * TILE_WIDTH - 128;
+    if (cameraX > Map::width * TILE_WIDTH - 128) cameraX = Map::width * TILE_WIDTH - 128;
   }
 
   // check for out of map conditions
-  if (playerX - normalHitbox.x > Map::width() * TILE_WIDTH)
+  if (playerX - normalHitbox.x > Map::width * TILE_WIDTH)
   {
     Game::init(); // TODO
   }
@@ -278,8 +280,8 @@ void Player::update()
       jumping = false;
       levitateCounter = 0;
       attackCounter = 0;
-      --playerHp;
-      sound.tone(NOTE_CS5H, 25);
+      --hp;
+      sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
     }
   }
 }

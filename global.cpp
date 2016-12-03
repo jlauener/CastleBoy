@@ -4,8 +4,6 @@ Arduboy2 ab;
 Sprites sprites;
 ArduboyTones sound(ab.audio.enabled);
 uint8_t gameState;
-int16_t cameraX;
-uint8_t playerHp;
 
 bool Util::collideHLine(int16_t lx, int16_t ly, int16_t lw, int16_t x, int16_t y, const Rect& hitbox)
 {

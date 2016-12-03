@@ -6,8 +6,13 @@
 #include "player.h"
 #include "entity.h"
 
+int16_t cameraX;
+
 void Game::init()
 {
+  Player::hp = 5;
+  Player::score = 0;
+  
   Entities::init();
   Map::init(test);
   Player::init(8, 56);
@@ -30,9 +35,18 @@ void Game::loop()
   Entities::draw();
   Player::draw();
   
-  for(uint8_t i = 0; i < playerHp; i++)
+  for(uint8_t i = 0; i < Player::hp; i++)
   {
     sprites.drawPlusMask(i * 7, 0, ui_heart_plus_mask, 0);
   }
+
+  // FIXME
+  uint16_t n;
+  if(Player::score >= 1000) n = 4;
+  else if(Player::score >= 100) n = 3;
+  else if(Player::score >= 10) n = 2;
+  else n = 1;
+  ab.setCursor(128 - n * 6, 0);
+  ab.print(Player::score);
 }
 

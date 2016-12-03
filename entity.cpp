@@ -1,6 +1,8 @@
 #include "entity.h"
 
 #include "assets.h"
+#include "map.h"
+#include "player.h"
 
 #define DIE_ANIM_ORIGIN_X 4
 #define DIE_ANIM_ORIGIN_Y 10
@@ -13,7 +15,8 @@ struct EntityData
 {
   Rect hitbox;
   Point spriteOrigin;
-  bool collidable; // TODO use bitmask
+  uint16_t score;
+  //bool collidable; // TODO use bitmask
   const uint8_t* sprite;
 };
 
@@ -24,7 +27,8 @@ const EntityData data[] =
     2, 8, // hitbox x, y
     4, 6, // hitbox width, height
     4, 10, // sprite origin x, y
-    false, // false
+    SCORE_CANDLE, // score
+    //false, // collidable
     entity_candle_plus_mask // sprite
   },
   // skeleton
@@ -32,9 +36,19 @@ const EntityData data[] =
     3, 14, // hitbox x, y
     6, 14, // hitbox width, height
     8, 16, // sprite origin x, y
-    true, // collidable
+    SCORE_SKELETON, // score
+    // true, // collidable
     entity_skeleton_plus_mask // sprite
-  }
+  },
+  // coin
+  {
+    3, 6, // hitbox x, y
+    6, 6, // hitbox width, height
+    4, 8, // sprite origin x, y
+    // true, // collidable
+    SCORE_COIN, // score
+    entity_coin_plus_mask // sprite
+  },
 };
 
 Entity entities[ENTITY_MAX];
@@ -45,6 +59,7 @@ void Entities::init()
   for (byte i = 0; i < ENTITY_MAX; i++)
   {
     entities[i].active = false;
+    entities[i].alive = false;
   }
 }
 
@@ -52,16 +67,17 @@ void Entities::add(uint8_t type, int16_t x, int16_t y)
 {
   for (byte i = 0; i < ENTITY_MAX; i++)
   {
-    if (!entities[i].active)
+    Entity& entity = entities[i];
+    if (!entity.active)
     {
-      entities[i].type = type;
-      entities[i].x = x;
-      entities[i].y = y;
-      entities[i].active = true;
-      entities[i].alive = true;
-      entities[i].frame = 0;
-      entities[i].counter = 0;
-      entities[i].dir = -1;
+      entity.type = type;
+      entity.x = x;
+      entity.y = y;
+      entity.active = true;
+      entity.alive = true;
+      entity.frame = 0;
+      entity.counter = 0;
+      entity.dir = -1;
       return;
     }
   }
@@ -74,44 +90,52 @@ void Entities::update()
 {
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
-    if (entities[i].active)
+    Entity& entity = entities[i];
+    if (entity.active)
     {
-      if (entities[i].alive)
+      if (entity.alive)
       {
-        switch (entities[i].type)
+        switch (entity.type)
         {
           case ENTITY_CANDLE:
             if (ab.everyXFrames(8))
             {
-              ++entities[i].frame %= 2;
+              ++entity.frame %= 2;
+            }
+            break;
+          case ENTITY_COIN:
+            Map::moveY(entity.x, entity.y, 2, data[entity.type].hitbox);
+            if (ab.everyXFrames(12))
+            {
+              ++entity.frame %= 2;
             }
             break;
           case ENTITY_SKELETON:
             if (ab.everyXFrames(3))
             {
-              entities[i].x += entities[i].dir;
-              if (++entities[i].counter == 23)
+              entity.x += entity.dir;
+              if (++entity.counter == 23)
               {
-                entities[i].counter = 0;
-                entities[i].dir = entities[i].dir == -1 ? 1 : -1;
+                entity.counter = 0;
+                entity.dir = entity.dir == -1 ? 1 : -1;
               }
             }
-            if(ab.everyXFrames(8))
+            if (ab.everyXFrames(8))
             {
-              ++entities[i].frame %= 2;
+              ++entity.frame %= 2;
             }
             break;
         }
       }
       else
       {
-        if(++entities[i].counter == 8)
+        if (++entity.counter == 8)
         {
-          if (++entities[i].frame == 3)
+          if (++entity.frame == 3)
           {
-            entities[i].active = false;
+            entity.active = false;
           }
-          entities[i].counter = 0;
+          entity.counter = 0;
         }
       }
     }
@@ -122,13 +146,25 @@ void Entities::attack(int16_t x, int16_t y, int16_t w)
 {
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
-    if (entities[i].alive)
+    Entity& entity = entities[i];
+    if (entity.alive && entity.type != ENTITY_COIN)
     {
-      if (Util::collideHLine(x, y, w, entities[i].x, entities[i].y, data[entities[i].type].hitbox))
+      if (Util::collideHLine(x, y, w, entity.x, entity.y, data[entity.type].hitbox))
       {
-        entities[i].alive = false;
-        entities[i].frame = 0;
-        entities[i].counter = 0;
+        Player::score += data[entity.type].score;
+        if (entity.type == ENTITY_CANDLE)
+        {
+          // special case: candle spawn a coin
+          entity.type = ENTITY_COIN;
+          entity.alive = true;
+          entity.frame = 0;
+        }
+        else
+        {
+          entity.alive = false;
+          entity.frame = 0;
+          entity.counter = 0;
+        }
         sound.tone(NOTE_CS3, 25);
       }
     }
@@ -139,11 +175,22 @@ Entity* Entities::collide(int16_t x, int16_t y, const Rect& hitbox)
 {
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
-    if (entities[i].alive && data[entities[i].type].collidable)
+    Entity& entity = entities[i];
+    if (entity.alive && entity.type != ENTITY_CANDLE)
     {
-      if (Util::collide(x, y, hitbox, entities[i].x, entities[i].y, data[entities[i].type].hitbox))
+      if (Util::collide(x, y, hitbox, entity.x, entity.y, data[entity.type].hitbox))
       {
-        return &entities[i];
+        if (entity.type == ENTITY_COIN)
+        {
+          entity.alive = false;
+          entity.active = false;
+          Player::score += data[entity.type].score;
+          sound.tone(NOTE_CS6, 30, NOTE_CS5, 40);
+        }
+        else
+        {
+          return &entity;
+        }
       }
     }
   }
@@ -154,19 +201,20 @@ void Entities::draw()
 {
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
-    if (entities[i].active)
+    Entity& entity = entities[i];
+    if (entity.active)
     {
-      if (entities[i].alive)
+      if (entity.alive)
       {
-        sprites.drawPlusMask(entities[i].x - data[entities[i].type].spriteOrigin.x - cameraX, entities[i].y - data[entities[i].type].spriteOrigin.y, data[entities[i].type].sprite, entities[i].frame);
+        sprites.drawPlusMask(entity.x - data[entity.type].spriteOrigin.x - cameraX, entity.y - data[entity.type].spriteOrigin.y, data[entity.type].sprite, entity.frame);
 
 #ifdef DEBUG_HITBOX
-        ab.fillRect(entities[i].x - data[entities[i].type].hitbox.x - cameraX, entities[i].y - data[entities[i].type].hitbox.y, data[entities[i].type].hitbox.width, data[entities[i].type].hitbox.height);
+        ab.fillRect(entity.x - data[entity.type].hitbox.x - cameraX, entity.y - data[entity.type].hitbox.y, data[entity.type].hitbox.width, data[entity.type].hitbox.height);
 #endif
       }
       else
       {
-        sprites.drawPlusMask(entities[i].x - DIE_ANIM_ORIGIN_X - cameraX, entities[i].y - DIE_ANIM_ORIGIN_Y, fx_destroy_plus_mask, entities[i].frame);
+        sprites.drawPlusMask(entity.x - DIE_ANIM_ORIGIN_X - cameraX, entity.y - DIE_ANIM_ORIGIN_Y, fx_destroy_plus_mask, entity.frame);
       }
     }
   }
