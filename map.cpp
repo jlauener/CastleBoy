@@ -4,9 +4,19 @@
 #include "entity.h"
 
 // map data
-#define TILE_EMPTY 0
-#define TILE_WALL 1
-#define TILE_GROUND 2
+#define TILE_DATA_EMPTY 0
+#define TILE_DATA_PROP 1
+#define TILE_DATA_WALL 2
+#define TILE_DATA_GROUND 3
+
+// tile sprite
+#define TILE_WALL 0
+#define TILE_WALL_END 1
+#define TILE_GROUND_START 2
+#define TILE_GROUND 3
+#define TILE_GROUND_START_ALT 4
+#define TILE_GROUND_ALT 5
+#define TILE_PROP 6
 
 int16_t Map::width;
 
@@ -17,8 +27,7 @@ int16_t height;
 
 uint8_t getTileAt(int16_t x, int16_t y)
 {
-  uint8_t mask = 0x03 << (y % 4) * 2;
-  return (pgm_read_byte(tilemap + (x * height + y) / 4) & mask) >> (y % 4) * 2;
+  return (pgm_read_byte(tilemap + (x * height + y) / 4) & (0x03 << (y % 4) * 2)) >> (y % 4) * 2;
 }
 
 }  // unamed
@@ -80,8 +89,7 @@ bool Map::collide(int16_t x, int16_t y, const Rect& hitbox)
   {
     for (int16_t iy = ty1; iy <= ty2; iy++)
     {
-      // FIXME
-      if (getTileAt(ix, iy) > 0)
+      if (getTileAt(ix, iy) != TILE_DATA_EMPTY && getTileAt(ix, iy) != TILE_DATA_PROP)
       {
         // check for rectangle intersection
         if (ix * TILE_WIDTH + TILE_WIDTH > x && iy * TILE_HEIGHT + TILE_HEIGHT > y && ix * TILE_WIDTH < x + hitbox.width && iy * TILE_HEIGHT < y + hitbox.height)
@@ -115,59 +123,58 @@ bool Map::moveY(int16_t x, int16_t& y, int16_t dy, const Rect& hitbox)
   return false;
 }
 
+// can be optimized CPU wise if needed
 void Map::draw()
 {
   uint8_t start = cameraX / 8;
-  bool isGround;
-  bool isBlock;
 
-  // FIXME can be optimized
   for (uint8_t ix = start; ix < start + 17; ix++)
   {
-    isGround = false;
-    isBlock = false;
+    bool isGround = false;
+    bool isWall = false;
     for (uint8_t iy = 0; iy < height; iy++)
     {
       uint8_t tile = getTileAt(ix, iy);
-      switch (tile)
+      if (tile == TILE_DATA_EMPTY)
       {
-        case TILE_EMPTY:
-          if (isBlock)
-          {
-            isBlock = false;
-            tile = 4;
-          }
-          else
-          {
-            tile = 0;
-          }
+        if (isWall)
+        {
+          isWall = false;
+          tile = TILE_WALL_END;
+        }
+        else
+        {
+          continue;
+        }
+      }
+      else if (tile == TILE_DATA_WALL)
+      {
+        tile = TILE_WALL;
+        isWall = true;
+        isGround = false;
+      }
+      else if (tile == TILE_DATA_GROUND)
+      {
+        bool useAlt = ix % 2 == 0 && iy % 2 == 1 || ix % 2 == 1 && iy & 2 == 0;
+        if (isGround)
+        {
+          // already in ground, use inner ground tile
+          tile = useAlt ? TILE_GROUND_ALT : TILE_GROUND;
+        }
+        else
+        {
+          // first ground tile
+          tile = useAlt ? TILE_GROUND_START_ALT : TILE_GROUND_START;
+          isGround = true;
+        }
+        isWall = false;
+      }
+      else // tile == TILE_DATA_PROP
+      {
+        tile = TILE_PROP;
+      }
 
-          isGround = false;
-          break;
-        case TILE_WALL:
-          tile = 1;
-          isBlock = true;
-          isGround = false;
-          break;
-        case TILE_GROUND:
-          if (isGround)
-          {
-            // already in ground, use inner ground tile
-            tile = 2;
-          }
-          else
-          {
-            // first ground tile
-            tile = 3;
-            isGround = true;
-          }
-          isBlock = false;
-          break;
-      }
-      if (tile > 0)
-      {
-        sprites.drawOverwrite(ix * TILE_WIDTH - cameraX, iy * TILE_HEIGHT, tileset, tile - 1);
-      }
+      sprites.drawOverwrite(ix * TILE_WIDTH - cameraX, iy * TILE_HEIGHT, tileset, tile);
     }
   }
 }
