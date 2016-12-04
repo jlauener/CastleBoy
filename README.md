@@ -40,7 +40,7 @@ This is unfortunatly needed to go around this problem https://gist.github.com/lu
 
 ## Final roadmap
 
-- [ ] Enemy 3: Skeleton that throws axe
+- [ ] Enemy 3: Skeleton that throws a bone
 - [ ] Enemy 4: Enemy that can be killed on with duck attack
 - [ ] Boss
 - [ ] Font for displaying score and numbers
