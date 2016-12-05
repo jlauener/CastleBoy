@@ -6,23 +6,22 @@
 struct Entity
 {
   uint8_t type;
-  int16_t x;
-  int16_t y;
-  // TODO use bitmask to pack crap together
+  Vec pos;
+  // TODO use bitmask ?
   bool active;
   bool alive;
   uint8_t frame;
   uint8_t counter;
-  int8_t dir; // FIXME
+  int8_t dir; // FIXME ?
 };
 
 namespace Entities
 {
   void init();
-  void add(uint8_t type, int16_t x, int16_t y);
+  void add(uint8_t type, uint8_t tileX, uint8_t tileY);
   void update();
-  void attack(int16_t x, int16_t y, int16_t w);
-  Entity* collide(int16_t x, int16_t y, const Rect& hitbox);
+  void attack(int16_t, int8_t y, int16_t x2);
+  Entity* collide(const Vec& pos, const Box& hitbox);
   void draw();
 }
 

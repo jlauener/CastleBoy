@@ -29,7 +29,7 @@ void Game::loop()
   Player::update();
   Entities::update();
 
-  int backgroundOffset = cameraX / 28; // FIXME properly calculate parralax unless all maps have same width
+  int16_t backgroundOffset = cameraX / 28; // FIXME properly calculate parralax unless all maps have same width
   sprites.drawOverwrite(16 - backgroundOffset, 4, background_mountain, 0);
   Map::draw();
   Entities::draw();

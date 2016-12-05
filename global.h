@@ -10,6 +10,20 @@ extern ArduboyTones sound;
 extern Sprites sprites;
 extern uint8_t gameState;
 
+struct Vec
+{
+  int16_t x;
+  int8_t y;
+};
+
+struct Box
+{
+  int16_t x;
+  int8_t y;
+  uint8_t width;
+  uint8_t height;
+};
+
 //#define DEBUG // enable to show log and CPU load
 //#define DEBUG_HITBOX // enable to show hitboxes
 
@@ -55,23 +69,6 @@ extern uint8_t gameState;
 #define CAMERA_BUFFER 64
 
 #define SOLID_TILE_COUNT 3
-
-// anim mode
-#define ONE_SHOT 0
-#define LOOP 1
-
-// anim data indexes
-#define MODE 0
-#define FRAME_RATE 1
-#define FRAME_COUNT 2
-#define FRAMES 3
-
-namespace Util
-{
-  // FIXME if those helpers are used in only one place, let's inline them
-  bool collideHLine(int16_t lx, int16_t ly, int16_t lw, int16_t x, int16_t y, const Rect& hitbox);
-  bool collide(int16_t x1, int16_t y1, const Rect& hitbox1, int16_t x2, int16_t y2, const Rect& hitbox2);
-}
 
 #ifdef DEBUG
 extern bool hasDebugValue;

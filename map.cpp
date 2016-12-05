@@ -18,14 +18,14 @@
 #define TILE_GROUND_ALT 5
 #define TILE_PROP 6
 
-int16_t Map::width;
+uint8_t Map::width;
 
 namespace
 {
 const uint8_t* tilemap;
-int16_t height;
+uint8_t height;
 
-uint8_t getTileAt(int16_t x, int16_t y)
+uint8_t getTileAt(uint8_t x, uint8_t y)
 {
   return (pgm_read_byte(tilemap + (x * height + y) / 4) & (0x03 << (y % 4) * 2)) >> (y % 4) * 2;
 }
@@ -48,11 +48,12 @@ void Map::init(const uint8_t* source)
     uint8_t entityType = (temp & 0xF0) >> 4;
     uint8_t y = temp & 0x0F;
     uint8_t x = pgm_read_byte(++source);
-    Entities::add(entityType, x * TILE_WIDTH + HALF_TILE_WIDTH, y * TILE_HEIGHT + TILE_HEIGHT);
+    Entities::add(entityType, x, y);
   }
 }
 
-bool Map::collide(int16_t x, int16_t y, const Rect& hitbox)
+// FIXME can we use uint8_t instead of int16_t ?
+bool Map::collide(int16_t x, int8_t y, const Box& hitbox)
 {
   x -= hitbox.x;
   y -= hitbox.y;
@@ -104,18 +105,18 @@ bool Map::collide(int16_t x, int16_t y, const Rect& hitbox)
   return false;
 }
 
-bool Map::moveY(int16_t x, int16_t& y, int16_t dy, const Rect& hitbox)
+bool Map::moveY(Vec& pos, int8_t dy, const Box& hitbox)
 {
   if (dy != 0)
   {
     int8_t sign = dy > 0 ? 1 : -1;
     while (dy != 0)
     {
-      if (Map::collide(x, y + sign, hitbox))
+      if (Map::collide(pos.x, pos.y + sign, hitbox))
       {
         return true;
       }
-      y += sign;
+      pos.y += sign;
       dy -= sign;
     }
   }
