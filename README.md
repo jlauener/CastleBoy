@@ -28,20 +28,20 @@ This is unfortunatly needed to go around this problem https://gist.github.com/lu
 - [x] Player attack
 - [x] Player ducking
 - [x] Player knockback when hit
-- [ ] Player HP and death
-- [ ] Parralax background (WIP)
+- [ ] Player HP and death (WIP)
+- [x] Parralax background
 - [x] Candles
 - [ ] Pickups (WIP)
 - [x] Enemy 1: Simple skeleton
-- [ ] Falling tiles
+- [ ] Enemy 2: Flying skull
 - [x] Asset pipeline
 - [ ] SFXs (WIP)
 - [ ] Stage theme: Exterior (WIP)
 
 ## Final roadmap
 
-- [ ] Enemy 2: Skeleton that throws axe
-- [ ] Enemy 3: Flying skull
+- [ ] Enemy 3: Skeleton that throws a bone
+- [ ] Enemy 4: Enemy that can be killed on with duck attack
 - [ ] Boss
 - [ ] Font for displaying score and numbers
 - [ ] Stage theme: Castle
@@ -55,13 +55,13 @@ This is unfortunatly needed to go around this problem https://gist.github.com/lu
 ## Extra features
 
 - [ ] Stage theme: Garden
-- [ ] Enemy that can be killed only with duck attack
-- [ ] Jumping enemy (most likely not)
+- [ ] Falling tiles
+- [ ] Jumping enemy
 - [ ] Enemy that shoot fireballs
 - [ ] Harmful object that fall from top
-- [ ] Stairs (most likely not)
-- [ ] Player ability to throw projecties (most likely not)
+- [ ] Stairs
+- [ ] Player ability to throw projecties
 - [ ] Option screen
 - [ ] Credit screen
-- [ ] Help screen (most likely not)
-- [ ] Save progress/high score to EPROM (most likely not)
+- [ ] Help screen
+- [ ] Save progress/high score to EPROM
