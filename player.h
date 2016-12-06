@@ -8,6 +8,7 @@ namespace Player
 extern Vec pos;
 extern uint8_t hp;
 extern uint16_t score;
+extern bool alive;
   
 void init(int16_t x, int8_t y);
 void update();

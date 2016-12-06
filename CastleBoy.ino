@@ -33,5 +33,10 @@ void loop()
   drawDebug();
 #endif
 
+  if(flashCounter > 0)
+  {
+    ab.fillRect(0, 0, 128, 64);
+    flashCounter--;
+  }
   ab.display();
 }

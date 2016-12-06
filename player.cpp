@@ -28,6 +28,7 @@
 uint8_t Player::hp;
 uint16_t Player::score;
 Vec Player::pos;
+bool Player::alive;
 
 namespace
 {
@@ -55,7 +56,6 @@ uint8_t knockbackCounter;
 uint8_t levitateCounter;
 bool flipped;
 bool walkFrame;
-bool dead;
 
 } // unamed
 
@@ -65,10 +65,10 @@ void Player::init(int16_t x, int8_t y)
   pos.y = y;
   grounded = false;
   attackCounter = 0;
+  alive = true;
   attacking = false;
   jumping = false;
   ducking = false;
-  dead = false;
   knockbackCounter = 0;
   levitateCounter = 0;
   velocityX = 0;
@@ -85,12 +85,12 @@ void Player::update()
       velocityX = 0;
       if (hp == 0)
       {
-        dead = true;
+        alive = false;
       }
     }
   }
 
-  if (dead)
+  if (!alive)
   {
     return;
   }
@@ -210,26 +210,10 @@ void Player::update()
     Entities::attack(pos.x + (flipped ? -24 : 0), pos.y - (ducking ? 3 : 11), pos.x + (flipped ? 0 : 24));
   }
 
-  // update camera, if needed
-  if (pos.x < cameraX + CAMERA_BUFFER)
+  // check if player falled in a hole
+  if (pos.y - SPRITE_ORIGIN_Y > 64)
   {
-    cameraX = pos.x - CAMERA_BUFFER;
-    if (cameraX < 0) cameraX = 0;
-  }
-  else if (pos.x > cameraX + 128 - CAMERA_BUFFER)
-  {
-    cameraX = pos.x - 128 + CAMERA_BUFFER;
-    if (cameraX > Map::width * TILE_WIDTH - 128) cameraX = Map::width * TILE_WIDTH - 128;
-  }
-
-  // check for out of map conditions
-  if (pos.x - normalHitbox.x > Map::width * TILE_WIDTH)
-  {
-    Game::init(); // TODO
-  }
-  else if (pos.y - SPRITE_ORIGIN_Y > 64)
-  {
-    Game::init(); // TODO
+    alive = false;
   }
 
   // check entity collision
@@ -245,6 +229,8 @@ void Player::update()
       levitateCounter = 0;
       attackCounter = 0;
       --hp;
+      flashCounter = 2;
+      Game::shake(16, 2);
       sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
     }
   }
@@ -254,7 +240,7 @@ void Player::draw()
 {
   uint8_t frame = 0;
 
-  if (dead)
+  if (!alive)
   {
     frame = FRAME_DEAD;
   }

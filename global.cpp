@@ -4,6 +4,7 @@ Arduboy2 ab;
 Sprites sprites;
 ArduboyTones sound(ab.audio.enabled);
 uint8_t gameState;
+uint8_t flashCounter = 0;
 
 #ifdef DEBUG
 bool hasDebugValue = false;

@@ -9,6 +9,7 @@ extern Arduboy2 ab;
 extern ArduboyTones sound;
 extern Sprites sprites;
 extern uint8_t gameState;
+extern uint8_t flashCounter;
 
 struct Vec
 {

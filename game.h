@@ -9,6 +9,7 @@ namespace Game
 {
   void init();
   void loop();
+  void shake(uint8_t duration, int8_t strenght);
 }
 
 #endif
