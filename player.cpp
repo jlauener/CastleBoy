@@ -27,6 +27,7 @@
 
 uint8_t Player::hp;
 uint16_t Player::score;
+Vec Player::pos;
 
 namespace
 {
@@ -42,7 +43,6 @@ const Box duckHitbox =
   8, 6  // width, height
 };
 
-Vec position;
 int8_t velocityX;
 int16_t velocityYf;
 // FIXME move flags to a single byte and use masking (is it worth it?)
@@ -61,8 +61,8 @@ bool dead;
 
 void Player::init(int16_t x, int8_t y)
 {
-  position.x = x;
-  position.y = y;
+  pos.x = x;
+  pos.y = y;
   grounded = false;
   attackCounter = 0;
   attacking = false;
@@ -132,7 +132,7 @@ void Player::update()
     }
     else
     {
-      Map::moveY(position, velocityYf / F_PRECISION, ducking ? duckHitbox : normalHitbox);
+      Map::moveY(pos, velocityYf / F_PRECISION, ducking ? duckHitbox : normalHitbox);
     }
   }
   else
@@ -141,11 +141,11 @@ void Player::update()
     int16_t offsetY = velocityYf / F_PRECISION;
     if (offsetY > 0)
     {
-      grounded = Map::moveY(position, offsetY, ducking ? duckHitbox : normalHitbox);
+      grounded = Map::moveY(pos, offsetY, ducking ? duckHitbox : normalHitbox);
     }
     else
     {
-      grounded = Map::collide(position.x, position.y + 1, ducking ? duckHitbox : normalHitbox);
+      grounded = Map::collide(pos.x, pos.y + 1, ducking ? duckHitbox : normalHitbox);
     }
 
     if (grounded)
@@ -182,9 +182,9 @@ void Player::update()
       )
      )
   {
-    if (!Map::collide(position.x + velocityX, position.y, ducking ? duckHitbox : normalHitbox))
+    if (!Map::collide(pos.x + velocityX, pos.y, ducking ? duckHitbox : normalHitbox))
     {
-      position.x += velocityX;
+      pos.x += velocityX;
     }
   }
 
@@ -198,7 +198,7 @@ void Player::update()
     else if (!ab.pressed(DOWN_BUTTON))
     {
       // only stop ducking if player can stand
-      ducking = Map::collide(position.x, position.y, normalHitbox);
+      ducking = Map::collide(pos.x, pos.y, normalHitbox);
     }
 
     // verticalMoveSpeed = ducking ? PLAYER_SPEED_DUCK : PLAYER_SPEED_NORMAL;
@@ -207,27 +207,27 @@ void Player::update()
   // perform attack
   if (attackCounter != 0 && attackCounter < ATTACK_CHARGE)
   {
-    Entities::attack(position.x + (flipped ? -24 : 0), position.y - (ducking ? 3 : 11), position.x + (flipped ? 0 : 24));
+    Entities::attack(pos.x + (flipped ? -24 : 0), pos.y - (ducking ? 3 : 11), pos.x + (flipped ? 0 : 24));
   }
 
   // update camera, if needed
-  if (position.x < cameraX + CAMERA_BUFFER)
+  if (pos.x < cameraX + CAMERA_BUFFER)
   {
-    cameraX = position.x - CAMERA_BUFFER;
+    cameraX = pos.x - CAMERA_BUFFER;
     if (cameraX < 0) cameraX = 0;
   }
-  else if (position.x > cameraX + 128 - CAMERA_BUFFER)
+  else if (pos.x > cameraX + 128 - CAMERA_BUFFER)
   {
-    cameraX = position.x - 128 + CAMERA_BUFFER;
+    cameraX = pos.x - 128 + CAMERA_BUFFER;
     if (cameraX > Map::width * TILE_WIDTH - 128) cameraX = Map::width * TILE_WIDTH - 128;
   }
 
   // check for out of map conditions
-  if (position.x - normalHitbox.x > Map::width * TILE_WIDTH)
+  if (pos.x - normalHitbox.x > Map::width * TILE_WIDTH)
   {
     Game::init(); // TODO
   }
-  else if (position.y - SPRITE_ORIGIN_Y > 64)
+  else if (pos.y - SPRITE_ORIGIN_Y > 64)
   {
     Game::init(); // TODO
   }
@@ -235,10 +235,10 @@ void Player::update()
   // check entity collision
   if (knockbackCounter == 0)
   {
-    Entity* entity = Entities::collide(position, ducking ? duckHitbox : normalHitbox);
+    Entity* entity = Entities::collide(pos, ducking ? duckHitbox : normalHitbox);
     if (entity != NULL)
     {
-      flipped = entity->pos.x < position.x;
+      flipped = entity->pos.x < pos.x;
       velocityX = flipped ? 1 : -1;
       knockbackCounter = PLAYER_KNOCKBACK_DURATION;
       jumping = false;
@@ -298,16 +298,16 @@ void Player::draw()
     }
   }
 
-  sprites.drawPlusMask(position.x - SPRITE_ORIGIN_X - cameraX, position.y - SPRITE_ORIGIN_Y, player_plus_mask, frame + (flipped ? FRAME_FLIPPED_OFFSET : 0));
+  sprites.drawPlusMask(pos.x - SPRITE_ORIGIN_X - cameraX, pos.y - SPRITE_ORIGIN_Y, player_plus_mask, frame + (flipped ? FRAME_FLIPPED_OFFSET : 0));
 
   if (attackCounter != 0 && attackCounter < ATTACK_CHARGE)
   {
-    sprites.drawPlusMask(position.x + (flipped ? -24 : 8) - cameraX , position.y - (ducking ? 4 : 12), flipped ? player_attack_left_plus_mask : player_attack_right_plus_mask, 0);
+    sprites.drawPlusMask(pos.x + (flipped ? -24 : 8) - cameraX , pos.y - (ducking ? 4 : 12), flipped ? player_attack_left_plus_mask : player_attack_right_plus_mask, 0);
   }
 
 #ifdef DEBUG_HITBOX
   Rect hitbox = ducking ? duckHitbox : normalHitbox;
-  ab.fillRect(position.x - hitbox.x - cameraX, position.y - hitbox.y, hitbox.width, hitbox.height);
+  ab.fillRect(pos.x - hitbox.x - cameraX, pos.y - hitbox.y, hitbox.width, hitbox.height);
 #endif
 
 }

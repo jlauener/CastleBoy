@@ -51,11 +51,13 @@ struct Box
 // entity types
 #define ENTITY_CANDLE 0
 #define ENTITY_SKELETON 1
-#define ENTITY_COIN 2
+#define ENTITY_SKULL 2
+#define ENTITY_COIN 3
 
 // entity score
 #define SCORE_CANDLE 5
 #define SCORE_SKELETON 10
+#define SCORE_SKULL 20
 #define SCORE_COIN 50
 
 // size stuffs

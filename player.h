@@ -5,6 +5,7 @@
 
 namespace Player
 {
+extern Vec pos;
 extern uint8_t hp;
 extern uint16_t score;
   

@@ -40,6 +40,15 @@ const EntityData data[] =
     // true, // collidable
     entity_skeleton_plus_mask // sprite
   },
+  // skull
+  {
+    2, 6, // hitbox x, y
+    4, 6, // hitbox width, height
+    4, 8, // sprite origin x, y
+    SCORE_SKULL, // score
+    // true, // collidable
+    entity_skull_plus_mask // sprite
+  },
   // coin
   {
     3, 6, // hitbox x, y
@@ -75,6 +84,7 @@ void Entities::add(uint8_t type, uint8_t tileX, uint8_t tileY)
       entity.pos.y = tileY * TILE_HEIGHT + TILE_HEIGHT;
       entity.active = true;
       entity.alive = true;
+      entity.flag = false;
       entity.frame = 0;
       entity.counter = 0;
       entity.dir = -1;
@@ -85,6 +95,64 @@ void Entities::add(uint8_t type, uint8_t tileX, uint8_t tileY)
   // FIXME assert?
 }
 
+inline void updateSkeleton(Entity& entity)
+{
+  if (ab.everyXFrames(3))
+  {
+    entity.pos.x += entity.dir;
+    if (++entity.counter == 23)
+    {
+      entity.counter = 0;
+      entity.dir = entity.dir == -1 ? 1 : -1;
+    }
+  }
+  if (ab.everyXFrames(8))
+  {
+    ++entity.frame %= 2;
+  }
+}
+
+// not inlining this method, we gain some bytes (?)
+void updateSkull(Entity& entity)
+{
+  if (!entity.flag && entity.pos.x - Player::pos.x < 72)
+  {
+    entity.flag = true;
+  }
+
+  if (entity.flag)
+  {
+    if (ab.everyXFrames(2))
+    {
+      --entity.pos.x;
+      if (entity.pos.x < -8)
+      {
+        entity.active = false;
+      }
+
+//      uint8_t pos = ++entity.counter % 20;
+//      uint8_t offset;
+//      if(pos < 3 || pos >= 17)
+//      {
+//        offset = 2;
+//      }
+//      else if(pos < 8 || pos >= 12)
+//      {
+//        offset = 1;
+//      }
+//      else
+//      {
+//        offset = 0;
+//      }
+      //uint8_t offset = pos < 3 || pos >= 17 ? 2 : 1;
+      entity.pos.y += ++entity.counter / 20 % 2 ? 1 : -1;
+    }
+    if (ab.everyXFrames(8))
+    {
+      ++entity.frame %= 2;
+    }
+  }
+}
 
 void Entities::update()
 {
@@ -111,19 +179,10 @@ void Entities::update()
             }
             break;
           case ENTITY_SKELETON:
-            if (ab.everyXFrames(3))
-            {
-              entity.pos.x += entity.dir;
-              if (++entity.counter == 23)
-              {
-                entity.counter = 0;
-                entity.dir = entity.dir == -1 ? 1 : -1;
-              }
-            }
-            if (ab.everyXFrames(8))
-            {
-              ++entity.frame %= 2;
-            }
+            updateSkeleton(entity);
+            break;
+          case ENTITY_SKULL:
+            updateSkull(entity);
             break;
         }
       }

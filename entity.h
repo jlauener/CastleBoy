@@ -10,6 +10,7 @@ struct Entity
   // TODO use bitmask ?
   bool active;
   bool alive;
+  bool flag;
   uint8_t frame;
   uint8_t counter;
   int8_t dir; // FIXME ?
