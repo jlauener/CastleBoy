@@ -65,7 +65,7 @@ void Menu::loop()
         if (ab.justPressed(A_BUTTON))
         {
           Game::reset();
-          Game::play();
+          showStageIntro();
         }
       }
       sprites.drawOverwrite(36, 5 + titleLeftOffset, title_left, 0);
