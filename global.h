@@ -8,7 +8,7 @@
 extern Arduboy2 ab;
 extern ArduboyTones sound;
 extern Sprites sprites;
-extern uint8_t gameState;
+extern uint8_t mainState;
 extern uint8_t flashCounter;
 
 struct Vec
@@ -32,12 +32,15 @@ struct Box
 
 #define ENTITY_MAX 32
 
-#define STATE_GAME 0
+#define STATE_PLAY 0
+#define STATE_TITLE 1
+#define STATE_STAGE_INTRO 2
+#define STATE_GAME_OVER 3
 
 // divider for fixed fractional numbers
 #define F_PRECISION 1000
 
-// player physic
+// player
 #define PLAYER_JUMP_GRAVITY_F 190 // 0.18
 #define PLAYER_FALL_GRAVITY_F 190 // 0.18
 #define PLAYER_JUMP_FORCE_F 3100 // 3.0
@@ -48,6 +51,8 @@ struct Box
 #define PLAYER_SPEED_DUCK 4 // every 4 frames
 #define PLAYER_SPEED_KNOCKBACK_NORMAL 2 // every 2 frames
 #define PLAYER_SPEED_KNOCKBACK_FAST 1 // every 1 frame
+#define STARTING_LIFE 3
+#define STARTING_HP 5
 
 // entity types
 #define ENTITY_CANDLE 0
@@ -72,6 +77,8 @@ struct Box
 #define CAMERA_BUFFER 64
 
 #define SOLID_TILE_COUNT 3
+
+#define FONT_PAD 4 // actual width + padding
 
 #ifdef DEBUG
 extern bool hasDebugValue;

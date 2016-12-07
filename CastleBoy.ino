@@ -1,20 +1,14 @@
 #include "global.h"
 
+#include "menu.h"
 #include "game.h"
-
-typedef void (*FunctionPointer) ();
-
-const FunctionPointer PROGMEM stateLoopFunction[] = {
-  Game::loop  
-};
 
 void setup()
 {
   ab.begin();
   ab.setFrameRate(FPS);
 
-  Game::init();
-  gameState = STATE_GAME;
+  Menu::showTitle();
 }
 
 void loop()
@@ -27,7 +21,14 @@ void loop()
   ab.pollButtons(); 
   ab.clear();
 
-  ((FunctionPointer) pgm_read_word (&stateLoopFunction[gameState]))();  
+  if(mainState == STATE_PLAY)
+  {
+    Game::loop();
+  }
+  else
+  {
+    Menu::loop();
+  }
   
 #ifdef DEBUG
   drawDebug();

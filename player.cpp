@@ -26,7 +26,6 @@
 #define WALK_FRAME_RATE 12
 
 uint8_t Player::hp;
-uint16_t Player::score;
 Vec Player::pos;
 bool Player::alive;
 
@@ -200,8 +199,6 @@ void Player::update()
       // only stop ducking if player can stand
       ducking = Map::collide(pos.x, pos.y, normalHitbox);
     }
-
-    // verticalMoveSpeed = ducking ? PLAYER_SPEED_DUCK : PLAYER_SPEED_NORMAL;
   }
 
   // perform attack
@@ -228,7 +225,10 @@ void Player::update()
       jumping = false;
       levitateCounter = 0;
       attackCounter = 0;
-      --hp;
+      if(--hp == 0)
+      {
+        alive = false;
+      }
       flashCounter = 2;
       Game::shake(16, 2);
       sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
@@ -284,16 +284,16 @@ void Player::draw()
     }
   }
 
-  sprites.drawPlusMask(pos.x - SPRITE_ORIGIN_X - cameraX, pos.y - SPRITE_ORIGIN_Y, player_plus_mask, frame + (flipped ? FRAME_FLIPPED_OFFSET : 0));
+  sprites.drawPlusMask(pos.x - SPRITE_ORIGIN_X - Game::cameraX, pos.y - SPRITE_ORIGIN_Y, player_plus_mask, frame + (flipped ? FRAME_FLIPPED_OFFSET : 0));
 
   if (attackCounter != 0 && attackCounter < ATTACK_CHARGE)
   {
-    sprites.drawPlusMask(pos.x + (flipped ? -24 : 8) - cameraX , pos.y - (ducking ? 4 : 12), flipped ? player_attack_left_plus_mask : player_attack_right_plus_mask, 0);
+    sprites.drawPlusMask(pos.x + (flipped ? -24 : 8) - Game::cameraX , pos.y - (ducking ? 4 : 12), flipped ? player_attack_left_plus_mask : player_attack_right_plus_mask, 0);
   }
 
 #ifdef DEBUG_HITBOX
   Rect hitbox = ducking ? duckHitbox : normalHitbox;
-  ab.fillRect(pos.x - hitbox.x - cameraX, pos.y - hitbox.y, hitbox.width, hitbox.height);
+  ab.fillRect(pos.x - hitbox.x - Game::cameraX, pos.y - hitbox.y, hitbox.width, hitbox.height);
 #endif
 
 }

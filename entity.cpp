@@ -213,7 +213,7 @@ void Entities::attack(int16_t x, int8_t y, int16_t x2)
       if (x2 >= (entity.pos.x - entityData.hitbox.x) && x <= (entity.pos.x - entityData.hitbox.x) + entityData.hitbox.width &&
           y >= (entity.pos.y - entityData.hitbox.y) && y <= (entity.pos.y - entityData.hitbox.y) + entityData.hitbox.height)
       {
-        Player::score += entityData.score;
+        Game::score += entityData.score;
         if (entity.type == ENTITY_CANDLE)
         {
           // special case: candle spawn a coin
@@ -256,7 +256,7 @@ Entity* Entities::collide(const Vec& pos, const Box& hitbox)
         {
           entity.alive = false;
           entity.active = false;
-          Player::score += data[entity.type].score;
+          Game::score += data[entity.type].score;
           sound.tone(NOTE_CS6, 30, NOTE_CS5, 40);
         }
         else
@@ -278,15 +278,15 @@ void Entities::draw()
     {
       if (entity.alive)
       {
-        sprites.drawPlusMask(entity.pos.x - data[entity.type].spriteOrigin.x - cameraX, entity.pos.y - data[entity.type].spriteOrigin.y, data[entity.type].sprite, entity.frame);
+        sprites.drawPlusMask(entity.pos.x - data[entity.type].spriteOrigin.x - Game::cameraX, entity.pos.y - data[entity.type].spriteOrigin.y, data[entity.type].sprite, entity.frame);
 
 #ifdef DEBUG_HITBOX
-        ab.fillRect(entity.pos.x - data[entity.type].hitbox.x - cameraX, entity.pos.y - data[entity.type].hitbox.y, data[entity.type].hitbox.width, data[entity.type].hitbox.height);
+        ab.fillRect(entity.pos.x - data[entity.type].hitbox.x - Game::cameraX, entity.pos.y - data[entity.type].hitbox.y, data[entity.type].hitbox.width, data[entity.type].hitbox.height);
 #endif
       }
       else
       {
-        sprites.drawPlusMask(entity.pos.x - DIE_ANIM_ORIGIN_X - cameraX, entity.pos.y - DIE_ANIM_ORIGIN_Y, fx_destroy_plus_mask, entity.frame);
+        sprites.drawPlusMask(entity.pos.x - DIE_ANIM_ORIGIN_X - Game::cameraX, entity.pos.y - DIE_ANIM_ORIGIN_Y, fx_destroy_plus_mask, entity.frame);
       }
     }
   }

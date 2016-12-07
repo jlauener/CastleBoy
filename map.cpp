@@ -37,7 +37,7 @@ void Map::init(const uint8_t* source)
   width = pgm_read_byte(source);
   height = pgm_read_byte(++source);
   tilemap = ++source;
-  cameraX = 0;
+  Game::cameraX = 0;
 
   // load entities
   source += width * height / 4;
@@ -127,7 +127,7 @@ bool Map::moveY(Vec& pos, int8_t dy, const Box& hitbox)
 // can be optimized CPU wise if needed
 void Map::draw()
 {
-  uint8_t start = cameraX / 8;
+  uint8_t start = Game::cameraX / 8;
 
   for (uint8_t ix = start; ix < start + 17; ix++)
   {
@@ -175,7 +175,7 @@ void Map::draw()
         tile = TILE_PROP;
       }
 
-      sprites.drawOverwrite(ix * TILE_WIDTH - cameraX, iy * TILE_HEIGHT, tileset, tile);
+      sprites.drawOverwrite(ix * TILE_WIDTH - Game::cameraX, iy * TILE_HEIGHT, tileset, tile);
     }
   }
 }

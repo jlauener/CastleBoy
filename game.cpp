@@ -1,25 +1,40 @@
 #include "game.h"
 
-#include "global.h"
 #include "assets.h"
 #include "map.h"
 #include "player.h"
 #include "entity.h"
-
-int16_t cameraX;
+#include "menu.h"
 
 namespace
 {
 uint8_t deathCounter = 0;
 uint8_t shakeCounter = 0;
+uint8_t life = 0;
+uint8_t stageIndex;
 int8_t shakeStrenght = 0;
+bool restoreHp = false;
 }
 
-void Game::init()
-{
-  Player::hp = 5;
-  Player::score = 0;
+int16_t Game::cameraX;
+uint16_t Game::score;
 
+void Game::reset()
+{
+  stageIndex = 0;
+  life = STARTING_LIFE;
+  Player::hp = STARTING_HP;
+  score = 0;
+}
+
+void Game::play()
+{
+  mainState = STATE_PLAY;
+  if(restoreHp)
+  {
+    Player::hp = STARTING_HP;
+    restoreHp = false;
+  }
   Entities::init();
   Map::init(test);
   Player::init(8, 56);
@@ -27,11 +42,12 @@ void Game::init()
 
 void Game::loop()
 {
-  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.pressed(DOWN_BUTTON))
-  {
-    Game::init();
-    return;
-  }
+// TODO debug stuffs
+//  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.pressed(DOWN_BUTTON))
+//  {
+//    Game::init();
+//    return;
+//  }
 
   Player::update();
   Entities::update();
@@ -39,20 +55,37 @@ void Game::loop()
   // check if stage is finished
   if (Player::pos.x - 4 /*normalHitbox.x*/ > Map::width * TILE_WIDTH)
   {
-    Game::init(); // TODO
+    if(++stageIndex == 3)
+    {
+      Menu::showGameOver();
+    }
+    else
+    {
+      Menu::showStageIntro();
+    }
   }
 
   // check if player is dead
   if (deathCounter == 0 && !Player::alive)
   {
-    deathCounter = 120;
+    deathCounter = 100;
+    --life;
+    restoreHp = true;
+    sound.tone(NOTE_G3, 100, NOTE_G2, 150, NOTE_G1, 350);
   }
 
   if (deathCounter > 0)
   {
     if (--deathCounter == 0)
     {
-      Game::init(); // TODO
+      if(life == 0)
+      {
+        Menu::showGameOver();
+      }
+      else
+      {
+        Menu::showStageIntro();
+      }
     }
   }
 
@@ -84,19 +117,24 @@ void Game::loop()
   Entities::draw();
   Player::draw();
 
+  ab.fillRect(0, 0, FONT_PAD, 7, BLACK);
+  Menu::drawNumber(0, 0, life);
+  
   for (uint8_t i = 0; i < Player::hp; i++)
   {
-    sprites.drawPlusMask(i * 7, 0, ui_heart_plus_mask, 0);
+    sprites.drawPlusMask(4 + i * 7, 0, ui_heart_plus_mask, 0);
   }
 
   // FIXME
-  uint16_t n;
-  if (Player::score >= 1000) n = 4;
-  else if (Player::score >= 100) n = 3;
-  else if (Player::score >= 10) n = 2;
-  else n = 1;
-  ab.setCursor(128 - n * 6, 0);
-  ab.print(Player::score);
+//  uint16_t n;
+//  if (Player::score >= 1000) n = 4;
+//  else if (Player::score >= 100) n = 3;
+//  else if (Player::score >= 10) n = 2;
+//  else n = 1;
+//  ab.setCursor(128 - n * 6, 0);
+//  ab.print(Player::score);
+  ab.fillRect(103, 0, 6 * FONT_PAD, 7, BLACK);
+  Menu::drawNumber(104, 0, Game::score, 6);
 }
 
 void Game::shake(uint8_t duration, int8_t strenght)
