@@ -226,7 +226,6 @@ void Entities::attack(int16_t x, int8_t y, int16_t x2)
           entity.alive = false;
           entity.frame = 0;
           entity.counter = 0;
-          Game::shake(6, 1);
         }
         sound.tone(NOTE_CS3, 25);
       }

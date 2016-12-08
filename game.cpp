@@ -9,10 +9,8 @@
 namespace
 {
 uint8_t deathCounter = 0;
-uint8_t shakeCounter = 0;
 uint8_t life = 0;
 uint8_t stageIndex;
-int8_t shakeStrenght = 0;
 bool restoreHp = false;
 }
 
@@ -101,16 +99,6 @@ void Game::loop()
     if (cameraX > Map::width * TILE_WIDTH - 128) cameraX = Map::width * TILE_WIDTH - 128;
   }
 
-  if (shakeCounter > 0)
-  {
-    cameraX += shakeStrenght;
-    if (shakeCounter % 4 == 0)
-    {
-      shakeStrenght = -shakeStrenght;
-    }
-    shakeCounter--;
-  }
-
   int16_t backgroundOffset = cameraX / 28; // FIXME properly calculate parralax unless all maps have same width
   sprites.drawOverwrite(16 - backgroundOffset, 4, background_mountain, 0);
   Map::draw();
@@ -136,10 +124,3 @@ void Game::loop()
   ab.fillRect(103, 0, 6 * FONT_PAD, 7, BLACK);
   Menu::drawNumber(104, 0, Game::score, 6);
 }
-
-void Game::shake(uint8_t duration, int8_t strenght)
-{
-  shakeCounter = duration;
-  shakeStrenght = strenght;
-}
-

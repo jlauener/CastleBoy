@@ -230,7 +230,6 @@ void Player::update()
         alive = false;
       }
       flashCounter = 2;
-      Game::shake(16, 2);
       sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
     }
   }
