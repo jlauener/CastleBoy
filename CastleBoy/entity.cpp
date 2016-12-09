@@ -213,7 +213,7 @@ void Entities::attack(int16_t x, int8_t y, int16_t x2)
           entity.frame = 0;
           entity.counter = 0;
         }
-        sound.tone(NOTE_CS3, 25);
+        sound.tone(NOTE_CS3H, 25);
       }
     }
   }

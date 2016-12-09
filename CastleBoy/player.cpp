@@ -99,7 +99,7 @@ void Player::update()
   if (knockbackCounter == 0 && attackCounter == 0 && ab.justPressed(B_BUTTON))
   {
     attackCounter = ATTACK_TOTAL_DURATION;
-    sound.tone(NOTE_GS4, 10);
+    sound.tone(NOTE_GS4H, 10);
   }
 
   if (attackCounter > 0)
@@ -234,7 +234,7 @@ void Player::update()
         alive = false;
       }
       flashCounter = 2;
-      sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
+      sound.tone(NOTE_GS3H, 25, NOTE_G3H, 15);
     }
   }
 }

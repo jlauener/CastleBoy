@@ -21,6 +21,7 @@ void loop()
   ab.poll(); 
   ab.clearDisplay();
 
+  Menu::updateMusic();
   if(mainState == STATE_GAME)
   {
     Game::loop();

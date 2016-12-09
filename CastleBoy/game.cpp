@@ -69,6 +69,7 @@ void Game::loop()
   {
     deathCounter = 100;
     restoreHp = true;
+    Menu::playMusic();
     sound.tone(NOTE_G3, 100, NOTE_G2, 150, NOTE_G1, 350);
   }
 

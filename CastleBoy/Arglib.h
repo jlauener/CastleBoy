@@ -452,7 +452,7 @@ THE SOFTWARE.
 
 // This must match the maximum number of tones that can be specified in
 // the tone() function.
-#define MAX_TONES 3
+#define MAX_TONES 8
 
 #ifndef AB_DEVKIT
   // Arduboy speaker pin 1 = Arduino pin 5 = ATmega32u4 PC6

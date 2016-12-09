@@ -10,7 +10,9 @@ namespace Menu
   extern uint8_t life;
   extern uint16_t score;
   extern uint8_t stageIndex;
-  
+
+  void playMusic(const uint16_t* music_ = NULL);
+  void updateMusic();
   void showTitle();
   void onStageFinished();
   void onPlayerDie();
