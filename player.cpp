@@ -89,6 +89,7 @@ void Player::update()
     }
   }
 
+  // not alive
   if (!alive)
   {
     return;
@@ -115,11 +116,12 @@ void Player::update()
     velocityYf = -PLAYER_JUMP_FORCE_F;
   }
 
-  // vertical movement
+  // vertical movement: levitation (middle of jump)
   if (levitateCounter > 0)
   {
     --levitateCounter;
   }
+  // vertical movement: jump
   else if (jumping)
   {
     velocityYf += PLAYER_JUMP_GRAVITY_F;
@@ -134,6 +136,7 @@ void Player::update()
       Map::moveY(pos, velocityYf / F_PRECISION, ducking ? duckHitbox : normalHitbox);
     }
   }
+  // vertical movement: walk
   else
   {
     velocityYf += PLAYER_FALL_GRAVITY_F;
@@ -153,19 +156,17 @@ void Player::update()
     }
   }
 
-  // horizontal movement
+  // horizontal movement: input
   if (knockbackCounter == 0)
   {
     if (attackCounter == 0 && ab.pressed(LEFT_BUTTON))
     {
       velocityX = -1;
-      //verticalMoveCounter = 0;
       flipped = true;
     }
     else if (attackCounter == 0 && ab.pressed(RIGHT_BUTTON))
     {
       velocityX = 1;
-      // verticalMoveCounter = 0;
       flipped = false;
     }
     else if (grounded)
@@ -174,9 +175,12 @@ void Player::update()
     }
   }
 
+  // horizontal movement: physic
   if (velocityX != 0 &&
       (
+        // normal speed
         knockbackCounter == 0 && ab.everyXFrames(ducking ? PLAYER_SPEED_DUCK : PLAYER_SPEED_NORMAL) ||
+        // knockback speed
         knockbackCounter > 0 && ab.everyXFrames(knockbackCounter < PLAYER_KNOCKBACK_FAST ? PLAYER_SPEED_KNOCKBACK_NORMAL : PLAYER_SPEED_KNOCKBACK_FAST)
       )
      )

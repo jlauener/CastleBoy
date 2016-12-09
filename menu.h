@@ -7,9 +7,13 @@ extern int16_t cameraX;
 
 namespace Menu
 {
+  extern uint8_t life;
+  extern uint16_t score;
+  extern uint8_t stageIndex;
+  
   void showTitle();
-  void showStageIntro();
-  void showGameOver();
+  void onStageFinished();
+  void onPlayerDie();
   void loop();
 
   void drawNumber(int16_t x, int16_t y, uint16_t value, uint8_t zeroPad = 0);

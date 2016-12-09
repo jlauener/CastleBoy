@@ -26,15 +26,16 @@ struct Box
 };
 
 //#define DEBUG // enable to show log and CPU load
+#define DEBUG_CHEAT // enable level reset with A+B+down
 //#define DEBUG_HITBOX // enable to show hitboxes
 
 #define FPS 60
 
 #define ENTITY_MAX 32
 
-#define STATE_PLAY 0
-#define STATE_TITLE 1
-#define STATE_STAGE_INTRO 2
+#define STATE_TITLE 0
+#define STATE_STAGE_INTRO 1
+#define STATE_GAME 2
 #define STATE_GAME_OVER 3
 
 // divider for fixed fractional numbers

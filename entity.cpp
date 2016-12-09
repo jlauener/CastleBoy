@@ -3,6 +3,7 @@
 #include "assets.h"
 #include "map.h"
 #include "player.h"
+#include "menu.h"
 
 #define DIE_ANIM_ORIGIN_X 4
 #define DIE_ANIM_ORIGIN_Y 10
@@ -130,21 +131,6 @@ void updateSkull(Entity& entity)
         entity.active = false;
       }
 
-//      uint8_t pos = ++entity.counter % 20;
-//      uint8_t offset;
-//      if(pos < 3 || pos >= 17)
-//      {
-//        offset = 2;
-//      }
-//      else if(pos < 8 || pos >= 12)
-//      {
-//        offset = 1;
-//      }
-//      else
-//      {
-//        offset = 0;
-//      }
-      //uint8_t offset = pos < 3 || pos >= 17 ? 2 : 1;
       entity.pos.y += ++entity.counter / 20 % 2 ? 1 : -1;
     }
     if (ab.everyXFrames(8))
@@ -213,7 +199,7 @@ void Entities::attack(int16_t x, int8_t y, int16_t x2)
       if (x2 >= (entity.pos.x - entityData.hitbox.x) && x <= (entity.pos.x - entityData.hitbox.x) + entityData.hitbox.width &&
           y >= (entity.pos.y - entityData.hitbox.y) && y <= (entity.pos.y - entityData.hitbox.y) + entityData.hitbox.height)
       {
-        Game::score += entityData.score;
+        Menu::score += entityData.score;
         if (entity.type == ENTITY_CANDLE)
         {
           // special case: candle spawn a coin
@@ -255,7 +241,7 @@ Entity* Entities::collide(const Vec& pos, const Box& hitbox)
         {
           entity.alive = false;
           entity.active = false;
-          Game::score += data[entity.type].score;
+          Menu::score += data[entity.type].score;
           sound.tone(NOTE_CS6, 30, NOTE_CS5, 40);
         }
         else

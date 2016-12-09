@@ -9,65 +9,65 @@
 namespace
 {
 uint8_t deathCounter = 0;
-uint8_t life = 0;
-uint8_t stageIndex;
 bool restoreHp = false;
 }
 
 int16_t Game::cameraX;
-uint16_t Game::score;
 
-void Game::reset()
+void Game::play(const uint8_t* source)
 {
-  stageIndex = 0;
-  life = STARTING_LIFE;
-  Player::hp = STARTING_HP;
-  score = 0;
-}
-
-void Game::play()
-{
-  mainState = STATE_PLAY;
-  if(restoreHp)
+  mainState = STATE_GAME;
+  if (restoreHp)
   {
     Player::hp = STARTING_HP;
     restoreHp = false;
   }
   Entities::init();
-  Map::init(test);
-  Player::init(8, 56);
+  Map::init(source);
+
+  // FIXME encode in stage
+  switch (Menu::stageIndex)
+  {
+    case 0:
+      Player::init(8, 56);
+      break;
+    case 1:
+      Player::init(8, 24);
+      break;
+    case 2:
+      Player::init(8, 40);
+      break;
+    case 3:
+      Player::init(24, 24);
+      break;
+  }
 }
 
 void Game::loop()
 {
-// TODO debug stuffs
-//  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.pressed(DOWN_BUTTON))
-//  {
-//    Game::init();
-//    return;
-//  }
+  // debug
+  #ifdef DEBUG_CHEAT
+    if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.pressed(DOWN_BUTTON))
+    {
+      Menu::onStageFinished();
+      return;
+    }
+  #endif
 
+  // update
   Player::update();
   Entities::update();
 
   // check if stage is finished
   if (Player::pos.x - 4 /*normalHitbox.x*/ > Map::width * TILE_WIDTH)
   {
-    if(++stageIndex == 3)
-    {
-      Menu::showGameOver();
-    }
-    else
-    {
-      Menu::showStageIntro();
-    }
+    Menu::onStageFinished();
   }
 
   // check if player is dead
   if (deathCounter == 0 && !Player::alive)
   {
     deathCounter = 100;
-    --life;
     restoreHp = true;
     sound.tone(NOTE_G3, 100, NOTE_G2, 150, NOTE_G1, 350);
   }
@@ -76,14 +76,7 @@ void Game::loop()
   {
     if (--deathCounter == 0)
     {
-      if(life == 0)
-      {
-        Menu::showGameOver();
-      }
-      else
-      {
-        Menu::showStageIntro();
-      }
+      Menu::onPlayerDie();
     }
   }
 
@@ -99,28 +92,33 @@ void Game::loop()
     if (cameraX > Map::width * TILE_WIDTH - 128) cameraX = Map::width * TILE_WIDTH - 128;
   }
 
-  int16_t backgroundOffset = cameraX / 28; // FIXME properly calculate parralax unless all maps have same width
-  sprites.drawOverwrite(16 - backgroundOffset, 4, background_mountain, 0);
+  // draw: parralax
+  if ((Menu::stageIndex == 0 || Menu::stageIndex == 2) /* FIXME */)
+  {
+    int16_t backgroundOffset = cameraX / 28; // FIXME properly calculate parralax unless all maps have same width
+    sprites.drawOverwrite(16 - backgroundOffset, 4, background_mountain, 0);
+  }
+
+  // draw: main
   Map::draw();
   Entities::draw();
   Player::draw();
 
-  ab.fillRect(0, 0, FONT_PAD, 7, BLACK);
-  Menu::drawNumber(0, 0, life);
-  
+  // ui: left box
+  ab.fillRect(0, 0, 5 + 4 * Player::hp, 7, BLACK);
+
+  // ui: life
+  Menu::drawNumber(0, 0, Menu::life);
+
+  // ui: hp
   for (uint8_t i = 0; i < Player::hp; i++)
   {
-    sprites.drawPlusMask(4 + i * 7, 0, ui_heart_plus_mask, 0);
+    sprites.drawSelfMasked(5 + i * 4, 0, ui_hp, 0);
   }
 
-  // FIXME
-//  uint16_t n;
-//  if (Player::score >= 1000) n = 4;
-//  else if (Player::score >= 100) n = 3;
-//  else if (Player::score >= 10) n = 2;
-//  else n = 1;
-//  ab.setCursor(128 - n * 6, 0);
-//  ab.print(Player::score);
-  ab.fillRect(103, 0, 6 * FONT_PAD, 7, BLACK);
-  Menu::drawNumber(104, 0, Game::score, 6);
+  // ui: right box
+  ab.fillRect(103, 0, 1 + 6 * FONT_PAD, 7, BLACK);
+
+  // ui:score
+  Menu::drawNumber(104, 0, Menu::score, 6);
 }

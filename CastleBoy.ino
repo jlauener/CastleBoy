@@ -21,7 +21,7 @@ void loop()
   ab.pollButtons(); 
   ab.clear();
 
-  if(mainState == STATE_PLAY)
+  if(mainState == STATE_GAME)
   {
     Game::loop();
   }

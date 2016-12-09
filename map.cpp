@@ -2,6 +2,7 @@
 
 #include "assets.h"
 #include "entity.h"
+#include "menu.h"
 
 // map data
 #define TILE_DATA_EMPTY 0
@@ -138,7 +139,7 @@ void Map::draw()
       uint8_t tile = getTileAt(ix, iy);
       if (tile == TILE_DATA_EMPTY)
       {
-        if (isWall)
+        if (Menu::stageIndex == 0/* FIXME */ && isWall)
         {
           isWall = false;
           tile = TILE_WALL_END;

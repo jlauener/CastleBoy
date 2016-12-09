@@ -2,9 +2,17 @@
 
 #include "game.h"
 #include "assets.h"
+#include "player.h"
+
+uint8_t Menu::life;
+uint16_t Menu::score;
+uint8_t Menu::stageIndex;
 
 namespace
 {
+#define MAX_STAGE 4
+const uint8_t* const stages[] = { stage_1, stage_2, stage_3, stage_4 };
+
 uint8_t counter;
 bool titleIntro;
 int8_t titleLeftOffset;
@@ -16,17 +24,38 @@ void Menu::showTitle()
   mainState = STATE_TITLE;
   titleIntro = true;
   counter = 60;
+
+  // reset game
+  life = STARTING_LIFE;
+  stageIndex = 0;
+  score = 0;
+  Player::hp = STARTING_HP;
 }
 
-void Menu::showStageIntro()
+void Menu::onStageFinished()
 {
-  mainState = STATE_STAGE_INTRO;
-  counter = 100;
+  if (++stageIndex == MAX_STAGE)
+  {
+    mainState = STATE_GAME_OVER;
+  }
+  else
+  {
+    mainState = STATE_STAGE_INTRO;
+    counter = 100;
+  }
 }
 
-void Menu::showGameOver()
+void Menu::onPlayerDie()
 {
-  mainState = STATE_GAME_OVER;
+  if (--life == 0)
+  {
+    mainState = STATE_GAME_OVER;
+  }
+  else
+  {
+    mainState = STATE_STAGE_INTRO;
+    counter = 60;
+  }
 }
 
 void Menu::loop()
@@ -34,11 +63,13 @@ void Menu::loop()
   switch (mainState)
   {
     case STATE_TITLE:
-      if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.pressed(DOWN_BUTTON))
+#ifdef DEBUG_CHEAT
+      if (ab.pressed(B_BUTTON) && ab.pressed(DOWN_BUTTON))
       {
         Menu::showTitle();
         return;
       }
+#endif
 
       if (titleIntro)
       {
@@ -58,31 +89,30 @@ void Menu::loop()
       {
         if (ab.everyXFrames(80))
         {
-            titleLeftOffset = titleLeftOffset == 0 ? 1 : 0;
-            titleRightOffset = titleRightOffset == 0 ? 1 : 0;
+          titleLeftOffset = titleLeftOffset == 0 ? 1 : 0;
+          titleRightOffset = titleRightOffset == 0 ? 1 : 0;
         }
 
         if (ab.justPressed(A_BUTTON))
         {
-          Game::reset();
-          showStageIntro();
+          mainState = STATE_STAGE_INTRO;
+          counter = 100;
         }
       }
       sprites.drawOverwrite(36, 5 + titleLeftOffset, title_left, 0);
       sprites.drawOverwrite(69, 5 + titleRightOffset, title_right, 0);
       break;
     case STATE_STAGE_INTRO:
-      ab.setCursor(4, 4);
-      ab.print("STAGE 1-1");
+      sprites.drawOverwrite(51, 29, text_stage, 0);
+      drawNumber(75, 29, stageIndex + 1);
       if (--counter == 0)
       {
-        Game::play();
+        Game::play(stages[stageIndex]);
       }
       break;
     case STATE_GAME_OVER:
-      ab.setCursor(4, 4);
-      ab.print("FINAL SCORE");
-      drawNumber(52, 34, Game::score);
+      sprites.drawOverwrite(42, 27, text_final_score, 0);
+      drawNumber(52, 39, score, 6);
       if (ab.justPressed(A_BUTTON))
       {
         showTitle();

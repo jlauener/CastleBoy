@@ -5,12 +5,9 @@
 
 namespace Game
 {
-  extern uint16_t score;
   extern int16_t cameraX;
   
-  void reset();
-  void play();
-  
+  void play(const uint8_t* source);
   void loop();
 }
 
