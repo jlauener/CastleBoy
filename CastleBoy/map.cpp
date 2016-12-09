@@ -4,27 +4,22 @@
 #include "entity.h"
 #include "menu.h"
 
-// map data
-#define TILE_DATA_EMPTY 0
-#define TILE_DATA_PROP 1
-#define TILE_DATA_WALL 2
-#define TILE_DATA_GROUND 3
-
-// tile sprite
-#define TILE_WALL 0
-#define TILE_WALL_END 1
-#define TILE_GROUND_START 2
-#define TILE_GROUND 3
-#define TILE_GROUND_START_ALT 4
-#define TILE_GROUND_ALT 5
-#define TILE_PROP 6
-
 uint8_t Map::width;
 
 namespace
 {
 const uint8_t* tilemap;
 uint8_t height;
+
+uint8_t solidTileIndex;
+uint8_t mainTile;
+uint8_t mainTileAlt;
+uint8_t mainStartTile;
+uint8_t mainStartTileAlt;
+uint8_t propTile;
+bool endMiscTile;
+uint8_t miscTile;
+uint8_t miscEndTile;
 
 uint8_t getTileAt(uint8_t x, uint8_t y)
 {
@@ -50,6 +45,65 @@ void Map::init(const uint8_t* source)
     uint8_t y = temp & 0x0F;
     uint8_t x = pgm_read_byte(++source);
     Entities::add(entityType, x, y);
+  }
+
+  // TODO depend on map data
+  switch (Menu::stageIndex)
+  {
+    case 0:
+      solidTileIndex = 2;
+
+      mainTile = TILE_GROUND;
+      mainTileAlt = TILE_GROUND_ALT;
+      mainStartTile = TILE_GROUND_START;
+      mainStartTileAlt = TILE_GROUND_START_ALT;
+
+      endMiscTile = true;
+      miscTile = TILE_WALL;
+      miscEndTile = TILE_WALL_END;
+
+      propTile = TILE_GRAVE;
+      break;
+    case 1:
+      solidTileIndex = 3;
+
+      mainTile = TILE_WALL;
+      mainTileAlt = TILE_WALL_ALT;
+      mainStartTile = TILE_WALL;
+      mainStartTileAlt = TILE_WALL_ALT;
+
+      endMiscTile = false;
+      miscTile = TILE_CHAIN;
+
+      propTile = TILE_WINDOW;
+      break;
+    case 2:
+      solidTileIndex = 2;
+
+      mainTile = TILE_GROUND;
+      mainTileAlt = TILE_GROUND_ALT;
+      mainStartTile = TILE_GROUND_START;
+      mainStartTileAlt = TILE_GROUND_START_ALT;
+
+      endMiscTile = false;
+      miscTile = TILE_WALL;
+      miscEndTile = TILE_WALL_END;
+
+      propTile = TILE_GRAVE;
+      break;
+    case 3:
+      solidTileIndex = 3;
+
+      mainTile = TILE_WALL;
+      mainTileAlt = TILE_WALL_ALT;
+      mainStartTile = TILE_WALL;
+      mainStartTileAlt = TILE_WALL_ALT;
+
+      endMiscTile = false;
+      miscTile = TILE_CHAIN;
+
+      propTile = TILE_WINDOW;
+      break;
   }
 }
 
@@ -91,7 +145,7 @@ bool Map::collide(int16_t x, int8_t y, const Box& hitbox)
   {
     for (int16_t iy = ty1; iy <= ty2; iy++)
     {
-      if (getTileAt(ix, iy) != TILE_DATA_EMPTY && getTileAt(ix, iy) != TILE_DATA_PROP)
+      if (getTileAt(ix, iy) >= solidTileIndex)
       {
         // check for rectangle intersection
         if (ix * TILE_WIDTH + TILE_WIDTH > x && iy * TILE_HEIGHT + TILE_HEIGHT > y && ix * TILE_WIDTH < x + hitbox.width && iy * TILE_HEIGHT < y + hitbox.height)
@@ -125,55 +179,56 @@ bool Map::moveY(Vec& pos, int8_t dy, const Box& hitbox)
   return false;
 }
 
-// can be optimized CPU wise if needed
+// can be optimized CPU wise if needed (by not using getTileAt)
 void Map::draw()
 {
   uint8_t start = Game::cameraX / 8;
 
   for (uint8_t ix = start; ix < start + 17; ix++)
   {
-    bool isGround = false;
-    bool isWall = false;
+    bool isMain = false;
+    bool needToEndMisc = false;
     for (uint8_t iy = 0; iy < height; iy++)
     {
       uint8_t tile = getTileAt(ix, iy);
       if (tile == TILE_DATA_EMPTY)
       {
-        if (Menu::stageIndex == 0/* FIXME */ && isWall)
+        if (needToEndMisc)
         {
-          isWall = false;
-          tile = TILE_WALL_END;
+          tile = miscEndTile;
+          needToEndMisc = false;
         }
         else
         {
           continue;
         }
       }
-      else if (tile == TILE_DATA_WALL)
+      else if (tile == TILE_DATA_MISC)
       {
-        tile = TILE_WALL;
-        isWall = true;
-        isGround = false;
+        tile = miscTile;
+        needToEndMisc = endMiscTile;
+        isMain = false;
       }
-      else if (tile == TILE_DATA_GROUND)
+      else if (tile == TILE_DATA_MAIN)
       {
         bool useAlt = ix % 2 == 0 && iy % 2 == 1 || ix % 2 == 1 && iy & 2 == 0;
-        if (isGround)
+        if (isMain)
         {
-          // already in ground, use inner ground tile
-          tile = useAlt ? TILE_GROUND_ALT : TILE_GROUND;
+          // already started, use normal main tile
+          tile = useAlt ? mainTileAlt : mainTile;
         }
         else
         {
-          // first ground tile
-          tile = useAlt ? TILE_GROUND_START_ALT : TILE_GROUND_START;
-          isGround = true;
+          // first main tile from top
+          tile = useAlt ? mainStartTileAlt : mainStartTile;
+          isMain = true;
         }
-        isWall = false;
+        needToEndMisc = false;
       }
       else // tile == TILE_DATA_PROP
       {
-        tile = TILE_PROP;
+        tile = propTile;
+        needToEndMisc = false;
       }
 
       sprites.drawOverwrite(ix * TILE_WIDTH - Game::cameraX, iy * TILE_HEIGHT, tileset, tile);

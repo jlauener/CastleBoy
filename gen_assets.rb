@@ -47,7 +47,8 @@ class MapData
   attr :name
   attr :width
   attr :height
-  attr :data
+  attr :tileData
+  attr :entityData
   attr :size
 
   def initialize(fileName)    
@@ -55,7 +56,8 @@ class MapData
     @name = File.basename(fileName,".*")    
     @width = jsonHash["width"]
     @height = jsonHash["height"]
-    @data = jsonHash["layers"][0]["data"]
+    @tileData = jsonHash["layers"][0]["data"]
+	@entityData = jsonHash["layers"][1]["data"]
 	@size = 0
 	
 	if @width > MAX_WIDTH
@@ -71,7 +73,7 @@ class MapData
     o = "// #{@name}\n"
     o << "// #{@width}x#{@height}\n"
     o << "//\n"
-    @data.each_with_index do |tile, i|
+    @tileData.each_with_index do |tile, i|
       o << "// " if i % @width == 0
       o << tile.to_s
       o << "\n" if (i + 1) % @width == 0
@@ -95,7 +97,7 @@ class MapData
 	count = 0
 	for ix in 0...@width
 		for iy in 0...@height
-			tile = data[iy * @width + ix]
+			tile = tileData[iy * @width + ix]
 			if tile < 4
 				byte += tile << count;
 			end
@@ -120,7 +122,7 @@ class MapData
   def entity_count
 	count = 0
 	for i in 0...@width * @height
-		if data[i] > 7
+		if entityData[i] > 16
 			count += 1
 		end
 	end
@@ -135,10 +137,15 @@ class MapData
 	total = 0
 	for ix in 0...@width
 		for iy in 0...@height
-			tile = data[iy * @width + ix]
-			if tile > 8
-				entity = tile - 9;				
-				add_byte(o, iy + (entity << 4)).add_byte(o, ix);
+			tile = entityData[iy * @width + ix]
+			if tile > 0
+				entity = tile - 5
+				if entity > 0 then entity -= 15 end# FIXME
+				if entity < 0 or entity > 16
+					raise "Invalid entity id #{entity}."
+				end
+				puts "entity id=" + entity.to_s
+				add_byte(o, iy + (entity << 4)).add_byte(o, ix)
 				total += 2
 				o << "\n" if total % PER_LINE == 0
 			end				
