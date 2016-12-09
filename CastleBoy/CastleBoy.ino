@@ -5,7 +5,7 @@
 
 void setup()
 {
-  ab.begin();
+  ab.start();
   ab.setFrameRate(FPS);
 
   Menu::showTitle();
@@ -18,8 +18,8 @@ void loop()
     return;
   }
 
-  ab.pollButtons(); 
-  ab.clear();
+  ab.poll(); 
+  ab.clearDisplay();
 
   if(mainState == STATE_GAME)
   {
@@ -36,7 +36,7 @@ void loop()
 
   if(flashCounter > 0)
   {
-    ab.fillRect(0, 0, 128, 64);
+    ab.fillRect(0, 0, 128, 64, WHITE);
     flashCounter--;
   }
   ab.display();

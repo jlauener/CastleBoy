@@ -360,7 +360,7 @@ end
 # ---------------------- write assets ------------------------------------------------------
 #
 
-File.open(assets.filename,"w") do |f|
+File.open("CastleBoy/" + assets.filename,"w") do |f|
   f.write assets.to_s
 end
 puts "\n#{assets.filename} compiled."
