@@ -297,7 +297,7 @@ void Menu::loop()
       drawNumber(75, 29, stageIndex + 1);
       if (--counter == 0)
       {
-        playMusic(music1);
+        //playMusic(music1);
         Game::play(stages[stageIndex]);
       }
       break;

@@ -39,6 +39,7 @@ extern uint8_t flashCounter;
 #define PLAYER_SPEED_KNOCKBACK_FAST 1 // every 1 frame
 #define STARTING_LIFE 3
 #define STARTING_HP 5
+#define KNIFE_DIST_MAX 30 // dist in frame (2px)
 
 // map data
 #define TILE_DATA_EMPTY 0

@@ -4,8 +4,6 @@
 #include "entity.h"
 #include "assets.h"
 
-// FIXME Cannot fall in a single tile
-
 #define ATTACK_TOTAL_DURATION 16
 #define ATTACK_CHARGE 10
 
@@ -33,14 +31,20 @@ namespace
 {
 const Box normalHitbox =
 {
-  4, 14, // x, y
-  8, 14  // width, height
+  3, 14, // x, y
+  6, 14  // width, height
 };
 
 const Box duckHitbox =
 {
-  4, 6, // x, y
-  8, 6  // width, height
+  3, 6, // x, y
+  6, 6  // width, height
+};
+
+const Box knifeHitbox =
+{
+  0, 1, // x, y
+  8, 4 // width, height
 };
 
 int8_t velocityX;
@@ -48,13 +52,18 @@ int16_t velocityYf;
 // FIXME move flags to a single byte and use masking (is it worth it?)
 bool grounded;
 uint8_t attackCounter;
-bool attacking;
+bool knifeAttack;
 bool jumping;
 bool ducking;
 uint8_t knockbackCounter;
 uint8_t levitateCounter;
 bool flipped;
 bool walkFrame;
+
+bool knife;
+bool knifeFlipped;
+Vec knifePosition;
+uint8_t knifeCounter;
 
 } // unamed
 
@@ -64,14 +73,15 @@ void Player::init(int16_t x, int8_t y)
   pos.y = y;
   grounded = false;
   attackCounter = 0;
+  knifeAttack = false;
   alive = true;
-  attacking = false;
   jumping = false;
   ducking = false;
   knockbackCounter = 0;
   levitateCounter = 0;
   velocityX = 0;
   velocityYf = 0;
+  knife = false;
 }
 
 void Player::update()
@@ -96,15 +106,20 @@ void Player::update()
   }
 
   // attack
-  if (knockbackCounter == 0 && attackCounter == 0 && ab.justPressed(B_BUTTON))
+  if (knockbackCounter == 0 && attackCounter == 0)
   {
-    attackCounter = ATTACK_TOTAL_DURATION;
-    sound.tone(NOTE_GS4H, 10);
-  }
-
-  if (attackCounter > 0)
-  {
-    --attackCounter;
+    if (ab.justPressed(B_BUTTON))
+    {
+      attackCounter = ATTACK_TOTAL_DURATION;
+      sound.tone(NOTE_GS4H, 10);
+    }
+    else if (ab.justPressed(UP_BUTTON))
+    {
+      knifeAttack = true;
+      knifeCounter = KNIFE_DIST_MAX;
+      attackCounter = ATTACK_TOTAL_DURATION;
+      sound.tone(NOTE_GS5H, 10); // TODO another sfx
+    }
   }
 
   // jump
@@ -206,9 +221,25 @@ void Player::update()
   }
 
   // perform attack
-  if (attackCounter != 0 && attackCounter < ATTACK_CHARGE)
+  if (attackCounter > 0)
   {
-    Entities::attack(pos.x + (flipped ? -24 : 0), pos.y - (ducking ? 3 : 11), pos.x + (flipped ? 0 : 24));
+    attackCounter--;
+    if (attackCounter < ATTACK_CHARGE)
+    {
+      if (knifeAttack)
+      {
+        knife = true;
+        knifePosition.x = pos.x + (flipped ? -14 : 6);
+        knifePosition.y = pos.y - (ducking ? 4 : 12);
+        knifeFlipped = flipped;
+        attackCounter = 0;
+        knifeAttack = false;
+      }
+      else
+      {
+        Entities::attack(pos.x + (flipped ? -24 : 0), pos.y - (ducking ? 3 : 11), pos.x + (flipped ? 0 : 24));
+      }
+    }
   }
 
   // check if player falled in a hole
@@ -217,6 +248,28 @@ void Player::update()
     alive = false;
   }
 
+  // knife
+  if(knife)
+  {
+    knifePosition.x += knifeFlipped ? -2 : 2;
+    Entity* entity = Entities::collide(knifePosition, knifeHitbox);
+    if(entity != NULL)
+    {
+      // TODO damage entity
+      knife = false;
+    }
+    
+    if(Map::collide(knifePosition.x, knifePosition.y, knifeHitbox))
+    {
+      knife = false;
+    }
+    
+    if(--knifeCounter == 0)
+    {
+      knife = false;
+    }
+  }
+  
   // check entity collision
   if (knockbackCounter == 0)
   {
@@ -229,7 +282,7 @@ void Player::update()
       jumping = false;
       levitateCounter = 0;
       attackCounter = 0;
-      if(--hp == 0)
+      if (--hp == 0)
       {
         alive = false;
       }
@@ -278,7 +331,8 @@ void Player::draw()
     }
     else
     {
-      frame = FRAME_ATTACK_CHARGE;
+      // when doing knife attack don't use the carge anim (it shows the leash)
+      frame = knifeAttack ? FRAME_ATTACK : FRAME_ATTACK_CHARGE;
     }
 
     if (ducking)
@@ -292,6 +346,11 @@ void Player::draw()
   if (attackCounter != 0 && attackCounter < ATTACK_CHARGE)
   {
     sprites.drawPlusMask(pos.x + (flipped ? -24 : 8) - Game::cameraX , pos.y - (ducking ? 4 : 12), flipped ? player_attack_left_plus_mask : player_attack_right_plus_mask, 0);
+  }
+
+  if(knife)
+  {
+    sprites.drawPlusMask(knifePosition.x - Game::cameraX, knifePosition.y, flipped ? player_knife_left_plus_mask : player_knife_right_plus_mask, 0);
   }
 
 #ifdef DEBUG_HITBOX
