@@ -18,11 +18,11 @@ void loop()
     return;
   }
 
-  ab.poll(); 
+  ab.poll();
   ab.clearDisplay();
 
   Menu::updateMusic();
-  if(mainState == STATE_GAME)
+  if (mainState == STATE_GAME)
   {
     Game::loop();
   }
@@ -30,12 +30,16 @@ void loop()
   {
     Menu::loop();
   }
-  
-#ifdef DEBUG
-  drawDebug();
+
+#ifdef DEBUG_LOG
+  drawDebugLog();
 #endif
 
-  if(flashCounter > 0)
+#ifdef DEBUG_CPU
+  drawDebugCpu();
+#endif
+
+  if (flashCounter > 0)
   {
     ab.fillRect(0, 0, 128, 64, WHITE);
     flashCounter--;

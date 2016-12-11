@@ -7,6 +7,7 @@ struct Entity
 {
   uint8_t type;
   Vec pos;
+  uint8_t hp;
   // TODO use bitmask ?
   bool active;
   bool alive;
@@ -21,7 +22,7 @@ namespace Entities
   void init();
   void add(uint8_t type, uint8_t tileX, uint8_t tileY);
   void update();
-  void attack(int16_t, int8_t y, int16_t x2);
+  uint8_t damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_t value);
   Entity* collide(const Vec& pos, const Box& hitbox);
   void draw();
 }

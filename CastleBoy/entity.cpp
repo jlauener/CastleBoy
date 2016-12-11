@@ -8,7 +8,7 @@
 #define DIE_ANIM_ORIGIN_X 4
 #define DIE_ANIM_ORIGIN_Y 10
 
-// TODO merge with enemy and create generic entity!
+// TODO refactor damage and collide (let's wait for falling blocks)
 namespace
 {
 
@@ -16,6 +16,7 @@ struct EntityData
 {
   Box hitbox;
   Point spriteOrigin;
+  uint8_t hp;
   uint16_t score;
   //bool collidable; // TODO use bitmask
   const uint8_t* sprite;
@@ -28,6 +29,7 @@ const EntityData data[] =
     2, 8, // hitbox x, y
     4, 6, // hitbox width, height
     4, 10, // sprite origin x, y
+    1, // hp
     SCORE_CANDLE, // score
     //false, // collidable
     entity_candle_plus_mask // sprite
@@ -37,6 +39,7 @@ const EntityData data[] =
     3, 14, // hitbox x, y
     6, 14, // hitbox width, height
     8, 16, // sprite origin x, y
+    2, // hp
     SCORE_SKELETON, // score
     // true, // collidable
     entity_skeleton_plus_mask // sprite
@@ -46,6 +49,7 @@ const EntityData data[] =
     2, 6, // hitbox x, y
     4, 6, // hitbox width, height
     4, 8, // sprite origin x, y
+    1, // hp
     SCORE_SKULL, // score
     // true, // collidable
     entity_skull_plus_mask // sprite
@@ -55,7 +59,7 @@ const EntityData data[] =
     3, 6, // hitbox x, y
     6, 6, // hitbox width, height
     4, 8, // sprite origin x, y
-    // true, // collidable
+    0, // hp
     SCORE_COIN, // score
     entity_coin_plus_mask // sprite
   },
@@ -83,6 +87,7 @@ void Entities::add(uint8_t type, uint8_t tileX, uint8_t tileY)
       entity.type = type;
       entity.pos.x = tileX * TILE_WIDTH + HALF_TILE_WIDTH;
       entity.pos.y = tileY * TILE_HEIGHT + TILE_HEIGHT;
+      entity.hp = data[type].hp;
       entity.active = true;
       entity.alive = true;
       entity.flag = false;
@@ -187,36 +192,50 @@ void Entities::update()
   }
 }
 
-void Entities::attack(int16_t x, int8_t y, int16_t x2)
+uint8_t Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_t value)
 {
+  uint8_t hitCount = 0;
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
     Entity& entity = entities[i];
     if (entity.alive && entity.type != ENTITY_COIN)
     {
       const EntityData& entityData = data[entity.type];
-      // line to rect collision
-      if (x2 >= (entity.pos.x - entityData.hitbox.x) && x <= (entity.pos.x - entityData.hitbox.x) + entityData.hitbox.width &&
-          y >= (entity.pos.y - entityData.hitbox.y) && y <= (entity.pos.y - entityData.hitbox.y) + entityData.hitbox.height)
+      if(Util::collideRect(entity.pos.x - entityData.hitbox.x, entity.pos.y - entityData.hitbox.y, entityData.hitbox.width, entityData.hitbox.height, x, y, width, height))
       {
-        Menu::score += entityData.score;
-        if (entity.type == ENTITY_CANDLE)
+        ++hitCount;
+        if (entity.hp <= value)
         {
-          // special case: candle spawn a coin
-          entity.type = ENTITY_COIN;
-          entity.alive = true;
-          entity.frame = 0;
+          Menu::score += entityData.score;
+          if (entity.type == ENTITY_CANDLE)
+          {
+            // special case: candle spawn a coin
+            entity.type = ENTITY_COIN;
+            entity.alive = true;
+            entity.frame = 0;
+          }
+          else
+          {
+            entity.alive = false;
+            entity.frame = 0;
+            entity.counter = 0;
+          }
+          sound.tone(NOTE_CS3H, 30);
         }
         else
         {
-          entity.alive = false;
-          entity.frame = 0;
-          entity.counter = 0;
+          entity.hp -= value;
+          sound.tone(NOTE_CS3H, 15);
         }
-        sound.tone(NOTE_CS3H, 25);
       }
     }
   }
+
+  if(hitCount)
+  {
+    LOG_DEBUG(hitCount);
+  }
+  return hitCount;
 }
 
 Entity* Entities::collide(const Vec& pos, const Box& hitbox)
@@ -227,15 +246,8 @@ Entity* Entities::collide(const Vec& pos, const Box& hitbox)
     if (entity.alive && entity.type != ENTITY_CANDLE)
     {
       const Box& entityHitbox = data[entity.type].hitbox;
-      // rect to rect collision
-      if ( !((entity.pos.x - entityHitbox.x)                        >= (pos.x - hitbox.x) + hitbox.width  ||
-             (entity.pos.x - entityHitbox.x) + entityHitbox.width   <= (pos.x - hitbox.x)                ||
-             (entity.pos.y - entityHitbox.y)                        >= (pos.y - hitbox.y) + hitbox.height ||
-             (entity.pos.y - entityHitbox.y) + entityHitbox.height  <= (pos.y - hitbox.y)))
+      if(Util::collideRect(entity.pos.x - entityHitbox.x, entity.pos.y - entityHitbox.y, entityHitbox.width, entityHitbox.height, pos.x - hitbox.x, pos.y - hitbox.y, hitbox.width, hitbox.height))
       {
-
-        //if (Util::collide(x, y, hitbox, entity.pos.x, entity.pos.y, data[entity.type].hitbox))
-        //{
         // special case: coin doesn't damage player
         if (entity.type == ENTITY_COIN)
         {
@@ -264,9 +276,8 @@ void Entities::draw()
       if (entity.alive)
       {
         sprites.drawPlusMask(entity.pos.x - data[entity.type].spriteOrigin.x - Game::cameraX, entity.pos.y - data[entity.type].spriteOrigin.y, data[entity.type].sprite, entity.frame);
-
 #ifdef DEBUG_HITBOX
-        ab.fillRect(entity.pos.x - data[entity.type].hitbox.x - Game::cameraX, entity.pos.y - data[entity.type].hitbox.y, data[entity.type].hitbox.width, data[entity.type].hitbox.height);
+        ab.fillRect(entity.pos.x - data[entity.type].hitbox.x - Game::cameraX, entity.pos.y - data[entity.type].hitbox.y, data[entity.type].hitbox.width, data[entity.type].hitbox.height, WHITE);
 #endif
       }
       else

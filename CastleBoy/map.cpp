@@ -148,9 +148,8 @@ bool Map::collide(int16_t x, int8_t y, const Box& hitbox)
       if (getTileAt(ix, iy) >= solidTileIndex)
       {
         // check for rectangle intersection
-        if (ix * TILE_WIDTH + TILE_WIDTH > x && iy * TILE_HEIGHT + TILE_HEIGHT > y && ix * TILE_WIDTH < x + hitbox.width && iy * TILE_HEIGHT < y + hitbox.height)
+        if(Util::collideRect(ix * TILE_WIDTH, iy * TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT, x, y, hitbox.width, hitbox.height))
         {
-          //LOG_DEBUG("hit");
           return true;
         }
       }

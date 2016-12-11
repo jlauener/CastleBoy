@@ -10,8 +10,9 @@ extern ArduboyTones sound;
 extern uint8_t mainState;
 extern uint8_t flashCounter;
 
-//#define DEBUG // enable to show log and CPU load
-#define DEBUG_CHEAT // enable level reset with A+B+down
+//#define DEBUG_LOG // enable to show debug logs (LOG_DEBUG)
+//#define DEBUG_CPU // enable to display cpu load
+#define DEBUG_CHEAT // enable to reset level with A+B+down
 //#define DEBUG_HITBOX // enable to show hitboxes
 
 #define FPS 60
@@ -39,7 +40,6 @@ extern uint8_t flashCounter;
 #define PLAYER_SPEED_KNOCKBACK_FAST 1 // every 1 frame
 #define STARTING_LIFE 3
 #define STARTING_HP 5
-#define KNIFE_DIST_MAX 30 // dist in frame (2px)
 
 // map data
 #define TILE_DATA_EMPTY 0
@@ -99,18 +99,21 @@ struct Box
   uint8_t height;
 };
 
-#ifdef DEBUG
-extern bool hasDebugValue;
+namespace Util
+{
+  bool collideRect(int16_t x1, int8_t y1, uint8_t width1, uint8_t height1, int16_t x2, int8_t y2, uint8_t width2, uint8_t height2);
+}
+
+#ifdef DEBUG_LOG
 extern int16_t debugValue;
-extern const char* debugText;
-
-#define LOG_DEBUG(x) logDebug(x)
-
-void logDebug(const char* text);
-void logDebug(int16_t value);
-void drawDebug();
+#define LOG_DEBUG(x) debugValue = x
+void drawDebugLog();
 #else
 #define LOG_DEBUG(x)
+#endif
+
+#ifdef DEBUG_CPU
+void drawDebugCpu();
 #endif
 
 #endif

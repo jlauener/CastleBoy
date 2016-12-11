@@ -63,7 +63,6 @@ bool walkFrame;
 bool knife;
 bool knifeFlipped;
 Vec knifePosition;
-uint8_t knifeCounter;
 
 } // unamed
 
@@ -110,15 +109,16 @@ void Player::update()
   {
     if (ab.justPressed(B_BUTTON))
     {
+      knifeAttack = false;
       attackCounter = ATTACK_TOTAL_DURATION;
       sound.tone(NOTE_GS4H, 10);
     }
     else if (ab.justPressed(UP_BUTTON))
     {
+      LOG_DEBUG(0);
       knifeAttack = true;
-      knifeCounter = KNIFE_DIST_MAX;
       attackCounter = ATTACK_TOTAL_DURATION;
-      sound.tone(NOTE_GS5H, 10); // TODO another sfx
+      sound.tone(NOTE_GS5H, 10);
     }
   }
 
@@ -223,21 +223,21 @@ void Player::update()
   // perform attack
   if (attackCounter > 0)
   {
-    attackCounter--;
-    if (attackCounter < ATTACK_CHARGE)
+    if (--attackCounter <= ATTACK_CHARGE)
     {
-      if (knifeAttack)
+      if (knifeAttack && attackCounter == ATTACK_CHARGE)
       {
         knife = true;
         knifePosition.x = pos.x + (flipped ? -14 : 6);
-        knifePosition.y = pos.y - (ducking ? 4 : 12);
+        knifePosition.y = pos.y - (ducking ? 6 : 14);
         knifeFlipped = flipped;
-        attackCounter = 0;
-        knifeAttack = false;
       }
       else
       {
-        Entities::attack(pos.x + (flipped ? -24 : 0), pos.y - (ducking ? 3 : 11), pos.x + (flipped ? 0 : 24));
+        Entities::damage(pos.x + (flipped ? -24 : 0), pos.y - (ducking ? 4 : 12), 24, 2, 2);
+#ifdef DEBUG_HITBOX
+        ab.fillRect(pos.x + (flipped ? -24 : 0) - Game::cameraX, pos.y - (ducking ? 4 : 12), 24, 2, WHITE);
+#endif
       }
     }
   }
@@ -252,10 +252,9 @@ void Player::update()
   if(knife)
   {
     knifePosition.x += knifeFlipped ? -2 : 2;
-    Entity* entity = Entities::collide(knifePosition, knifeHitbox);
-    if(entity != NULL)
+    if(Entities::damage(knifePosition.x - knifeHitbox.x, knifePosition.y - knifeHitbox.y, knifeHitbox.width, knifeHitbox.height, 1))
     {
-      // TODO damage entity
+      LOG_DEBUG(777);
       knife = false;
     }
     
@@ -263,8 +262,8 @@ void Player::update()
     {
       knife = false;
     }
-    
-    if(--knifeCounter == 0)
+
+    if(knifePosition.x + knifeHitbox.width < Game::cameraX || knifePosition.x > Game::cameraX + 128)
     {
       knife = false;
     }
@@ -325,14 +324,17 @@ void Player::draw()
         frame = walkFrame ? FRAME_WALK_2 : FRAME_WALK_1;
       }
     }
+    else if (knifeAttack)
+    {
+      frame = FRAME_ATTACK;
+    }
     else if (attackCounter < ATTACK_CHARGE)
     {
       frame = FRAME_ATTACK;
     }
     else
     {
-      // when doing knife attack don't use the carge anim (it shows the leash)
-      frame = knifeAttack ? FRAME_ATTACK : FRAME_ATTACK_CHARGE;
+      frame = FRAME_ATTACK_CHARGE;
     }
 
     if (ducking)
@@ -343,7 +345,7 @@ void Player::draw()
 
   sprites.drawPlusMask(pos.x - SPRITE_ORIGIN_X - Game::cameraX, pos.y - SPRITE_ORIGIN_Y, player_plus_mask, frame + (flipped ? FRAME_FLIPPED_OFFSET : 0));
 
-  if (attackCounter != 0 && attackCounter < ATTACK_CHARGE)
+  if (attackCounter != 0 && !knifeAttack && attackCounter < ATTACK_CHARGE)
   {
     sprites.drawPlusMask(pos.x + (flipped ? -24 : 8) - Game::cameraX , pos.y - (ducking ? 4 : 12), flipped ? player_attack_left_plus_mask : player_attack_right_plus_mask, 0);
   }
@@ -354,8 +356,8 @@ void Player::draw()
   }
 
 #ifdef DEBUG_HITBOX
-  Rect hitbox = ducking ? duckHitbox : normalHitbox;
-  ab.fillRect(pos.x - hitbox.x - Game::cameraX, pos.y - hitbox.y, hitbox.width, hitbox.height);
+  Box hitbox = ducking ? duckHitbox : normalHitbox;
+  ab.fillRect(pos.x - hitbox.x - Game::cameraX, pos.y - hitbox.y, hitbox.width, hitbox.height, WHITE);
 #endif
 
 }
