@@ -31,6 +31,10 @@ void loop()
   drawDebugCpu();
 #endif
 
+#ifdef DEBUG_RAM
+  drawDebugRam();
+#endif
+
   if (flashCounter > 0)
   {
     ab.fillRect(0, 0, 128, 64, WHITE);

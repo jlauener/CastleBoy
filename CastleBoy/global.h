@@ -12,6 +12,7 @@ extern uint8_t flashCounter;
 
 //#define DEBUG_LOG // enable to show debug logs (LOG_DEBUG)
 //#define DEBUG_CPU // enable to display cpu load
+//#define DEBUG_RAM // enable to display RAM usage
 #define DEBUG_CHEAT // enable to reset level with A+B+down
 //#define DEBUG_HITBOX // enable to show hitboxes
 
@@ -154,6 +155,10 @@ void drawDebugLog();
 
 #ifdef DEBUG_CPU
 void drawDebugCpu();
+#endif
+
+#ifdef DEBUG_RAM
+void drawDebugRam();
 #endif
 
 #endif

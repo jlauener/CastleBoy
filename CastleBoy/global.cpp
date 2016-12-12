@@ -44,6 +44,13 @@ void Util::drawNumber(int16_t x, int16_t y, uint16_t value, uint8_t zeroPad)
   }
 }
 
+int freeRam()
+{
+  extern int __heap_start, *__brkval;
+  int v;
+  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
+}
+
 #ifdef DEBUG_LOG
 #include "menu.h"
 int16_t debugValue = 0;
@@ -59,6 +66,19 @@ void drawDebugLog()
 void drawDebugCpu()
 {
   ab.fillRect(100, 0, 30, 8, BLACK);
-  Menu::drawNumber(110, 0, ab.cpuLoad());
+  Util::drawNumber(110, 0, ab.cpuLoad());
+}
+#endif
+
+#ifdef DEBUG_RAM
+#include "menu.h"
+void drawDebugRam()
+{
+  extern int __heap_start, *__brkval;
+  int v;
+  int ram = (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
+
+  ab.fillRect(60, 0, 30, 8, BLACK);
+  Util::drawNumber(60, 0, ram);
 }
 #endif
