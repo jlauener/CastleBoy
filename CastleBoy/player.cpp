@@ -82,6 +82,7 @@ void Player::init(int16_t x, int8_t y)
   velocityX = 0;
   velocityYf = 0;
   knife = false;
+//  knifeCount = 99;
 }
 
 void Player::update()
@@ -243,8 +244,7 @@ void Player::update()
       }
       else
       {
-        bool dummy;
-        Entities::damage(pos.x + (flipped ? -24 : 0), pos.y - (ducking ? 4 : 12), 24, 2, 2, dummy);
+        Entities::damage(pos.x + (flipped ? -24 : 0), pos.y - (ducking ? 4 : 12), 24, 2, 2);
 #ifdef DEBUG_HITBOX
         ab.fillRect(pos.x + (flipped ? -24 : 0) - Game::cameraX, pos.y - (ducking ? 4 : 12), 24, 2, WHITE);
 #endif
@@ -262,9 +262,7 @@ void Player::update()
   if (knife)
   {   
     knifePosition.x += knifeFlipped ? -2 : 2;
-    bool hit;
-    Entities::damage(knifePosition.x - knifeHitbox.x, knifePosition.y - knifeHitbox.y, knifeHitbox.width, knifeHitbox.height, 1, hit);    
-    if(hit)
+    if(Entities::damage(knifePosition.x - knifeHitbox.x, knifePosition.y - knifeHitbox.y, knifeHitbox.width, knifeHitbox.height, 1))
     {
       LOG_DEBUG(777);
       knife = false;    

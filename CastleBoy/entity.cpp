@@ -15,7 +15,8 @@ namespace
 struct EntityData
 {
   Box hitbox;
-  Point spriteOrigin;
+  int8_t spriteOriginX;
+  int8_t spriteOriginY;
   uint8_t hp;
   const uint8_t* sprite;
 };
@@ -184,8 +185,7 @@ void Entities::init()
 {
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
-    entities[i].active = false;
-    entities[i].alive = false;
+    entities[i].state = 0;
   }
 }
 
@@ -194,18 +194,18 @@ void Entities::add(uint8_t type, uint8_t tileX, uint8_t tileY)
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
     Entity& entity = entities[i];
-    if (!entity.active)
+    if (entity.state == 0)
     {
       entity.type = type;
       entity.pos.x = tileX * TILE_WIDTH + HALF_TILE_WIDTH;
       entity.pos.y = tileY * TILE_HEIGHT + TILE_HEIGHT;
       entity.hp = data[type].hp;
-      entity.active = true;
-      entity.alive = true;
-      entity.flag = false;
+      entity.state = FLAG_ACTIVE | FLAG_ALIVE;
+//      entity.active = true;
+//      entity.alive = true;
+//      entity.flag = false;
       entity.frame = 0;
       entity.counter = 0;
-      entity.dir = -1;
       return;
     }
   }
@@ -217,11 +217,18 @@ inline void updateSkeleton(Entity& entity)
 {
   if (ab.everyXFrames(3))
   {
-    entity.pos.x += entity.dir;
+    entity.pos.x += entity.state & FLAG_MISC ? 1 : -1;
     if (++entity.counter == 23)
     {
       entity.counter = 0;
-      entity.dir = entity.dir == -1 ? 1 : -1;
+      if(entity.state & FLAG_MISC)
+      {
+        entity.state &= ~FLAG_MISC;
+      }
+      else
+      {
+        entity.state |= FLAG_MISC;
+      }
     }
   }
   if (ab.everyXFrames(8))
@@ -233,19 +240,19 @@ inline void updateSkeleton(Entity& entity)
 // not inlining this method, we gain some bytes (?)
 void updateSkull(Entity& entity)
 {
-  if (!entity.flag && entity.pos.x - Player::pos.x < 72)
+  if (!(entity.state & FLAG_MISC) && entity.pos.x - Player::pos.x < 72)
   {
-    entity.flag = true;
+    entity.state |= FLAG_MISC;
   }
 
-  if (entity.flag)
+  if (entity.state & FLAG_MISC)
   {
     if (ab.everyXFrames(2))
     {
       --entity.pos.x;
       if (entity.pos.x < -8)
       {
-        entity.active = false;
+        entity.state &= ~FLAG_ACTIVE;
       }
 
       entity.pos.y += ++entity.counter / 20 % 2 ? 1 : -1;
@@ -262,9 +269,9 @@ void Entities::update()
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
     Entity& entity = entities[i];
-    if (entity.active)
+    if (entity.state & FLAG_ACTIVE)
     {
-      if (entity.alive)
+      if (entity.state & FLAG_ALIVE)
       {
         switch (entity.type)
         {
@@ -301,7 +308,7 @@ void Entities::update()
         {
           if (++entity.frame == 3)
           {
-            entity.active = false;
+            entity.state = 0;
           }
           entity.counter = 0;
         }
@@ -310,13 +317,13 @@ void Entities::update()
   }
 }
 
-void Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_t value, bool& hit)
+bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_t value)
 {
-  hit = false;
+  bool hit = false;
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
     Entity& entity = entities[i];
-    if (entity.alive)
+    if (entity.state & FLAG_ALIVE)
     {
       const EntityData& entityData = data[entity.type];
       if (entityData.hp > 0 &&
@@ -337,7 +344,7 @@ void Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
           }
           else
           {
-            entity.alive = false;            
+            entity.state &= ~FLAG_ALIVE;            
           }
           entity.counter = 0;
           entity.frame = 0;
@@ -356,7 +363,7 @@ void Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
   {
     LOG_DEBUG(1);
   }
-  //return hit;
+  return hit;
 }
 
 Entity* Entities::collide(int16_t x, int8_t y, uint8_t width, uint8_t height)
@@ -364,7 +371,7 @@ Entity* Entities::collide(int16_t x, int8_t y, uint8_t width, uint8_t height)
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
     Entity& entity = entities[i];
-    if (entity.alive && entity.type != ENTITY_CANDLE_COIN && entity.type != ENTITY_CANDLE_POWERUP)
+    if (entity.state & FLAG_ALIVE && entity.type != ENTITY_CANDLE_COIN && entity.type != ENTITY_CANDLE_POWERUP)
     {
       const Box& entityHitbox = data[entity.type].hitbox;
       if (Util::collideRect(entity.pos.x - entityHitbox.x, entity.pos.y - entityHitbox.y, entityHitbox.width, entityHitbox.height, x, y, width, height))
@@ -372,8 +379,7 @@ Entity* Entities::collide(int16_t x, int8_t y, uint8_t width, uint8_t height)
         if (data[entity.type].hp == 0)
         {
           // special case: pickups don't have HP and don't damage player
-          entity.alive = false;
-          entity.active = false;
+          entity.state = 0;
           sound.tone(NOTE_CS6, 30, NOTE_CS5, 40);
 
           switch(entity.type)
@@ -409,11 +415,11 @@ void Entities::draw()
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
     Entity& entity = entities[i];
-    if (entity.active)
+    if (entity.state & FLAG_ACTIVE)
     {
-      if (entity.alive)
+      if (entity.state & FLAG_ALIVE)
       {
-        sprites.drawPlusMask(entity.pos.x - data[entity.type].spriteOrigin.x - Game::cameraX, entity.pos.y - data[entity.type].spriteOrigin.y, data[entity.type].sprite, entity.frame);
+        sprites.drawPlusMask(entity.pos.x - data[entity.type].spriteOriginX - Game::cameraX, entity.pos.y - data[entity.type].spriteOriginY, data[entity.type].sprite, entity.frame);
 #ifdef DEBUG_HITBOX
         ab.fillRect(entity.pos.x - data[entity.type].hitbox.x - Game::cameraX, entity.pos.y - data[entity.type].hitbox.y, data[entity.type].hitbox.width, data[entity.type].hitbox.height, WHITE);
 #endif
