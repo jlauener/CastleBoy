@@ -17,52 +17,164 @@ struct EntityData
   Box hitbox;
   Point spriteOrigin;
   uint8_t hp;
-  uint16_t score;
-  //bool collidable; // TODO use bitmask
   const uint8_t* sprite;
 };
 
+// TODO use PROGMEM?
 const EntityData data[] =
 {
-  // candle
+  // 0000 ???
+  {
+    0, 0, // hitbox x, y
+    0, 0, // hitbox width, height
+    0, 0, // sprite origin x, y
+    0, // hp
+    NULL // sprite
+  },
+  // 0001 ???
+  {
+    0, 0, // hitbox x, y
+    0, 0, // hitbox width, height
+    0, 0, // sprite origin x, y
+    0, // hp
+    NULL // sprite
+  },
+  // 0010 candle: coin
   {
     2, 8, // hitbox x, y
     4, 6, // hitbox width, height
     4, 10, // sprite origin x, y
-    1, // hp
-    SCORE_CANDLE, // score
-    //false, // collidable
+    1, // hpm
     entity_candle_plus_mask // sprite
   },
-  // skeleton
+  // 0011 candle: powerup
+  {
+    2, 8, // hitbox x, y
+    4, 6, // hitbox width, height
+    4, 10, // sprite origin x, y
+    1, // hpm
+    entity_candle_plus_mask // sprite
+  },
+  // 0100 skeleton: simple
   {
     3, 14, // hitbox x, y
     6, 14, // hitbox width, height
     8, 16, // sprite origin x, y
     2, // hp
-    SCORE_SKELETON, // score
-    // true, // collidable
     entity_skeleton_plus_mask // sprite
   },
-  // skull
+  // 0101 skeleton: throw
+  {
+    3, 14, // hitbox x, y
+    6, 14, // hitbox width, height
+    8, 16, // sprite origin x, y
+    2, // hp
+    entity_skeleton_plus_mask // sprite
+  },
+  // 0100 skeleton: armored
+  {
+    3, 14, // hitbox x, y
+    6, 14, // hitbox width, height
+    8, 16, // sprite origin x, y
+    6, // hp
+    entity_skeleton_plus_mask // sprite
+  },
+  // 0111 skeleton: throw armored
+  {
+    3, 14, // hitbox x, y
+    6, 14, // hitbox width, height
+    8, 16, // sprite origin x, y
+    6, // hp
+    entity_skeleton_plus_mask // sprite
+  },
+  // 1000 flyer: skull
   {
     2, 6, // hitbox x, y
     4, 6, // hitbox width, height
     4, 8, // sprite origin x, y
     1, // hp
-    SCORE_SKULL, // score
-    // true, // collidable
     entity_skull_plus_mask // sprite
   },
-  // coin
+  // 1001 flyer: ???
+  {
+    0, 0, // hitbox x, y
+    0, 0, // hitbox width, height
+    0, 0, // sprite origin x, y
+    0, // hp
+    NULL // sprite
+  },
+  // 1010 ???
+  {
+    0, 0, // hitbox x, y
+    0, 0, // hitbox width, height
+    0, 0, // sprite origin x, y
+    0, // hp
+    NULL // sprite
+  },
+  // 1011 ???
+  {
+    0, 0, // hitbox x, y
+    0, 0, // hitbox width, height
+    0, 0, // sprite origin x, y
+    0, // hp
+    NULL // sprite
+  },
+  // 1100 ???
+  {
+    0, 0, // hitbox x, y
+    0, 0, // hitbox width, height
+    0, 0, // sprite origin x, y
+    0, // hp
+    NULL // sprite
+  },
+  // 1101 ???
+  {
+    0, 0, // hitbox x, y
+    0, 0, // hitbox width, height
+    0, 0, // sprite origin x, y
+    0, // hp
+    NULL // sprite
+  },
+  // 1110 ???
+  {
+    0, 0, // hitbox x, y
+    0, 0, // hitbox width, height
+    0, 0, // sprite origin x, y
+    0, // hp
+    NULL // sprite
+  },
+  // 1111 ???
+  {
+    0, 0, // hitbox x, y
+    0, 0, // hitbox width, height
+    0, 0, // sprite origin x, y
+    0, // hp
+    NULL // sprite
+  },
+  // 10000 pickup: coin
   {
     3, 6, // hitbox x, y
     6, 6, // hitbox width, height
     4, 8, // sprite origin x, y
     0, // hp
-    SCORE_COIN, // score
     entity_coin_plus_mask // sprite
   },
+  // 10001 pickup: heart
+  {
+    3, 6, // hitbox x, y
+    6, 6, // hitbox width, height
+    4, 8, // sprite origin x, y
+    0, // hp
+    entity_heart_plus_mask // sprite
+  },
+  // 10010 pickup: knife
+  {
+    4, 6, // hitbox x, y
+    8, 6, // hitbox width, height
+    3, 6, // sprite origin x, y
+    0, // hp
+    entity_knife_plus_mask // sprite
+  }
 };
 
 Entity entities[ENTITY_MAX];
@@ -156,23 +268,29 @@ void Entities::update()
       {
         switch (entity.type)
         {
-          case ENTITY_CANDLE:
+          case ENTITY_CANDLE_COIN:
+          case ENTITY_CANDLE_POWERUP:
             if (ab.everyXFrames(8))
             {
               ++entity.frame %= 2;
             }
             break;
-          case ENTITY_COIN:
+          case ENTITY_PICKUP_COIN:
+          case ENTITY_PICKUP_HEART:
+          case ENTITY_PICKUP_KNIFE:
             Map::moveY(entity.pos, 2, data[entity.type].hitbox);
-            if (ab.everyXFrames(12))
+            if (entity.type != ENTITY_PICKUP_KNIFE && ab.everyXFrames(12))
             {
               ++entity.frame %= 2;
             }
             break;
-          case ENTITY_SKELETON:
+          case ENTITY_SKELETON_SIMPLE:
+          case ENTITY_SKELETON_THROW:
+          case ENTITY_SKELETON_ARMORED:
+          case ENTITY_SKELETON_THROW_ARMORED:
             updateSkeleton(entity);
             break;
-          case ENTITY_SKULL:
+          case ENTITY_FLYER_SKULL:
             updateSkull(entity);
             break;
         }
@@ -192,34 +310,37 @@ void Entities::update()
   }
 }
 
-uint8_t Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_t value)
+void Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_t value, bool& hit)
 {
-  uint8_t hitCount = 0;
+  hit = false;
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
     Entity& entity = entities[i];
-    if (entity.alive && entity.type != ENTITY_COIN)
+    if (entity.alive)
     {
       const EntityData& entityData = data[entity.type];
-      if(Util::collideRect(entity.pos.x - entityData.hitbox.x, entity.pos.y - entityData.hitbox.y, entityData.hitbox.width, entityData.hitbox.height, x, y, width, height))
+      if (entityData.hp > 0 &&
+          Util::collideRect(entity.pos.x - entityData.hitbox.x, entity.pos.y - entityData.hitbox.y, entityData.hitbox.width, entityData.hitbox.height, x, y, width, height))
       {
-        ++hitCount;
+        hit = true;
         if (entity.hp <= value)
-        {
-          Menu::score += entityData.score;
-          if (entity.type == ENTITY_CANDLE)
+        {         
+          if (entity.type == ENTITY_CANDLE_COIN)
           {
-            // special case: candle spawn a coin
-            entity.type = ENTITY_COIN;
-            entity.alive = true;
-            entity.frame = 0;
+            // special case: CANDLE_COIN spawns a COIN
+            entity.type = ENTITY_PICKUP_COIN;
+          }
+          else if(entity.type == ENTITY_CANDLE_POWERUP)
+          {
+            // special case: CANDLE_POWERUP spawns an HEART or KNIFE            
+            entity.type = Player::hp == PLAYER_MAX_HP ? ENTITY_PICKUP_KNIFE : ENTITY_PICKUP_HEART;
           }
           else
           {
-            entity.alive = false;
-            entity.frame = 0;
-            entity.counter = 0;
+            entity.alive = false;            
           }
+          entity.counter = 0;
+          entity.frame = 0;
           sound.tone(NOTE_CS3H, 30);
         }
         else
@@ -231,30 +352,47 @@ uint8_t Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uin
     }
   }
 
-  if(hitCount)
+  if (hit)
   {
-    LOG_DEBUG(hitCount);
+    LOG_DEBUG(1);
   }
-  return hitCount;
+  //return hit;
 }
 
-Entity* Entities::collide(const Vec& pos, const Box& hitbox)
+Entity* Entities::collide(int16_t x, int8_t y, uint8_t width, uint8_t height)
 {
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
     Entity& entity = entities[i];
-    if (entity.alive && entity.type != ENTITY_CANDLE)
+    if (entity.alive && entity.type != ENTITY_CANDLE_COIN && entity.type != ENTITY_CANDLE_POWERUP)
     {
       const Box& entityHitbox = data[entity.type].hitbox;
-      if(Util::collideRect(entity.pos.x - entityHitbox.x, entity.pos.y - entityHitbox.y, entityHitbox.width, entityHitbox.height, pos.x - hitbox.x, pos.y - hitbox.y, hitbox.width, hitbox.height))
-      {
-        // special case: coin doesn't damage player
-        if (entity.type == ENTITY_COIN)
+      if (Util::collideRect(entity.pos.x - entityHitbox.x, entity.pos.y - entityHitbox.y, entityHitbox.width, entityHitbox.height, x, y, width, height))
+      {        
+        if (data[entity.type].hp == 0)
         {
+          // special case: pickups don't have HP and don't damage player
           entity.alive = false;
           entity.active = false;
-          Menu::score += data[entity.type].score;
           sound.tone(NOTE_CS6, 30, NOTE_CS5, 40);
+
+          switch(entity.type)
+          {
+            case ENTITY_PICKUP_COIN:
+              // TODO
+              // Menu::timeLeft += PICKUP_COIN_VALUE;
+              break;
+            case ENTITY_PICKUP_HEART:              
+              if(Player::hp < PLAYER_MAX_HP)
+              {
+                ++Player::hp;
+              }
+              break;
+            case ENTITY_PICKUP_KNIFE:
+              // TODO
+              Player::knifeCount += PICKUP_KNIFE_VALUE;
+              break;
+          }
         }
         else
         {

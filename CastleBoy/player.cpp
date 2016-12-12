@@ -26,6 +26,7 @@
 uint8_t Player::hp;
 Vec Player::pos;
 bool Player::alive;
+uint8_t Player::knifeCount;
 
 namespace
 {
@@ -115,10 +116,18 @@ void Player::update()
     }
     else if (ab.justPressed(UP_BUTTON))
     {
-      LOG_DEBUG(0);
-      knifeAttack = true;
-      attackCounter = ATTACK_TOTAL_DURATION;
-      sound.tone(NOTE_GS5H, 10);
+      if (knifeCount > 0)
+      {
+        LOG_DEBUG(0);
+        --knifeCount;
+        knifeAttack = true;
+        attackCounter = ATTACK_TOTAL_DURATION;
+        sound.tone(NOTE_GS5H, 10);
+      }
+      else
+      {
+        sound.tone(NOTE_G2H, 5);
+      }
     }
   }
 
@@ -234,7 +243,8 @@ void Player::update()
       }
       else
       {
-        Entities::damage(pos.x + (flipped ? -24 : 0), pos.y - (ducking ? 4 : 12), 24, 2, 2);
+        bool dummy;
+        Entities::damage(pos.x + (flipped ? -24 : 0), pos.y - (ducking ? 4 : 12), 24, 2, 2, dummy);
 #ifdef DEBUG_HITBOX
         ab.fillRect(pos.x + (flipped ? -24 : 0) - Game::cameraX, pos.y - (ducking ? 4 : 12), 24, 2, WHITE);
 #endif
@@ -249,30 +259,33 @@ void Player::update()
   }
 
   // knife
-  if(knife)
-  {
+  if (knife)
+  {   
     knifePosition.x += knifeFlipped ? -2 : 2;
-    if(Entities::damage(knifePosition.x - knifeHitbox.x, knifePosition.y - knifeHitbox.y, knifeHitbox.width, knifeHitbox.height, 1))
+    bool hit;
+    Entities::damage(knifePosition.x - knifeHitbox.x, knifePosition.y - knifeHitbox.y, knifeHitbox.width, knifeHitbox.height, 1, hit);    
+    if(hit)
     {
       LOG_DEBUG(777);
-      knife = false;
+      knife = false;    
     }
     
-    if(Map::collide(knifePosition.x, knifePosition.y, knifeHitbox))
+    if (Map::collide(knifePosition.x, knifePosition.y, knifeHitbox))
     {
       knife = false;
     }
 
-    if(knifePosition.x + knifeHitbox.width < Game::cameraX || knifePosition.x > Game::cameraX + 128)
+    if (knifePosition.x + knifeHitbox.width < Game::cameraX || knifePosition.x > Game::cameraX + 128)
     {
       knife = false;
-    }
+    }   
   }
-  
+
   // check entity collision
   if (knockbackCounter == 0)
   {
-    Entity* entity = Entities::collide(pos, ducking ? duckHitbox : normalHitbox);
+    const Box& hitbox = ducking ? duckHitbox : normalHitbox;
+    Entity* entity = Entities::collide(pos.x - hitbox.x, pos.y - hitbox.y, hitbox.width, hitbox.height);
     if (entity != NULL)
     {
       flipped = entity->pos.x < pos.x;
@@ -350,9 +363,9 @@ void Player::draw()
     sprites.drawPlusMask(pos.x + (flipped ? -24 : 8) - Game::cameraX , pos.y - (ducking ? 4 : 12), flipped ? player_attack_left_plus_mask : player_attack_right_plus_mask, 0);
   }
 
-  if(knife)
+  if (knife)
   {
-    sprites.drawPlusMask(knifePosition.x - Game::cameraX, knifePosition.y, flipped ? player_knife_left_plus_mask : player_knife_right_plus_mask, 0);
+    sprites.drawPlusMask(knifePosition.x - Game::cameraX, knifePosition.y, entity_knife_plus_mask, flipped);
   }
 
 #ifdef DEBUG_HITBOX

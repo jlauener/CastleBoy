@@ -2,6 +2,7 @@
 
 #include "assets.h"
 #include "entity.h"
+#include "player.h"
 #include "menu.h"
 
 uint8_t Map::width;
@@ -30,80 +31,72 @@ uint8_t getTileAt(uint8_t x, uint8_t y)
 
 void Map::init(const uint8_t* source)
 {
+  // map size
   width = pgm_read_byte(source);
   height = pgm_read_byte(++source);
-  tilemap = ++source;
-  Game::cameraX = 0;
+  
+  uint8_t temp = pgm_read_byte(++source);
 
-  // load entities
+  // rendering style (indoor, outdoor, garden)
+  if (temp & 0x80)
+  {
+    // indoor
+    solidTileIndex = 3;
+
+    mainTile = TILE_WALL;
+    mainTileAlt = TILE_WALL_ALT;
+    mainStartTile = TILE_WALL;
+    mainStartTileAlt = TILE_WALL_ALT;
+
+    endMiscTile = false;
+    miscTile = TILE_CHAIN;
+
+    propTile = TILE_WINDOW;
+  }
+  else
+  {
+    // outdoor/garden
+    solidTileIndex = 2;
+
+    mainTile = TILE_GROUND;
+    mainTileAlt = TILE_GROUND_ALT;
+    mainStartTile = TILE_GROUND_START;
+    mainStartTileAlt = TILE_GROUND_START_ALT;
+    miscTile = TILE_WALL;
+    miscEndTile = TILE_WALL_END;
+
+    if (temp & 0x40)
+    {
+      // outdoor
+      endMiscTile = true;
+      propTile = TILE_GRAVE;
+    }
+    else
+    {
+      // garden
+      endMiscTile = false;
+      propTile = TILE_GRAVE;
+    }
+  }
+
+  // player starting position
+  uint8_t playerY = temp & 0x0F;
+  uint8_t playerX = pgm_read_byte(++source);
+  Player::init(playerX * TILE_WIDTH + HALF_TILE_WIDTH, playerY * TILE_HEIGHT + TILE_HEIGHT);
+
+  // tile map position
+  tilemap = ++source;
+    
+  // entities
   source += width * height / 4;
   uint8_t entityCount = pgm_read_byte(source);
   for (uint8_t i = 0; i < entityCount; i++)
   {
-    uint8_t temp = pgm_read_byte(++source);
+    temp = pgm_read_byte(++source);
     uint8_t entityType = (temp & 0xF0) >> 4;
-    uint8_t y = temp & 0x0F;
     uint8_t x = pgm_read_byte(++source);
+    uint8_t y = temp & 0x0F;
     Entities::add(entityType, x, y);
-  }
-
-  // TODO depend on map data
-  switch (Menu::stageIndex)
-  {
-    case 0:
-      solidTileIndex = 2;
-
-      mainTile = TILE_GROUND;
-      mainTileAlt = TILE_GROUND_ALT;
-      mainStartTile = TILE_GROUND_START;
-      mainStartTileAlt = TILE_GROUND_START_ALT;
-
-      endMiscTile = true;
-      miscTile = TILE_WALL;
-      miscEndTile = TILE_WALL_END;
-
-      propTile = TILE_GRAVE;
-      break;
-    case 1:
-      solidTileIndex = 3;
-
-      mainTile = TILE_WALL;
-      mainTileAlt = TILE_WALL_ALT;
-      mainStartTile = TILE_WALL;
-      mainStartTileAlt = TILE_WALL_ALT;
-
-      endMiscTile = false;
-      miscTile = TILE_CHAIN;
-
-      propTile = TILE_WINDOW;
-      break;
-    case 2:
-      solidTileIndex = 2;
-
-      mainTile = TILE_GROUND;
-      mainTileAlt = TILE_GROUND_ALT;
-      mainStartTile = TILE_GROUND_START;
-      mainStartTileAlt = TILE_GROUND_START_ALT;
-
-      endMiscTile = false;
-      miscTile = TILE_WALL;
-      miscEndTile = TILE_WALL_END;
-
-      propTile = TILE_GRAVE;
-      break;
-    case 3:
-      solidTileIndex = 3;
-
-      mainTile = TILE_WALL;
-      mainTileAlt = TILE_WALL_ALT;
-      mainStartTile = TILE_WALL;
-      mainStartTileAlt = TILE_WALL_ALT;
-
-      endMiscTile = false;
-      miscTile = TILE_CHAIN;
-
-      propTile = TILE_WINDOW;
-      break;
   }
 }
 
@@ -148,7 +141,7 @@ bool Map::collide(int16_t x, int8_t y, const Box& hitbox)
       if (getTileAt(ix, iy) >= solidTileIndex)
       {
         // check for rectangle intersection
-        if(Util::collideRect(ix * TILE_WIDTH, iy * TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT, x, y, hitbox.width, hitbox.height))
+        if (Util::collideRect(ix * TILE_WIDTH, iy * TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT, x, y, hitbox.width, hitbox.height))
         {
           return true;
         }

@@ -16,31 +16,15 @@ int16_t Game::cameraX;
 
 void Game::play(const uint8_t* source)
 {
-  mainState = STATE_GAME;
+  mainState = STATE_PLAY;
   if (restoreHp)
   {
-    Player::hp = STARTING_HP;
+    Player::hp = PLAYER_MAX_HP;
     restoreHp = false;
   }
   Entities::init();
   Map::init(source);
-
-  // FIXME encode in stage
-  switch (Menu::stageIndex)
-  {
-    case 0:
-      Player::init(8, 56);
-      break;
-    case 1:
-      Player::init(8, 24);
-      break;
-    case 2:
-      Player::init(8, 40);
-      break;
-    case 3:
-      Player::init(24, 24);
-      break;
-  }
+  cameraX = 0;
 }
 
 void Game::loop()
@@ -69,7 +53,7 @@ void Game::loop()
   {
     deathCounter = 100;
     restoreHp = true;
-    Menu::playMusic();
+    //Menu::playMusic();
     sound.tone(NOTE_G3, 100, NOTE_G2, 150, NOTE_G1, 350);
   }
 
@@ -105,21 +89,19 @@ void Game::loop()
   Entities::draw();
   Player::draw();
 
-  // ui: left box
-  ab.fillRect(0, 0, 5 + 4 * Player::hp, 7, BLACK);
-
-  // ui: life
-  Menu::drawNumber(0, 0, Menu::life);
-
   // ui: hp
-  for (uint8_t i = 0; i < Player::hp; i++)
+  ab.fillRect(0, 0, 4 * PLAYER_MAX_HP, 7, BLACK);
+  for (uint8_t i = 0; i < PLAYER_MAX_HP; i++)
   {
-    sprites.drawSelfMasked(5 + i * 4, 0, ui_hp, 0);
+    sprites.drawSelfMasked(i * 4, 0, i < Player::hp ? ui_hp_full : ui_hp_empty, 0);
   }
 
-  // ui: right box
-  ab.fillRect(103, 0, 1 + 6 * FONT_PAD, 7, BLACK);
+  // ui: knife count
+  ab.fillRect(52, 0, 24, 7, BLACK);
+  sprites.drawSelfMasked(52, 0, ui_knife_count, 0);  
+  Util::drawNumber(64, 0, Player::knifeCount, 2);
 
-  // ui:score
-  Menu::drawNumber(104, 0, Menu::score, 6);
+  // ui: time left
+  ab.fillRect(103, 0, 1 + 6 * FONT_PAD, 7, BLACK);
+  Util::drawNumber(104, 0, Menu::timeLeft, 6);
 }

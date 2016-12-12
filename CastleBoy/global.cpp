@@ -18,13 +18,39 @@ bool Util::collideRect(int16_t x1, int8_t y1, uint8_t width1, uint8_t height1, i
            y1 + height1  <= y2);
 }
 
+
+// Inspired by TEAMArg's Sirene, stages.h:775
+// But optimized (use of int8_t, use cast instead of for loop)
+void Util::drawNumber(int16_t x, int16_t y, uint16_t value, uint8_t zeroPad)
+{
+  char buf[10];
+  ltoa(value, buf, 10);
+  uint8_t strLength = strlen(buf);
+  uint8_t pad = zeroPad > strLength ? zeroPad - strLength : 0;
+
+  // draw 0 padding
+  for (uint8_t i = 0; i < pad; i++)
+  {
+    sprites.drawSelfMasked(x + FONT_PAD * i, y, font, 0);
+  }
+
+  // draw the number
+  for (uint8_t i = 0; i < strLength; i++)
+  {
+    uint8_t digit = (uint8_t) buf[i];
+    digit -= 48;
+    if (digit > 9) digit = 0;
+    sprites.drawSelfMasked(x + pad * FONT_PAD + FONT_PAD * i, y, font, digit);
+  }
+}
+
 #ifdef DEBUG_LOG
 #include "menu.h"
 int16_t debugValue = 0;
 void drawDebugLog()
 {
   ab.fillRect(0, 0, 30, 8, BLACK);
-  Menu::drawNumber(0, 0, debugValue);
+  Util::drawNumber(0, 0, debugValue);
 }
 #endif
 

@@ -44,34 +44,48 @@ class MapData
   MAX_ENTITIES = 32
   PER_LINE = 8
 
-  attr :name
+  attr :name  
   attr :width
-  attr :height
+  attr :height  
   attr :tileData
   attr :entityData
-  attr :size
+  attr :size  
+  attr :mapType
+  attr :mapTypeStr
 
   def initialize(fileName)    
     jsonHash = JSON.parse(File.read(fileName))
-    @name = File.basename(fileName,".*")    
+    @name = File.basename(fileName,".*")
     @width = jsonHash["width"]
     @height = jsonHash["height"]
     @tileData = jsonHash["layers"][0]["data"]
-	@entityData = jsonHash["layers"][1]["data"]
-	@size = 0
-	
-	if @width > MAX_WIDTH
-		raise "Map #{@name} is too wide, max is #{MAX_WIDTH}, current is #{@width}."
-	end
-	
-	if @height > MAX_HEIGHT
-		raise "Map #{@name} is too high, max is #{MAX_HEIGHT}, current is #{@height}."
-	end
+    @entityData = jsonHash["layers"][1]["data"]
+    @size = 0
+
+    if @width > MAX_WIDTH
+      raise "Map #{@name} is too wide, max is #{MAX_WIDTH}, current is #{@width}."
+    end
+
+    if @height > MAX_HEIGHT
+      raise "Map #{@name} is too high, max is #{MAX_HEIGHT}, current is #{@height}."
+    end
+    
+    @mapTypeStr = jsonHash["properties"]["type"]
+    if @mapTypeStr == "indoor"
+      @mapType = 0x8
+    elsif @mapTypeStr == "outdoor"
+      @mapType = 0x4
+    elsif @mapTypeStr == "garden"
+      @mapType = 0x0
+    else
+      raise "Map #{@name} has an invalid type '#{@mapTypeStr}'."
+    end
   end
 
   def code_header
-    o = "// #{@name}\n"
-    o << "// #{@width}x#{@height}\n"
+    o = "// name: #{@name}\n"
+    o << "// type: #{@mapTypeStr}\n"
+    o << "// size: #{@width}x#{@height}\n"
     o << "//\n"
     @tileData.each_with_index do |tile, i|
       o << "// " if i % @width == 0
@@ -84,86 +98,116 @@ class MapData
   
   def add_byte(o, byte)
     hex = byte.to_s(16).upcase
-	hex = "0x" + (hex.length == 1 ? "0" : "") + hex + ","
+    hex = "0x" + (hex.length == 1 ? "0" : "") + hex + ","
     o << hex
-	@size += 1
-	self
+    @size += 1
+    self
+  end
+  
+  def meta_data
+    o = ""
+    playerFound = false
+    for ix in 0...@width
+      for iy in 0...@height
+        if entityData[iy * @width + ix] == 21
+          add_byte(o, iy + (@mapType << 4))
+          add_byte(o, ix)
+          playerFound = true
+        end
+      end
+    end
+    if !playerFound
+      raise "Map #{@name} has not player starting position."
+    end
+    o << "\n"
+    o
   end
   
   def tilemap_data
     o = ""
-	total = 0
-	byte = 0
-	count = 0
-	for ix in 0...@width
-		for iy in 0...@height
-			tile = tileData[iy * @width + ix]
-			if tile < 4
-				byte += tile << count;
-			end
-			count += 2
-			
-			if count == 8
-				add_byte(o, byte)
-				total += 1
-				o << "\n" if total % PER_LINE == 0
-				count = 0
-				byte = 0
-			end
-		end
+    total = 0
+    byte = 0
+    count = 0
+    for ix in 0...@width
+      for iy in 0...@height
+        tile = tileData[iy * @width + ix]
+        if tile < 4
+          byte += tile << count;
+        end
+        count += 2
+
+        if count == 8
+          add_byte(o, byte)
+          total += 1
+          o << "\n" if total % PER_LINE == 0
+          count = 0
+          byte = 0
+        end
+      end
     end
-	if count != 0
-		raise "Map #{@name} has wrong size, must be a multiple of 8."		
-	end
-	o << "\n"
+
+    if count != 0
+      raise "Map #{@name} has wrong size, must be a multiple of 8."
+    end
+    o << "\n"
     o
   end
   
   def entity_count
-	count = 0
-	for i in 0...@width * @height
-		if entityData[i] > 16
-			count += 1
-		end
-	end
-	if count > MAX_ENTITIES
-		raise "Map #{@name} has too many entities, max is #{MAX_ENTITIES}, current is #{@count}."
-	end
-	count
+    count = 0
+    for i in 0...@width * @height      
+      tile = entityData[i]
+      if tile > 0
+        entity = tile - 5
+        if entity != 16 # player entity is 16, discard it
+          if entity < 0 or entity >= 16
+            raise "Invalid entity id #{entity}."
+          end
+          count += 1
+        end
+      end
+    end
+    
+    if count > MAX_ENTITIES
+      raise "Map #{@name} has too many entities, max is #{MAX_ENTITIES}, current is #{@count}."
+    end
+    count
   end
   
   def entity_data
-    o = ""	
-	total = 0
-	for ix in 0...@width
-		for iy in 0...@height
-			tile = entityData[iy * @width + ix]
-			if tile > 0
-				entity = tile - 5
-				if entity > 0 then entity -= 15 end# FIXME
-				if entity < 0 or entity > 16
-					raise "Invalid entity id #{entity}."
-				end
-				puts "entity id=" + entity.to_s
-				add_byte(o, iy + (entity << 4)).add_byte(o, ix)
-				total += 2
-				o << "\n" if total % PER_LINE == 0
-			end				
-		end
+    o = ""
+    total = 0
+    for ix in 0...@width
+      for iy in 0...@height
+        tile = entityData[iy * @width + ix]
+        if tile > 0
+          entity = tile - 5
+          if entity != 16 # player entity is 16, discard it
+            if entity < 0 or entity >= 16
+              raise "Invalid entity id #{entity}."
+            end
+            add_byte(o, iy + (entity << 4)).add_byte(o, ix)
+            total += 2
+            o << "\n" if total % PER_LINE == 0
+          end
+        end
+      end
     end
-	o << "\n"
+    o << "\n"
     o
   end
 
   def to_s
     o = code_header
-    o << "PROGMEM const byte #{@name}[] = {\n"
-	o << "// width, height\n"
-	o << "#{@width}, #{@height},\n"
+    o << "PROGMEM const uint8_t #{@name}[] = {\n"
+    o << "// width, height\n"
+    o << "#{@width}, #{@height},\n"
+    o << "// map type + player start y (SS00YYYY), player start x\n"
+    o << meta_data
     o << "// tilemap data\n"
     o << tilemap_data
-	o << "// entity count\n"
-	o << "#{entity_count},\n"
+    o << "// entity count\n"
+    o << "#{entity_count},\n"
     o << "// entities data\n"
     o << entity_data
     o << "\n};\n\n"
@@ -301,15 +345,15 @@ class ImageCharArray
 
   def to_s
     o = code_header
-    o << "PROGMEM const unsigned char #{variable_name}[] = {\n"
+    o << "PROGMEM const uint8_t #{variable_name}[] = {\n"
     o << image_data(@data)
     o << "\n};\n\n"
     if mask?
-      o << "PROGMEM const unsigned char #{mask_name}[] = {\n"
+      o << "PROGMEM const uint8_t #{mask_name}[] = {\n"
       o << image_data(@mask_data)
       o << "\n};\n\n"
 
-      o << "PROGMEM const unsigned char #{plus_mask_name}[] = {\n"
+      o << "PROGMEM const uint8_t #{plus_mask_name}[] = {\n"
       o << image_data(interlace(@data, @mask_data))
       o << "\n};\n\n"
 
