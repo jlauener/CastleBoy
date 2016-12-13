@@ -1,10 +1,9 @@
 #include "map.h"
 
-#include "assets.h"
-#include "entity.h"
-#include "player.h"
-#include "menu.h"
 #include "game.h"
+#include "player.h"
+#include "entity.h"
+#include "assets.h"
 
 uint8_t Map::width;
 bool Map::showBackground;

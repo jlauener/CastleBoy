@@ -17,6 +17,7 @@ extern uint8_t flashCounter;
 
 #define FPS 60
 
+#define STAGE_MAX 4
 #define ENTITY_MAX 32
 
 // divider for fixed fractional numbers
@@ -24,7 +25,7 @@ extern uint8_t flashCounter;
 
 // game
 #define GAME_STARTING_LIFE 3
-#define GAME_STARTING_TIME 200
+#define GAME_STARTING_TIME 12000 // frames (200 secs)
 
 // player
 #define PLAYER_JUMP_GRAVITY_F 190 // 0.18
@@ -65,8 +66,8 @@ extern uint8_t flashCounter;
 #define TILE_WINDOW 9
 
 // entity score
-#define PICKUP_COIN_VALUE 3 // 3 seconds
-#define PICKUP_KNIFE_VALUE 3 // 3 knifes
+#define PICKUP_COIN_VALUE 180 // frames
+#define PICKUP_KNIFE_VALUE 3 // knifes
 
 // size stuffs
 #define TILE_WIDTH 8

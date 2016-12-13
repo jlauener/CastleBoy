@@ -1,10 +1,9 @@
 #include "entity.h"
 
-#include "assets.h"
+#include "game.h"
 #include "map.h"
 #include "player.h"
-#include "menu.h"
-#include "game.h"
+#include "assets.h"
 
 // TODO refactor damage and collide (let's wait for falling blocks)
 
@@ -66,10 +65,9 @@
 // state flags
 #define FLAG_PRESENT 0x80
 #define FLAG_ALIVE 0x40
-#define FLAG_ACTIVE 0x20
-#define FLAG_HURT 0x10
-#define FLAG_MISC1 0x08
-#define FLAG_MISC2 0x04
+#define FLAG_HURT 0x20
+#define FLAG_MISC1 0x10
+#define FLAG_MISC2 0x08
 
 namespace
 {
@@ -240,9 +238,9 @@ const EntityData data[] =
   },
   // 10011 projectile: bone
   {
-    4, 6, // hitbox x, y
-    8, 6, // hitbox width, height
-    3, 6, // sprite origin x, y
+    3, 3, // hitbox x, y
+    6, 6, // hitbox width, height
+    4, 4, // sprite origin x, y
     0, // hp
     entity_bone_plus_mask // sprite
   }
@@ -305,7 +303,7 @@ inline void updateSkeleton(Entity& entity)
         }
         else
         {
-          if (entity.type & SKELETON_THROW_FLAG)
+          if (entity.type & SKELETON_THROW_FLAG && entity.pos.x - Player::pos.x < 72)
           {
             // start throwing bone
             entity.state |= FLAG_MISC2;
@@ -327,21 +325,29 @@ inline void updateSkeleton(Entity& entity)
 }
 
 // not inlining this method, we gain some bytes (?)
-void updateSkull(Entity& entity)
+void updateFlyer(Entity& entity)
 {
-  if (ab.everyXFrames(2))
+  if (!(entity.state & FLAG_MISC1) && entity.pos.x - Player::pos.x < 72)
   {
-    --entity.pos.x;
-    if (entity.pos.x < -8)
-    {
-      entity.state  = 0;
-    }
-
-    entity.pos.y += ++entity.counter / 20 % 2 ? 1 : -1;
+    entity.state |= FLAG_MISC1;
   }
-  if (ab.everyXFrames(8))
+
+  if (entity.state & FLAG_MISC1)
   {
-    ++entity.frame %= 2;
+    if (ab.everyXFrames(2))
+    {
+      --entity.pos.x;
+      if (entity.pos.x < -8)
+      {
+        entity.state  = 0;
+      }
+
+      entity.pos.y += ++entity.counter / 20 % 2 ? 1 : -1;
+    }
+    if (ab.everyXFrames(8))
+    {
+      ++entity.frame %= 2;
+    }
   }
 }
 
@@ -354,62 +360,58 @@ void Entities::update()
     {
       if (entity.state & FLAG_ALIVE)
       {
-        if (!(entity.state & FLAG_ACTIVE) &&
-            (entity.pos.x - Player::pos.x < 72 || entity.type > 0x0F))
+        switch (entity.type)
         {
-          entity.state |= FLAG_ACTIVE;
-        }
-
-        if (entity.state & FLAG_ACTIVE)
-        {
-          switch (entity.type)
-          {
-            case ENTITY_FALLING_TILE:
-              if (entity.state & FLAG_MISC1)
-              {
-                if (++entity.counter == 30)
-                {
-                  entity.state = 0;
-                }
-              }
-              break;
-            case ENTITY_CANDLE_COIN:
-            case ENTITY_CANDLE_POWERUP:
-              if (ab.everyXFrames(8))
-              {
-                ++entity.frame %= 2;
-              }
-              break;
-            case ENTITY_PICKUP_COIN:
-            case ENTITY_PICKUP_HEART:
-            case ENTITY_PICKUP_KNIFE:
-              Game::moveY(entity.pos, 2, data[entity.type].hitbox);
-              if (entity.type != ENTITY_PICKUP_KNIFE && ab.everyXFrames(12))
-              {
-                ++entity.frame %= 2;
-              }
-              break;
-            case ENTITY_SKELETON_SIMPLE:
-            case ENTITY_SKELETON_THROW:
-            case ENTITY_SKELETON_ARMORED:
-            case ENTITY_SKELETON_THROW_ARMORED:
-              updateSkeleton(entity);
-              break;
-            case ENTITY_FLYER_SKULL:
-              updateSkull(entity);
-              break;
-            case ENTITY_PROJECTILE_BONE:
-              --entity.pos.x;
-              if (entity.pos.x < -8)
+          case ENTITY_FALLING_TILE:
+            if (entity.state & FLAG_MISC1)
+            {
+              if (++entity.counter == 30)
               {
                 entity.state = 0;
               }
-              if (ab.everyXFrames(8))
-              {
-                ++entity.frame %= 2;
-              }
-              break;
-          }
+            }
+            break;
+          case ENTITY_CANDLE_COIN:
+          case ENTITY_CANDLE_POWERUP:
+            if (ab.everyXFrames(8))
+            {
+              ++entity.frame %= 2;
+            }
+            break;
+          case ENTITY_PICKUP_COIN:
+          case ENTITY_PICKUP_HEART:
+          case ENTITY_PICKUP_KNIFE:
+            Game::moveY(entity.pos, 2, data[entity.type].hitbox);
+            if (entity.type != ENTITY_PICKUP_KNIFE && ab.everyXFrames(12))
+            {
+              ++entity.frame %= 2;
+            }
+            break;
+          case ENTITY_SKELETON_SIMPLE:
+          case ENTITY_SKELETON_THROW:
+          case ENTITY_SKELETON_ARMORED:
+          case ENTITY_SKELETON_THROW_ARMORED:
+            updateSkeleton(entity);
+            break;
+          case ENTITY_FLYER_SKULL:
+            updateFlyer(entity);
+            break;
+          case ENTITY_PROJECTILE_BONE:
+            --entity.pos.x;
+            entity.pos.y += entity.counter - 2;
+            if (entity.counter < 8 && ab.everyXFrames(10))
+            {
+              ++entity.counter;
+            }
+            if (entity.pos.y > 68)
+            {
+              entity.state = 0;
+            }
+            if (ab.everyXFrames(8))
+            {
+              ++entity.frame %= 2;
+            }
+            break;
         }
       }
       else
@@ -549,59 +551,6 @@ Entity* Entities::checkPlayer(int16_t x, int8_t y, uint8_t width, uint8_t height
   }
   return NULL;
 }
-
-//Entity* Entities::query(int16_t x, int8_t y, uint8_t width, uint8_t height)
-//{
-//  for (uint8_t i = 0; i < ENTITY_MAX; i++)
-//  {
-//    Entity& entity = entities[i];
-//    if (entity.state & FLAG_ALIVE && entity.type != ENTITY_CANDLE_COIN && entity.type != ENTITY_CANDLE_POWERUP)
-//    {
-//      const Box& entityHitbox = data[entity.type].hitbox;
-//      if (Util::collideRect(entity.pos.x - entityHitbox.x,
-//                            entity.pos.y - entityHitbox.y,
-//                            entityHitbox.width,
-//                            entityHitbox.height,
-//                            x, y, width, height))
-//      {
-//        return &entity;
-//      }
-//    }
-//  }
-//  return NULL;
-//}
-//
-//void Entities::damage(Entity& entity, uint8_t value)
-//{
-//  if (data[entity.type].hp > 0) // entity with no HP cannot be damaged
-//  {
-//    if (entity.hp <= value)
-//    {
-//      if (entity.type == ENTITY_CANDLE_COIN)
-//      {
-//        // special case: CANDLE_COIN spawns a COIN
-//        entity.type = ENTITY_PICKUP_COIN;
-//      }
-//      else if (entity.type == ENTITY_CANDLE_POWERUP)
-//      {
-//        // special case: CANDLE_POWERUP spawns an HEART or KNIFE
-//        entity.type = Player::hp == PLAYER_MAX_HP ? ENTITY_PICKUP_KNIFE : ENTITY_PICKUP_HEART;
-//      }
-//      else
-//      {
-//        entity.state &= ~FLAG_ALIVE;
-//      }
-//      entity.counter = 0;
-//      entity.frame = 0;
-//      sound.tone(NOTE_CS3H, 30);
-//    }
-//    else
-//    {
-//      entity.hp -= value;
-//      sound.tone(NOTE_CS3H, 15);
-//    }
-//  }
-//}
 
 void Entities::draw()
 {

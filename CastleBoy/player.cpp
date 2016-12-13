@@ -83,7 +83,7 @@ void Player::init(int16_t x, int8_t y)
   velocityX = 0;
   velocityYf = 0;
   knife = false;
-  knifeCount = 99;
+  //knifeCount = 99;
 }
 
 void Player::update()

@@ -9,6 +9,7 @@ namespace Game
   extern uint8_t life;
   extern uint16_t timeLeft;
   extern uint8_t stageIndex;
+  extern bool hasPlayerDied;
   
   void play(const uint8_t* source);
   void loop();

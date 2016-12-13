@@ -1,60 +1,23 @@
 #include "menu.h"
 
 #include "game.h"
-#include "assets.h"
-#include "sounds.h"
 #include "player.h"
+#include "assets.h"
 
 namespace
 {
-#define MAX_STAGE 4
 const uint8_t* const stages[] = { stage_1, stage_2, stage_3, stage_4 };
 
 uint8_t counter;
-bool titleIntro;
+bool flag;
 int8_t titleLeftOffset;
 int8_t titleRightOffset;
 }
 
-//const uint16_t* music = NULL;
-//uint16_t musicCounter = 0;
-//uint8_t musicIndex = 0;
-
-//void Menu::playMusic(const uint16_t* music_)
-//{
-//  music = music_;
-//  musicCounter = 1;
-//  musicIndex = 0;
-//}
-//
-//void Menu::updateMusic()
-//{
-//  if(music == NULL)
-//  {
-//    return;
-//  }
-//
-//  if(--musicCounter == 0)
-//  {
-//    int16_t newTone = music[musicIndex++];
-//    if(newTone == TONES_REPEAT)
-//    {
-//      newTone = music[0];
-//      musicIndex = 1;
-//    }
-//
-//    musicCounter =  music[musicIndex++] / 16; // duration
-//    if(newTone != 0)
-//    {
-//      sound.tone(newTone, musicCounter * 10);
-//    }
-//  }
-//}
-
 void Menu::showTitle()
 {
   mainState = STATE_TITLE;
-  titleIntro = true;
+  flag = true;
   counter = 60;
 
   // reset game
@@ -65,34 +28,13 @@ void Menu::showTitle()
   Player::knifeCount = 0;
 }
 
-void Menu::onStageFinished()
+void Menu::showStageIntro()
 {
-  //playMusic();
-  if (++Game::stageIndex == MAX_STAGE)
-  {
-    mainState = STATE_GAME_FINISHED;
-  }
-  else
-  {
-    mainState = STATE_STAGE_INTRO;
-    counter = 100;
-  }
+  mainState = STATE_STAGE_INTRO;
+  counter = 100;
 }
 
-void Menu::onPlayerDied()
-{
-  if (Game::life == 0)
-  {
-    mainState = STATE_GAME_OVER;
-  }
-  else
-  {
-    mainState = STATE_STAGE_INTRO;
-    counter = 60;
-  }
-}
-
-void updateTitle()
+void loopTitle()
 {
 #ifdef DEBUG_CHEAT
   if (ab.pressed(B_BUTTON) && ab.pressed(DOWN_BUTTON))
@@ -102,7 +44,7 @@ void updateTitle()
   }
 #endif
 
-  if (titleIntro)
+  if (flag)
   {
     titleLeftOffset = counter * 2;
     titleRightOffset = -counter * 2;
@@ -111,8 +53,7 @@ void updateTitle()
     {
       titleLeftOffset = 1;
       titleRightOffset = 0;
-      //sound.tones(beat2);
-      titleIntro = false;
+      flag = false;
       flashCounter = 6;
     }
   }
@@ -126,7 +67,7 @@ void updateTitle()
 
     if (ab.justPressed(A_BUTTON))
     {
-      sound.tones(sfx_select);
+      sound.tone(NOTE_CS6, 30);
       mainState = STATE_STAGE_INTRO;
       counter = 100;
     }
@@ -135,58 +76,43 @@ void updateTitle()
   sprites.drawOverwrite(69, 5 + titleRightOffset, title_right, 0);
 }
 
-void updateStageIntro()
-{
-  sprites.drawOverwrite(51, 22, text_stage, 0);
-  Util::drawNumber(75, 22, Game::stageIndex + 1, ALIGN_LEFT);
-  sprites.drawOverwrite(54, 38, ui_life_count, 0);
-  Util::drawNumber(64, 38, Game::life, ALIGN_LEFT);
-  if (--counter == 0)
-  {
-    //playMusic(music1);
-    Game::play(stages[Game::stageIndex]);
-  }
-}
-
-void updateGameOver()
-{
-  sprites.drawOverwrite(47, 27, text_game_over, 0);
-  if (ab.justPressed(A_BUTTON))
-  {
-    Menu::showTitle();
-  }
-}
-
-void updateGameFinished()
-{
-  sprites.drawOverwrite(42, 27, text_final_score, 0);
-  Util::drawNumber(52, 39, Game::timeLeft, ALIGN_CENTER);
-  if (ab.justPressed(A_BUTTON))
-  {
-    Menu::showTitle();
-  }
-}
-
 void Menu::loop()
 {
-  //updateMusic();
-
   switch (mainState)
   {
     case STATE_TITLE:
-      updateTitle();
+      loopTitle();
       break;
     case STATE_PLAY:
       Game::loop();
       break;
     case STATE_STAGE_INTRO:
-      updateStageIntro();
+      sprites.drawOverwrite(51, 22, text_stage, 0);
+      Util::drawNumber(75, 22, Game::stageIndex + 1, ALIGN_LEFT);
+      if(Game::hasPlayerDied)
+      {
+        sprites.drawOverwrite(52, 38, ui_life_count, 0);
+        Util::drawNumber(64, 38, Game::life, ALIGN_LEFT);
+      }
+      if (--counter == 0)
+      {
+        Game::play(stages[Game::stageIndex]);
+      }
       break;
     case STATE_GAME_OVER:
-      updateGameOver();
+      sprites.drawOverwrite(47, 27, text_game_over, 0);
+      if (ab.justPressed(A_BUTTON))
+      {
+        Menu::showTitle();
+      }
       break;
     case STATE_GAME_FINISHED:
-      updateGameFinished();
+      sprites.drawOverwrite(42, 27, text_final_score, 0);
+      Util::drawNumber(52, 39, Game::timeLeft / FPS, ALIGN_CENTER);
+      if (ab.justPressed(A_BUTTON))
+      {
+        Menu::showTitle();
+      }
       break;
   }
 }

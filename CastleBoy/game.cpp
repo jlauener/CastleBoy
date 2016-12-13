@@ -1,29 +1,29 @@
 #include "game.h"
 
-#include "assets.h"
+#include "menu.h"
 #include "map.h"
 #include "player.h"
 #include "entity.h"
-#include "menu.h"
+#include "assets.h"
 
 int16_t Game::cameraX;
 uint8_t Game::life;
 uint16_t Game::timeLeft;
 uint8_t Game::stageIndex;
+bool Game::hasPlayerDied = false;
 
 namespace
 {
 uint8_t deathCounter = 0;
-bool restoreHp = false;
 }
 
 void Game::play(const uint8_t* source)
 {
   mainState = STATE_PLAY;
-  if (restoreHp)
+  if (hasPlayerDied)
   {
     Player::hp = PLAYER_MAX_HP;
-    restoreHp = false;
+    hasPlayerDied = false;
   }
   Entities::init();
   Map::init(source);
@@ -33,19 +33,32 @@ void Game::play(const uint8_t* source)
 void Game::loop()
 {
   // debug
-  #ifdef DEBUG_CHEAT
-    if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.pressed(DOWN_BUTTON))
+#ifdef DEBUG_CHEAT
+  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.pressed(DOWN_BUTTON))
+  {
+    Menu::showStageIntro();
+    return;
+  }
+
+  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.pressed(UP_BUTTON))
+  {
+    if (++stageIndex == STAGE_MAX)
     {
-      Menu::onStageFinished();
-      return;
+      mainState = STATE_GAME_FINISHED;
     }
-  #endif
+    else
+    {
+      Menu::showStageIntro();
+    }
+    return;
+  }
+#endif
 
   // update
   Player::update();
   Entities::update();
 
-  if(timeLeft > 0 && ab.everyXFrames(60))
+  if (timeLeft > 0)
   {
     --timeLeft;
   }
@@ -53,14 +66,21 @@ void Game::loop()
   // check if stage is finished
   if (Player::pos.x - 4 /*normalHitbox.x*/ > Map::width * TILE_WIDTH)
   {
-    Menu::onStageFinished();
+    if (++stageIndex == STAGE_MAX)
+    {
+      mainState = STATE_GAME_FINISHED;
+    }
+    else
+    {
+      Menu::showStageIntro();
+    }
   }
 
   // check if player is dead
   if (deathCounter == 0 && (!Player::alive || timeLeft == 0))
-  {    
+  {
     Player::knifeCount = 0;
-    if(timeLeft == 0)
+    if (timeLeft == 0)
     {
       Game::life = 0;
     }
@@ -68,9 +88,8 @@ void Game::loop()
     {
       --Game::life;
     }
-    
+
     deathCounter = 100;
-    restoreHp = true;
     //Menu::playMusic();
     sound.tone(NOTE_G3, 100, NOTE_G2, 150, NOTE_G1, 350);
   }
@@ -79,7 +98,15 @@ void Game::loop()
   {
     if (--deathCounter == 0)
     {
-      Menu::onPlayerDied();
+      if (life == 0)
+      {
+        mainState = STATE_GAME_OVER;
+      }
+      else
+      {
+        hasPlayerDied = true;
+        Menu::showStageIntro();
+      }
     }
   }
 
@@ -106,7 +133,7 @@ void Game::loop()
   Map::draw();
   Entities::draw();
   Player::draw();
-  
+
   // ui: hp
   ab.fillRect(0, 0, 4 * PLAYER_MAX_HP, 7, BLACK);
   for (uint8_t i = 0; i < PLAYER_MAX_HP; i++)
@@ -116,12 +143,12 @@ void Game::loop()
 
   // ui: knife count
   ab.fillRect(54, 0, 13, 7, BLACK);
-  sprites.drawSelfMasked(55, 0, ui_knife_count, 0);  
-  
+  sprites.drawSelfMasked(55, 0, ui_knife_count, 0);
+
   Util::drawNumber(68, 0, Player::knifeCount, ALIGN_LEFT);
 
   // ui: time left
-  Util::drawNumber(128, 0, timeLeft, ALIGN_RIGHT);
+  Util::drawNumber(128, 0, timeLeft / FPS, ALIGN_RIGHT);
 }
 
 bool Game::moveY(Vec& pos, int8_t dy, const Box& hitbox, bool collideToEntity)

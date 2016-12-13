@@ -5,11 +5,8 @@
 
 namespace Menu
 {
-  //void playMusic(const uint16_t* music_ = NULL);
-  //void updateMusic();
   void showTitle();
-  void onStageFinished();
-  void onPlayerDied();
+  void showStageIntro();
   void loop();
 }
 

@@ -13,11 +13,11 @@ struct Entity
   // ||||||||
   // |||||||+- n/a
   // ||||||+-- n/a
-  // |||||+--- misc2
-  // ||||+---- misc1
-  // |||+----- hurt
-  // ||+------ alive
-  // |+------- active
+  // |||||+--- n/a
+  // ||||+---- misc2
+  // |||+----- misc1
+  // ||+------ hurt
+  // |+------- alive
   // +-------- present
   uint8_t state;
   
@@ -33,8 +33,6 @@ namespace Entities
   bool damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_t value);
   bool moveCollide(int16_t x, int8_t y, const Box& hitbox);
   Entity* checkPlayer(int16_t x, int8_t y, uint8_t width, uint8_t height);
- // Entity* query(int16_t x, int8_t y, uint8_t width, uint8_t height);
- // void damage(Entity& entity, uint8_t value);
   void draw();
 }
 
