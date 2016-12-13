@@ -31,7 +31,7 @@ void Menu::showTitle()
 void Menu::showStageIntro()
 {
   mainState = STATE_STAGE_INTRO;
-  counter = 100;
+  counter = 120;
 }
 
 void loopTitle()
@@ -55,6 +55,7 @@ void loopTitle()
       titleRightOffset = 0;
       flag = false;
       flashCounter = 6;
+      sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
     }
   }
   else

@@ -89,7 +89,7 @@ void Game::loop()
       --Game::life;
     }
 
-    deathCounter = 100;
+    deathCounter = 160;
     //Menu::playMusic();
     sound.tone(NOTE_G3, 100, NOTE_G2, 150, NOTE_G1, 350);
   }
