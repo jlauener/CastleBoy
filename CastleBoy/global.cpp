@@ -21,26 +21,36 @@ bool Util::collideRect(int16_t x1, int8_t y1, uint8_t width1, uint8_t height1, i
 
 // Inspired by TEAMArg's Sirene, stages.h:775
 // But optimized (use of int8_t, use cast instead of for loop)
-void Util::drawNumber(int16_t x, int16_t y, uint16_t value, uint8_t zeroPad)
+// Also use alignment (LEFT, RIGHT, CENTER) instead of zero padding
+void Util::drawNumber(int16_t x, int16_t y, uint16_t value, uint8_t align)
 {
   char buf[10];
   ltoa(value, buf, 10);
   uint8_t strLength = strlen(buf);
-  uint8_t pad = zeroPad > strLength ? zeroPad - strLength : 0;
-
-  // draw 0 padding
-  for (uint8_t i = 0; i < pad; i++)
+  int8_t offset;
+  switch (align)
   {
-    sprites.drawSelfMasked(x + FONT_PAD * i, y, font, 0);
+    case ALIGN_LEFT:
+      offset = 0;
+      break;
+    case ALIGN_CENTER:
+      offset = -(strLength * 2);
+      break;
+    case ALIGN_RIGHT:
+      offset = -(strLength * 4);
+      break;
   }
 
+  // draw the frame
+  ab.fillRect(x + offset - 1, y, 4 * strLength + 1, 7, BLACK);
+  
   // draw the number
   for (uint8_t i = 0; i < strLength; i++)
   {
     uint8_t digit = (uint8_t) buf[i];
     digit -= 48;
     if (digit > 9) digit = 0;
-    sprites.drawSelfMasked(x + pad * FONT_PAD + FONT_PAD * i, y, font, digit);
+    sprites.drawSelfMasked(x + offset + 4 * i, y, font, digit);
   }
 }
 
@@ -55,18 +65,16 @@ int freeRam()
 #include "menu.h"
 int16_t debugValue = 0;
 void drawDebugLog()
-{
-  ab.fillRect(0, 0, 30, 8, BLACK);
-  Util::drawNumber(0, 0, debugValue);
+{ 
+  Util::drawNumber(0, 0, debugValue, ALIGN_LEFT);
 }
 #endif
 
 #ifdef DEBUG_CPU
 #include "menu.h"
 void drawDebugCpu()
-{
-  ab.fillRect(100, 0, 30, 8, BLACK);
-  Util::drawNumber(110, 0, ab.cpuLoad());
+{ 
+  Util::drawNumber(128, 0, ab.cpuLoad(), ALIGN_RIGHT);
 }
 #endif
 
@@ -77,8 +85,7 @@ void drawDebugRam()
   extern int __heap_start, *__brkval;
   int v;
   int ram = (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
-
-  ab.fillRect(60, 0, 30, 8, BLACK);
-  Util::drawNumber(60, 0, ram);
+  
+  Util::drawNumber(64, 0, ram, ALIGN_CENTER);
 }
 #endif

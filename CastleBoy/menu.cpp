@@ -5,10 +5,6 @@
 #include "sounds.h"
 #include "player.h"
 
-uint8_t Menu::life;
-uint16_t Menu::timeLeft;
-uint8_t Menu::stageIndex;
-
 namespace
 {
 #define MAX_STAGE 4
@@ -62,9 +58,9 @@ void Menu::showTitle()
   counter = 60;
 
   // reset game
-  life = PLAYER_STARTING_LIFE;
-  stageIndex = 0;
-  timeLeft = PLAYER_STARTING_TIME;
+  Game::life = GAME_STARTING_LIFE;
+  Game::stageIndex = 0;
+  Game::timeLeft = GAME_STARTING_TIME;
   Player::hp = PLAYER_MAX_HP;
   Player::knifeCount = 0;
 }
@@ -72,7 +68,7 @@ void Menu::showTitle()
 void Menu::onStageFinished()
 {
   //playMusic();
-  if (++stageIndex == MAX_STAGE)
+  if (++Game::stageIndex == MAX_STAGE)
   {
     mainState = STATE_GAME_FINISHED;
   }
@@ -83,10 +79,9 @@ void Menu::onStageFinished()
   }
 }
 
-void Menu::onPlayerDie()
+void Menu::onPlayerDied()
 {
-  Player::knifeCount = 0;
-  if (--life == 0)
+  if (Game::life == 0)
   {
     mainState = STATE_GAME_OVER;
   }
@@ -143,13 +138,13 @@ void updateTitle()
 void updateStageIntro()
 {
   sprites.drawOverwrite(51, 22, text_stage, 0);
-  Util::drawNumber(75, 22, Menu::stageIndex + 1);
+  Util::drawNumber(75, 22, Game::stageIndex + 1, ALIGN_LEFT);
   sprites.drawOverwrite(54, 38, ui_life_count, 0);
-  Util::drawNumber(64, 38, Menu::life);
+  Util::drawNumber(64, 38, Game::life, ALIGN_LEFT);
   if (--counter == 0)
   {
     //playMusic(music1);
-    Game::play(stages[Menu::stageIndex]);
+    Game::play(stages[Game::stageIndex]);
   }
 }
 
@@ -165,7 +160,7 @@ void updateGameOver()
 void updateGameFinished()
 {
   sprites.drawOverwrite(42, 27, text_final_score, 0);
-  Util::drawNumber(52, 39, Menu::timeLeft, 6);
+  Util::drawNumber(52, 39, Game::timeLeft, ALIGN_CENTER);
   if (ab.justPressed(A_BUTTON))
   {
     Menu::showTitle();

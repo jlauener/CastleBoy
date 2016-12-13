@@ -1,5 +1,6 @@
 #include "player.h"
 
+#include "game.h"
 #include "map.h"
 #include "entity.h"
 #include "assets.h"
@@ -32,14 +33,14 @@ namespace
 {
 const Box normalHitbox =
 {
-  3, 14, // x, y
-  6, 14  // width, height
+  4, 14, // x, y
+  8, 14  // width, height
 };
 
 const Box duckHitbox =
 {
-  3, 6, // x, y
-  6, 6  // width, height
+  4, 6, // x, y
+  8, 6  // width, height
 };
 
 const Box knifeHitbox =
@@ -82,7 +83,7 @@ void Player::init(int16_t x, int8_t y)
   velocityX = 0;
   velocityYf = 0;
   knife = false;
-//  knifeCount = 99;
+  knifeCount = 99;
 }
 
 void Player::update()
@@ -141,6 +142,22 @@ void Player::update()
     velocityYf = -PLAYER_JUMP_FORCE_F;
   }
 
+  // duck
+  if (knockbackCounter == 0 && attackCounter == 0)
+  {
+    if (!ducking)
+    {
+      ducking = grounded && ab.pressed(DOWN_BUTTON);
+    }
+    else if (!ab.pressed(DOWN_BUTTON))
+    {
+      // only stop ducking if player can stand
+      ducking = Map::collide(pos.x, pos.y, normalHitbox);
+    }
+  }
+
+  const Box& hitbox = ducking ? duckHitbox : normalHitbox;
+
   // vertical movement: levitation (middle of jump)
   if (levitateCounter > 0)
   {
@@ -158,7 +175,7 @@ void Player::update()
     }
     else
     {
-      Map::moveY(pos, velocityYf / F_PRECISION, ducking ? duckHitbox : normalHitbox);
+      Game::moveY(pos, velocityYf / F_PRECISION, ducking ? duckHitbox : normalHitbox, true);
     }
   }
   // vertical movement: walk
@@ -168,11 +185,11 @@ void Player::update()
     int16_t offsetY = velocityYf / F_PRECISION;
     if (offsetY > 0)
     {
-      grounded = Map::moveY(pos, offsetY, ducking ? duckHitbox : normalHitbox);
+      grounded = Game::moveY(pos, offsetY, hitbox, true);
     }
     else
     {
-      grounded = Map::collide(pos.x, pos.y + 1, ducking ? duckHitbox : normalHitbox);
+      grounded = Entities::moveCollide(pos.x, pos.y + 1, hitbox) || Map::collide(pos.x, pos.y + 1, hitbox);
     }
 
     if (grounded)
@@ -210,23 +227,9 @@ void Player::update()
       )
      )
   {
-    if (!Map::collide(pos.x + velocityX, pos.y, ducking ? duckHitbox : normalHitbox))
+    if (!Entities::moveCollide(pos.x + velocityX, pos.y, hitbox) && !Map::collide(pos.x + velocityX, pos.y, hitbox))
     {
       pos.x += velocityX;
-    }
-  }
-
-  // duck
-  if (knockbackCounter == 0 && attackCounter == 0)
-  {
-    if (!ducking)
-    {
-      ducking = grounded && ab.pressed(DOWN_BUTTON);
-    }
-    else if (!ab.pressed(DOWN_BUTTON))
-    {
-      // only stop ducking if player can stand
-      ducking = Map::collide(pos.x, pos.y, normalHitbox);
     }
   }
 
@@ -235,12 +238,15 @@ void Player::update()
   {
     if (--attackCounter <= ATTACK_CHARGE)
     {
-      if (knifeAttack && attackCounter == ATTACK_CHARGE)
+      if (knifeAttack)
       {
-        knife = true;
-        knifePosition.x = pos.x + (flipped ? -14 : 6);
-        knifePosition.y = pos.y - (ducking ? 6 : 14);
-        knifeFlipped = flipped;
+        if(attackCounter == ATTACK_CHARGE)
+        {
+          knife = true;
+          knifePosition.x = pos.x + (flipped ? -14 : 6);
+          knifePosition.y = pos.y - (ducking ? 6 : 14);
+          knifeFlipped = flipped;
+        }
       }
       else
       {
@@ -260,14 +266,18 @@ void Player::update()
 
   // knife
   if (knife)
-  {   
+  {
     knifePosition.x += knifeFlipped ? -2 : 2;
+    //Entity* entity = Entities::query(knifePosition.x - knifeHitbox.x, knifePosition.y - knifeHitbox.y, knifeHitbox.width, knifeHitbox.height);
+    //if (entity != NULL)
+    //{
     if(Entities::damage(knifePosition.x - knifeHitbox.x, knifePosition.y - knifeHitbox.y, knifeHitbox.width, knifeHitbox.height, 1))
-    {
+      {      
       LOG_DEBUG(777);
-      knife = false;    
+      knife = false;
+      //Entities::damage(*entity, 1);
     }
-    
+
     if (Map::collide(knifePosition.x, knifePosition.y, knifeHitbox))
     {
       knife = false;
@@ -276,14 +286,13 @@ void Player::update()
     if (knifePosition.x + knifeHitbox.width < Game::cameraX || knifePosition.x > Game::cameraX + 128)
     {
       knife = false;
-    }   
+    }
   }
 
   // check entity collision
   if (knockbackCounter == 0)
-  {
-    const Box& hitbox = ducking ? duckHitbox : normalHitbox;
-    Entity* entity = Entities::collide(pos.x - hitbox.x, pos.y - hitbox.y, hitbox.width, hitbox.height);
+  {    
+    Entity* entity = Entities::checkPlayer(pos.x - hitbox.x, pos.y - hitbox.y, hitbox.width, hitbox.height);
     if (entity != NULL)
     {
       flipped = entity->pos.x < pos.x;

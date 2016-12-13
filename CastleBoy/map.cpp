@@ -4,8 +4,10 @@
 #include "entity.h"
 #include "player.h"
 #include "menu.h"
+#include "game.h"
 
 uint8_t Map::width;
+bool Map::showBackground;
 
 namespace
 {
@@ -34,7 +36,7 @@ void Map::init(const uint8_t* source)
   // map size
   width = pgm_read_byte(source);
   height = pgm_read_byte(++source);
-  
+
   uint8_t temp = pgm_read_byte(++source);
 
   // rendering style (indoor, outdoor, garden)
@@ -52,6 +54,7 @@ void Map::init(const uint8_t* source)
     miscTile = TILE_CHAIN;
 
     propTile = TILE_WINDOW;
+    showBackground = false;
   }
   else
   {
@@ -64,6 +67,7 @@ void Map::init(const uint8_t* source)
     mainStartTileAlt = TILE_GROUND_START_ALT;
     miscTile = TILE_WALL;
     miscEndTile = TILE_WALL_END;
+    showBackground = true;
 
     if (temp & 0x40)
     {
@@ -86,7 +90,7 @@ void Map::init(const uint8_t* source)
 
   // tile map position
   tilemap = ++source;
-    
+
   // entities
   source += width * height / 4;
   uint8_t entityCount = pgm_read_byte(source);
@@ -96,7 +100,8 @@ void Map::init(const uint8_t* source)
     uint8_t entityType = (temp & 0xF0) >> 4;
     uint8_t x = pgm_read_byte(++source);
     uint8_t y = temp & 0x0F;
-    Entities::add(entityType, x, y);
+
+    Entities::add(entityType, x * TILE_WIDTH + HALF_TILE_WIDTH, y * TILE_HEIGHT + TILE_HEIGHT);
   }
 }
 
@@ -116,9 +121,9 @@ bool Map::collide(int16_t x, int8_t y, const Box& hitbox)
   }
 
   int16_t tx1 = x / TILE_WIDTH;
-  int16_t ty1 = y / TILE_HEIGHT;
+  int8_t ty1 = y / TILE_HEIGHT;
   int16_t tx2 = (x + hitbox.width - 1) / TILE_WIDTH;
-  int16_t ty2 = (y + hitbox.height - 1) / TILE_HEIGHT;
+  int8_t ty2 = (y + hitbox.height - 1) / TILE_HEIGHT;
 
   if (ty2 < 0 || ty2 >= height)
   {
@@ -136,7 +141,7 @@ bool Map::collide(int16_t x, int8_t y, const Box& hitbox)
   // perform hit test on selected tiles
   for (int16_t ix = tx1; ix <= tx2; ix++)
   {
-    for (int16_t iy = ty1; iy <= ty2; iy++)
+    for (int8_t iy = ty1; iy <= ty2; iy++)
     {
       if (getTileAt(ix, iy) >= solidTileIndex)
       {
@@ -146,25 +151,6 @@ bool Map::collide(int16_t x, int8_t y, const Box& hitbox)
           return true;
         }
       }
-    }
-  }
-
-  return false;
-}
-
-bool Map::moveY(Vec& pos, int8_t dy, const Box& hitbox)
-{
-  if (dy != 0)
-  {
-    int8_t sign = dy > 0 ? 1 : -1;
-    while (dy != 0)
-    {
-      if (Map::collide(pos.x, pos.y + sign, hitbox))
-      {
-        return true;
-      }
-      pos.y += sign;
-      dy -= sign;
     }
   }
 

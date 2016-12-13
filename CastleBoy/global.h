@@ -2,7 +2,6 @@
 #define GLOBAL_H
 
 #include "Arglib.h"
-#include "game.h"
 
 extern Arduboy ab;
 extern Sprites sprites;
@@ -20,14 +19,12 @@ extern uint8_t flashCounter;
 
 #define ENTITY_MAX 32
 
-#define STATE_TITLE 0
-#define STATE_STAGE_INTRO 1
-#define STATE_PLAY 2
-#define STATE_GAME_OVER 3
-#define STATE_GAME_FINISHED 4
-
 // divider for fixed fractional numbers
 #define F_PRECISION 1000
+
+// game
+#define GAME_STARTING_LIFE 3
+#define GAME_STARTING_TIME 200
 
 // player
 #define PLAYER_JUMP_GRAVITY_F 190 // 0.18
@@ -40,9 +37,14 @@ extern uint8_t flashCounter;
 #define PLAYER_SPEED_DUCK 4 // every 4 frames
 #define PLAYER_SPEED_KNOCKBACK_NORMAL 2 // every 2 frames
 #define PLAYER_SPEED_KNOCKBACK_FAST 1 // every 1 frame
-#define PLAYER_STARTING_LIFE 3
-#define PLAYER_STARTING_TIME 200
 #define PLAYER_MAX_HP 5
+
+// game state
+#define STATE_TITLE 0
+#define STATE_STAGE_INTRO 1
+#define STATE_PLAY 2
+#define STATE_GAME_OVER 3
+#define STATE_GAME_FINISHED 4
 
 // map data
 #define TILE_DATA_EMPTY 0
@@ -62,51 +64,6 @@ extern uint8_t flashCounter;
 #define TILE_CHAIN 8
 #define TILE_WINDOW 9
 
-// entity types
-
-// 0000 ???
-// 0001 ???
-
-// 0010 candle: coin
-// 0011 candle: powerup
-//   ||
-//   |+-- coin/powerup flag
-//   +--- candle flag
-#define ENTITY_CANDLE_COIN 0x02
-#define ENTITY_CANDLE_POWERUP 0x03
-
-// 0100 skeleton: simple
-// 0101 skeleton: throw
-// 0110 skeleton: armored
-// 0111 skeleton: armored + throw
-//  |||
-//  ||+-- throw flag
-//  |+--- armored flag
-//  +---- skeleton flag
-#define ENTITY_SKELETON_SIMPLE 0x04
-#define ENTITY_SKELETON_THROW 0x05
-#define ENTITY_SKELETON_ARMORED 0x06
-#define ENTITY_SKELETON_THROW_ARMORED 0x07
-
-// 1000 flyer: skull
-// 1001 flyer: ???
-#define ENTITY_FLYER_SKULL 0x08
-
-// 1010 ???
-// 1011 ???
-// 1100 ???
-// 1101 boss 1
-// 1110 boss 2
-// 1111 boss 3
-
-// pickups
-// 10000 pickup: coin
-// 10001 pickup: heart
-// 10010 pickup: knife
-#define ENTITY_PICKUP_COIN 0x10
-#define ENTITY_PICKUP_HEART 0x11
-#define ENTITY_PICKUP_KNIFE 0x12
-
 // entity score
 #define PICKUP_COIN_VALUE 3 // 3 seconds
 #define PICKUP_KNIFE_VALUE 3 // 3 knifes
@@ -120,10 +77,6 @@ extern uint8_t flashCounter;
 #define MAP_HEIGHT_MAX 6
 
 #define CAMERA_BUFFER 64
-
-#define SOLID_TILE_COUNT 3
-
-#define FONT_PAD 4 // actual width + padding
 
 struct Vec
 {
@@ -139,10 +92,14 @@ struct Box
   uint8_t height;
 };
 
+#define ALIGN_LEFT 0
+#define ALIGN_CENTER 1
+#define ALIGN_RIGHT 2
+
 namespace Util
 {
   bool collideRect(int16_t x1, int8_t y1, uint8_t width1, uint8_t height1, int16_t x2, int8_t y2, uint8_t width2, uint8_t height2);
-  void drawNumber(int16_t x, int16_t y, uint16_t value, uint8_t zeroPad = 0);
+  void drawNumber(int16_t x, int16_t y, uint16_t value, uint8_t align);
 }
 
 #ifdef DEBUG_LOG

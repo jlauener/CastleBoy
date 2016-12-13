@@ -6,10 +6,10 @@
 namespace Map
 {
 extern uint8_t width;
+extern bool showBackground;
 
 void init(const uint8_t* source);
 bool collide(int16_t x, int8_t y, const Box& hitbox);
-bool moveY(Vec& pos, int8_t dy, const Box& hitbox);
 void draw();
 }
 
