@@ -11,7 +11,7 @@
 
 namespace
 {
-const uint8_t* const stages[] = { stage_1_1, stage_1_2, stage_1_3, stage_2_1, stage_2_2, stage_2_3, stage_3_1, stage_3_2, stage_3_3 };
+const uint8_t* const stages[] = { stage_1_1, stage_1_2, stage_1_3, stage_1_4, stage_2_1, stage_2_2, stage_2_3, stage_2_4, stage_3_1, stage_3_2, stage_3_3, stage_3_4 };
 
 uint8_t counter;
 bool flag;
@@ -48,8 +48,8 @@ void drawMenuOption(uint8_t index, const uint8_t* sprite)
   sprites.drawOverwrite(64 - halfWidth, 40 + index * 8, sprite, 0);
   if(index == menuIndex)
   {
-    sprites.drawOverwrite(53 - halfWidth, 40 + index * 8, entity_candle, toggle);
-    sprites.drawOverwrite(66 + halfWidth, 40 + index * 8, entity_candle, toggle);
+    sprites.drawOverwrite(53 - halfWidth, 38 + index * 8, entity_candle, toggle);
+    sprites.drawOverwrite(66 + halfWidth, 38 + index * 8, entity_candle, toggle);
   }
 }
 
@@ -179,7 +179,7 @@ void Menu::loop()
       break;
     case STATE_GAME_FINISHED:
       sprites.drawOverwrite(42, 22, text_final_score, 0);
-      Util::drawNumber(52, 38, Game::timeLeft / FPS, ALIGN_CENTER);
+      Util::drawNumber(64, 38, Game::timeLeft / FPS, ALIGN_CENTER);
       if (ab.justPressed(A_BUTTON))
       {
         Menu::showTitle();

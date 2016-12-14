@@ -17,7 +17,7 @@ extern uint8_t flashCounter;
 
 #define FPS 60
 
-#define STAGE_MAX 4
+#define STAGE_MAX 12
 #define ENTITY_MAX 32
 
 // divider for fixed fractional numbers

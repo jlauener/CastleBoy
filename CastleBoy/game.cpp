@@ -77,7 +77,7 @@ void Game::loop()
   // finished: exit from left
   if (finishedCounter == 0 && Player::pos.x - 4 /*normalHitbox.x*/ > Map::width * TILE_WIDTH)
   {
-    finishedCounter = 20;
+    finishedCounter = 1;
   }
 
   // finished: boss killed

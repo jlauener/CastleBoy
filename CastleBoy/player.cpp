@@ -101,6 +101,7 @@ void Player::update()
       velocityX = 0;
       if (hp == 0)
       {
+        LOG_DEBUG(1);
         alive = false;
       }
     }
@@ -108,7 +109,7 @@ void Player::update()
 
   if (invincibleCounter > 0)
   {
-    if(--invincibleCounter == 0)
+    if (--invincibleCounter == 0)
     {
       visible = true;
     }
@@ -273,6 +274,7 @@ void Player::update()
   // check if player falled in a hole
   if (pos.y - SPRITE_ORIGIN_Y > 64)
   {
+    LOG_DEBUG(2);
     alive = false;
   }
 
@@ -297,28 +299,25 @@ void Player::update()
   }
 
   // check entity collision
-  if (invincibleCounter == 0)
+  Entity* entity = Entities::checkPlayer(pos.x - hitbox.x, pos.y - hitbox.y, hitbox.width, hitbox.height);
+  if (invincibleCounter == 0 && entity != NULL)
   {
-    Entity* entity = Entities::checkPlayer(pos.x - hitbox.x, pos.y - hitbox.y, hitbox.width, hitbox.height);
-    if (entity != NULL)
+    flipped = entity->pos.x < pos.x;
+    velocityX = flipped ? 1 : -1;
+    knockbackCounter = PLAYER_KNOCKBACK_DURATION;
+    jumping = false;
+    //levitateCounter = 0;
+    attackCounter = 0;
+    if (--hp > 0)
     {
-      flipped = entity->pos.x < pos.x;
-      velocityX = flipped ? 1 : -1;
-      knockbackCounter = PLAYER_KNOCKBACK_DURATION;
-      jumping = false;
-      //levitateCounter = 0;
-      attackCounter = 0;
-      if (--hp == 0)
-      {
-        alive = false;
-      }
-      else
-      {
-        invincibleCounter = PLAYER_INVINCIBLE_DURATION;
-      }
-      flashCounter = 2;
-      sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
+     // alive = false;
+   // }
+    //else
+    //{
+      invincibleCounter = PLAYER_INVINCIBLE_DURATION;
     }
+    flashCounter = 2;
+    sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
   }
 }
 
