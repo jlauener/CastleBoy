@@ -4,12 +4,19 @@
 #include "player.h"
 #include "assets.h"
 
+#define TITLE_OPTION_MAX 2
+#define TITLE_OPTION_PLAY 0
+#define TITLE_OPTION_HELP 1
+#define TITLE_OPTION_SFX 2
+
 namespace
 {
-const uint8_t* const stages[] = { stage_1, stage_2, stage_3, stage_4 };
+const uint8_t* const stages[] = { stage_1_1, stage_1_2, stage_1_3, stage_2_1, stage_2_2, stage_2_3, stage_3_1, stage_3_2, stage_3_3 };
 
 uint8_t counter;
 bool flag;
+bool toggle = 0;
+uint8_t menuIndex;
 int8_t titleLeftOffset;
 int8_t titleRightOffset;
 }
@@ -19,6 +26,7 @@ void Menu::showTitle()
   mainState = STATE_TITLE;
   flag = true;
   counter = 60;
+  menuIndex = TITLE_OPTION_PLAY;
 
   // reset game
   Game::life = GAME_STARTING_LIFE;
@@ -32,6 +40,17 @@ void Menu::showStageIntro()
 {
   mainState = STATE_STAGE_INTRO;
   counter = 120;
+}
+
+void drawMenuOption(uint8_t index, const uint8_t* sprite)
+{
+  uint8_t halfWidth = pgm_read_byte(sprite) / 2;
+  sprites.drawOverwrite(64 - halfWidth, 40 + index * 8, sprite, 0);
+  if(index == menuIndex)
+  {
+    sprites.drawOverwrite(53 - halfWidth, 40 + index * 8, entity_candle, toggle);
+    sprites.drawOverwrite(66 + halfWidth, 40 + index * 8, entity_candle, toggle);
+  }
 }
 
 void loopTitle()
@@ -64,21 +83,63 @@ void loopTitle()
     {
       titleLeftOffset = titleLeftOffset == 0 ? 1 : 0;
       titleRightOffset = titleRightOffset == 0 ? 1 : 0;
+    }    
+
+    if(ab.justPressed(UP_BUTTON) && menuIndex > 0)
+    {
+      --menuIndex;
+      sound.tone(NOTE_E6, 15);
     }
 
-    if (ab.justPressed(A_BUTTON))
+    if(ab.justPressed(DOWN_BUTTON) && menuIndex < TITLE_OPTION_MAX)
     {
-      sound.tone(NOTE_CS6, 30);
-      mainState = STATE_STAGE_INTRO;
-      counter = 100;
+      ++menuIndex;
+      sound.tone(NOTE_E6, 15);
     }
+    
+    if (ab.justPressed(A_BUTTON))
+    {      
+      switch(menuIndex)
+      {
+        case TITLE_OPTION_PLAY:
+          mainState = STATE_STAGE_INTRO;
+          counter = 100;
+          sound.tone(NOTE_CS6, 30);
+          break;
+        case TITLE_OPTION_HELP: 
+          // TODO
+          sound.tone(NOTE_CS6, 30);
+          break;
+        case TITLE_OPTION_SFX:
+          if(ab.audio.enabled())
+          {            
+            ab.audio.off();
+          }
+          else
+          {
+            ab.audio.on();
+          }
+          ab.audio.saveOnOff();
+          sound.tone(NOTE_CS6, 30);
+          break;
+      }      
+    }
+
+    drawMenuOption(TITLE_OPTION_PLAY, text_play);
+    drawMenuOption(TITLE_OPTION_HELP, text_help);
+    drawMenuOption(TITLE_OPTION_SFX, ab.audio.enabled() ? text_sfx_off : text_sfx_on);
   }
   sprites.drawOverwrite(36, 5 + titleLeftOffset, title_left, 0);
-  sprites.drawOverwrite(69, 5 + titleRightOffset, title_right, 0);
+  sprites.drawOverwrite(69, 5 + titleRightOffset, title_right, 0);  
 }
 
 void Menu::loop()
 {
+  if(ab.everyXFrames(20))
+  {
+    toggle = !toggle;
+  }
+  
   switch (mainState)
   {
     case STATE_TITLE:
@@ -88,8 +149,9 @@ void Menu::loop()
       Game::loop();
       break;
     case STATE_STAGE_INTRO:
-      sprites.drawOverwrite(51, 22, text_stage, 0);
-      Util::drawNumber(75, 22, Game::stageIndex + 1, ALIGN_LEFT);
+      sprites.drawOverwrite(46, 22, text_stage, 0);
+      Util::drawNumber(69, 22, Game::stageIndex / 3 + 1, ALIGN_LEFT);
+      Util::drawNumber(76, 22, Game::stageIndex % 3 + 1, ALIGN_LEFT);
       if(Game::hasPlayerDied)
       {
         sprites.drawOverwrite(52, 38, ui_life_count, 0);
@@ -101,15 +163,23 @@ void Menu::loop()
       }
       break;
     case STATE_GAME_OVER:
-      sprites.drawOverwrite(47, 27, text_game_over, 0);
+      if(Game::timeLeft == 0)
+      {
+        sprites.drawOverwrite(47, 27, text_time_up, 0);
+      }
+      else
+      {
+        sprites.drawOverwrite(47, 27, text_game_over, 0);
+      }
+      sprites.drawOverwrite(60, 40, entity_skull, toggle);
       if (ab.justPressed(A_BUTTON))
       {
         Menu::showTitle();
       }
       break;
     case STATE_GAME_FINISHED:
-      sprites.drawOverwrite(42, 27, text_final_score, 0);
-      Util::drawNumber(52, 39, Game::timeLeft / FPS, ALIGN_CENTER);
+      sprites.drawOverwrite(42, 22, text_final_score, 0);
+      Util::drawNumber(52, 38, Game::timeLeft / FPS, ALIGN_CENTER);
       if (ab.justPressed(A_BUTTON))
       {
         Menu::showTitle();

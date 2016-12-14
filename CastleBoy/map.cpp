@@ -7,6 +7,7 @@
 
 uint8_t Map::width;
 bool Map::showBackground;
+Entity* Map::boss;
 
 namespace
 {
@@ -37,8 +38,9 @@ void Map::init(const uint8_t* source)
   height = pgm_read_byte(++source);
 
   uint8_t temp = pgm_read_byte(++source);
+  bool hasBoss = (temp & 0xC0) == 0xC0;
 
-  // rendering style (indoor, outdoor, garden)
+  // rendering style (indoor, outdoor, garden)  
   if (temp & 0x80)
   {
     // indoor
@@ -93,6 +95,7 @@ void Map::init(const uint8_t* source)
   // entities
   source += width * height / 4;
   uint8_t entityCount = pgm_read_byte(source);
+  boss = NULL;
   for (uint8_t i = 0; i < entityCount; i++)
   {
     temp = pgm_read_byte(++source);
@@ -100,7 +103,11 @@ void Map::init(const uint8_t* source)
     uint8_t x = pgm_read_byte(++source);
     uint8_t y = temp & 0x0F;
 
-    Entities::add(entityType, x * TILE_WIDTH + HALF_TILE_WIDTH, y * TILE_HEIGHT + TILE_HEIGHT);
+    Entity* entity = Entities::add(entityType, x * TILE_WIDTH + HALF_TILE_WIDTH, y * TILE_HEIGHT + TILE_HEIGHT);
+    if(hasBoss)
+    {
+      boss = entity;
+    }
   }
 }
 

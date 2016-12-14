@@ -28,7 +28,7 @@ struct Entity
 namespace Entities
 {
   void init();
-  void add(uint8_t type, int16_t x, int8_t y);
+  Entity* add(uint8_t type, int16_t x, int8_t y);
   void update();
   bool damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_t value);
   bool moveCollide(int16_t x, int8_t y, const Box& hitbox);

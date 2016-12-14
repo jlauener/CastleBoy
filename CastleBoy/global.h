@@ -26,6 +26,7 @@ extern uint8_t flashCounter;
 // game
 #define GAME_STARTING_LIFE 3
 #define GAME_STARTING_TIME 12000 // frames (200 secs)
+#define BOSS_MAX_HP 12
 
 // player
 #define PLAYER_JUMP_GRAVITY_F 190 // 0.18
@@ -100,6 +101,7 @@ struct Box
 
 namespace Util
 {
+  void toggle(uint8_t & flags, uint8_t mask);
   bool collideRect(int16_t x1, int8_t y1, uint8_t width1, uint8_t height1, int16_t x2, int8_t y2, uint8_t width2, uint8_t height2);
   void drawNumber(int16_t x, int16_t y, uint16_t value, uint8_t align);
 }

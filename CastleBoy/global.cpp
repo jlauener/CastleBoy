@@ -8,6 +8,17 @@ ArduboyTones sound(ab.audio.enabled);
 uint8_t mainState;
 uint8_t flashCounter = 0;
 
+void Util::toggle(uint8_t & flags, uint8_t mask)
+{
+  if (flags & mask)
+  {
+    flags &= ~mask;
+  }
+  else
+  {
+    flags |= mask;
+  }
+}
 
 bool Util::collideRect(int16_t x1, int8_t y1, uint8_t width1, uint8_t height1, int16_t x2, int8_t y2, uint8_t width2, uint8_t height2)
 {
@@ -43,7 +54,7 @@ void Util::drawNumber(int16_t x, int16_t y, uint16_t value, uint8_t align)
 
   // draw the frame
   ab.fillRect(x + offset - 1, y, 4 * strLength + 1, 7, BLACK);
-  
+
   // draw the number
   for (uint8_t i = 0; i < strLength; i++)
   {
@@ -65,7 +76,7 @@ int freeRam()
 #include "menu.h"
 int16_t debugValue = 0;
 void drawDebugLog()
-{ 
+{
   Util::drawNumber(0, 0, debugValue, ALIGN_LEFT);
 }
 #endif
@@ -73,7 +84,7 @@ void drawDebugLog()
 #ifdef DEBUG_CPU
 #include "menu.h"
 void drawDebugCpu()
-{ 
+{
   Util::drawNumber(128, 0, ab.cpuLoad(), ALIGN_RIGHT);
 }
 #endif
@@ -85,7 +96,7 @@ void drawDebugRam()
   extern int __heap_start, *__brkval;
   int v;
   int ram = (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
-  
+
   Util::drawNumber(64, 0, ram, ALIGN_CENTER);
 }
 #endif

@@ -43,14 +43,39 @@ class MapData
   MAX_HEIGHT = 8
   MAX_ENTITIES = 32
   PER_LINE = 8
+  
+  TILE_ID_MAX = 4
+  
+  ENTITY_OFFSET = 4
+  ENTITY_PLAYER = 17
+  ENTITY_ID_MAX = 16
+  ENTITY_FALLING_TILE = 1
+  
+  ENTITY_SKULL = 9
+  ENTITY_SKULL_X_OFFSET = 7
+  
+  TYPE_INDOOR_NAME = "indoor"
+  TYPE_INDOOR_VALUE = 0x8
+  
+  TYPE_OUTDOOR_NAME = "outdoor"
+  TYPE_OUTDOOR_VALUE = 0x4
+  
+  TYPE_GARDEN_NAME = "garden"
+  TYPE_GARDEN_VALUE = 0x0
+  
+  TYPE_BOSS_NAME = "boss"
+  TYPE_BOSS_VALUE = 0xC
 
   attr :name  
   attr :width
-  attr :height  
+  attr :height 
+  attr :playerX
+  attr :playerY
+  attr :entityCount
   attr :tileData
   attr :entityData
   attr :size  
-  attr :mapType
+  attr :mapType  
   attr :mapTypeStr
 
   def initialize(fileName)    
@@ -70,13 +95,64 @@ class MapData
       raise "Map #{@name} is too high, max is #{MAX_HEIGHT}, current is #{@height}."
     end
     
+    # first pass: apply offset and find player
+    playerFound = false
+    for iy in 0...@height
+      for ix in 0...@width
+        if @tileData[iy * @width + ix] > TILE_ID_MAX
+          raise "Map #{@name} has invalid tile id #{@tileData[iy * @width + ix]} at #{ix},#{iy}."
+        end
+        
+        entity = @entityData[iy * @width + ix]
+        if entity > 0
+          entity -= ENTITY_OFFSET                
+          if entity == ENTITY_PLAYER
+            @playerX = ix
+            @playerY = iy          
+            playerFound = true;
+            @entityData[iy * @width + ix] = 0
+          else
+            if entity < 0 or entity > ENTITY_ID_MAX
+              raise "Map #{@name} has invalid entity id #{entity} at #{ix},#{iy}."
+            end
+            @entityData[iy * @width + ix] = entity
+          end
+        end
+      end
+    end
+    if !playerFound
+      raise "Map #{@name} has no player starting position."
+    end
+    
+    #second pass: merge falling tiles and count entities
+    @entityCount = 0
+    for iy in 0...@height
+      for ix in 0...@width      
+        entity = @entityData[iy * @width + ix]       
+        if entity > 0
+          if entity == ENTITY_FALLING_TILE
+            if @entityData[iy * @width + ix + 1] != ENTITY_FALLING_TILE
+              raise "Map #{@name} has invalid falling tile at #{ix},#{iy}. Must go in pair"
+            end
+            @entityData[iy * @width + ix + 1] = 0
+          end
+          @entityCount += 1
+        end
+      end
+    end
+    if @entityCount > MAX_ENTITIES
+      raise "Map #{@name} has too many entities, max is #{MAX_ENTITIES}, current is #{@entityCount}."
+    end
+    
     @mapTypeStr = jsonHash["properties"]["type"]
-    if @mapTypeStr == "indoor"
-      @mapType = 0x8
-    elsif @mapTypeStr == "outdoor"
-      @mapType = 0x4
-    elsif @mapTypeStr == "garden"
-      @mapType = 0x0
+    if @mapTypeStr == TYPE_INDOOR_NAME
+      @mapType = TYPE_INDOOR_VALUE
+    elsif @mapTypeStr == TYPE_OUTDOOR_NAME
+      @mapType = TYPE_OUTDOOR_VALUE
+    elsif @mapTypeStr == TYPE_GARDEN_NAME
+      @mapType = TYPE_GARDEN_VALUE
+    elsif @mapTypeStr == TYPE_BOSS_NAME
+      @mapType = TYPE_BOSS_VALUE
     else
       raise "Map #{@name} has an invalid type '#{@mapTypeStr}'."
     end
@@ -105,20 +181,9 @@ class MapData
   end
   
   def meta_data
-    o = ""
-    playerFound = false
-    for ix in 0...@width
-      for iy in 0...@height
-        if entityData[iy * @width + ix] == 21
-          add_byte(o, iy + (@mapType << 4))
-          add_byte(o, ix)
-          playerFound = true
-        end
-      end
-    end
-    if !playerFound
-      raise "Map #{@name} has not player starting position."
-    end
+    o = ""    
+    add_byte(o, @playerY + (@mapType << 4))
+    add_byte(o, @playerX)          
     o << "\n"
     o
   end
@@ -153,43 +218,21 @@ class MapData
     o
   end
   
-  def entity_count
-    count = 0
-    for i in 0...@width * @height      
-      tile = entityData[i]
-      if tile > 0
-        entity = tile - 5
-        if entity != 16 # player entity is 16, discard it
-          if entity < 0 or entity >= 16
-            raise "Invalid entity id #{entity}."
-          end
-          count += 1
-        end
-      end
-    end
-    
-    if count > MAX_ENTITIES
-      raise "Map #{@name} has too many entities, max is #{MAX_ENTITIES}, current is #{@count}."
-    end
-    count
-  end
-  
   def entity_data
     o = ""
     total = 0
     for ix in 0...@width
       for iy in 0...@height
-        tile = entityData[iy * @width + ix]
-        if tile > 0
-          entity = tile - 5
-          if entity != 16 # player entity is 16, discard it
-            if entity < 0 or entity >= 16
-              raise "Invalid entity id #{entity}."
-            end
-            add_byte(o, iy + (entity << 4)).add_byte(o, ix)
-            total += 2
-            o << "\n" if total % PER_LINE == 0
+        entity = @entityData[iy * @width + ix]
+        if entity > 0
+          x = ix
+          y = iy
+          if entity == ENTITY_SKULL
+            x += ENTITY_SKULL_X_OFFSET
           end
+          add_byte(o, y + ((entity - 1) << 4)).add_byte(o, x)
+          total += 2
+          o << "\n" if total % PER_LINE == 0          
         end
       end
     end
@@ -207,7 +250,7 @@ class MapData
     o << "// tilemap data\n"
     o << tilemap_data
     o << "// entity count\n"
-    o << "#{entity_count},\n"
+    o << "#{@entityCount},\n"
     o << "// entities data\n"
     o << entity_data
     o << "\n};\n\n"
@@ -220,7 +263,7 @@ files = Dir.glob("./map/**/*.json")
 files.each do |fileName|
   mapData = MapData.new(fileName)
   out = mapData.to_s
-  puts "#{mapData.name}: #{mapData.width}x#{mapData.height} tiles #{mapData.entity_count} entities #{mapData.size} bytes"
+  puts "#{mapData.name}: #{mapData.width}x#{mapData.height} tiles #{mapData.entityCount} entities #{mapData.size} bytes"
   assets.files << out
 end
 puts "\n"

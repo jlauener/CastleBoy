@@ -15,6 +15,17 @@ bool Game::hasPlayerDied = false;
 namespace
 {
 uint8_t deathCounter = 0;
+uint8_t finishedCounter = 0;
+
+void drawHpBar(int16_t x, int16_t y, uint8_t value, uint8_t max)
+{
+  ab.fillRect(x, y, 4 * max, 7, BLACK);
+  for (uint8_t i = 0; i < max; i++)
+  {
+    sprites.drawSelfMasked(x + i * 4, y, i < value ? ui_hp_full : ui_hp_empty, 0);
+  }
+}
+
 }
 
 void Game::play(const uint8_t* source)
@@ -63,20 +74,35 @@ void Game::loop()
     --timeLeft;
   }
 
-  // check if stage is finished
-  if (Player::pos.x - 4 /*normalHitbox.x*/ > Map::width * TILE_WIDTH)
+  // finished: exit from left
+  if (finishedCounter == 0 && Player::pos.x - 4 /*normalHitbox.x*/ > Map::width * TILE_WIDTH)
   {
-    if (++stageIndex == STAGE_MAX)
+    finishedCounter = 20;
+  }
+
+  // finished: boss killed
+  if (finishedCounter == 0 && Map::boss != NULL && Map::boss->hp == 0)
+  {
+    finishedCounter = 120;
+  }
+
+  // finished: update counter
+  if (finishedCounter > 0)
+  {
+    if (--finishedCounter == 0)
     {
-      mainState = STATE_GAME_FINISHED;
-    }
-    else
-    {
-      Menu::showStageIntro();
+      if (++stageIndex == STAGE_MAX)
+      {
+        mainState = STATE_GAME_FINISHED;
+      }
+      else
+      {
+        Menu::showStageIntro();
+      }
     }
   }
 
-  // check if player is dead
+  // game over: check if player is alive
   if (deathCounter == 0 && (!Player::alive || timeLeft == 0))
   {
     Player::knifeCount = 0;
@@ -94,6 +120,7 @@ void Game::loop()
     sound.tone(NOTE_G3, 100, NOTE_G2, 150, NOTE_G1, 350);
   }
 
+  // game over: update counter
   if (deathCounter > 0)
   {
     if (--deathCounter == 0)
@@ -135,11 +162,7 @@ void Game::loop()
   Player::draw();
 
   // ui: hp
-  ab.fillRect(0, 0, 4 * PLAYER_MAX_HP, 7, BLACK);
-  for (uint8_t i = 0; i < PLAYER_MAX_HP; i++)
-  {
-    sprites.drawSelfMasked(i * 4, 0, i < Player::hp ? ui_hp_full : ui_hp_empty, 0);
-  }
+  drawHpBar(0, 0, Player::hp, PLAYER_MAX_HP);
 
   // ui: knife count
   ab.fillRect(54, 0, 13, 7, BLACK);
@@ -149,6 +172,12 @@ void Game::loop()
 
   // ui: time left
   Util::drawNumber(128, 0, timeLeft / FPS, ALIGN_RIGHT);
+
+  // ui: boss
+  if (Map::boss != NULL)
+  {
+    drawHpBar(40, 58, Map::boss->hp, BOSS_MAX_HP);
+  }
 }
 
 bool Game::moveY(Vec& pos, int8_t dy, const Box& hitbox, bool collideToEntity)

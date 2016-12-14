@@ -46,7 +46,8 @@
 // 1010 ??? 0x0A
 // 1011 ??? 0x0B
 // 1100 ??? 0x0C
-// 1101 boss 1 0x0D
+// 1101 boss 1
+#define ENTITY_BOSS_1 0x0D
 // 1110 boss 2 0x0E
 // 1111 boss 3 0x0F
 
@@ -188,13 +189,13 @@ const EntityData data[] =
     0, // hp
     NULL // sprite
   },
-  // 1101 reserved boss 1
+  // 1101 boss 1
   {
-    0, 0, // hitbox x, y
-    0, 0, // hitbox width, height
-    0, 0, // sprite origin x, y
-    0, // hp
-    NULL // sprite
+    8, 26, // hitbox x, y
+    16, 26, // hitbox width, height
+    12, 32, // sprite origin x, y
+    BOSS_MAX_HP, // hp
+    entity_boss1_plus_mask // sprite
   },
   // 1110 reserved boss 2
   {
@@ -257,7 +258,7 @@ void Entities::init()
   }
 }
 
-void Entities::add(uint8_t type, int16_t x, int8_t y)
+Entity* Entities::add(uint8_t type, int16_t x, int8_t y)
 {
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
@@ -271,14 +272,15 @@ void Entities::add(uint8_t type, int16_t x, int8_t y)
       entity.state = FLAG_PRESENT | FLAG_ALIVE;
       entity.frame = 0;
       entity.counter = 0;
-      return;
+      return &entity;
     }
   }
 
   // FIXME assert?
+  return NULL;
 }
 
-inline void updateSkeleton(Entity& entity)
+void updateSkeleton(Entity& entity)
 {
   if (ab.everyXFrames(3))
   {
@@ -316,15 +318,49 @@ inline void updateSkeleton(Entity& entity)
 
   if (entity.state & FLAG_MISC2)
   {
-    entity.frame = 2;
+    entity.frame = 4;
   }
   else if (ab.everyXFrames(8))
   {
     ++entity.frame %= 2;
+    if (entity.hp > 2)
+    {
+      // use armored frame
+      entity.frame += 2;
+    }
   }
 }
 
-// not inlining this method, we gain some bytes (?)
+void updateBoss1(Entity& entity)
+{
+  if (ab.everyXFrames(4))
+  {
+    if (entity.state & FLAG_MISC2)
+    {
+      // boss got hurt, change direction
+      entity.state &= ~FLAG_MISC2;
+      Util::toggle(entity.state, FLAG_MISC1);
+      entity.counter = 87 - entity.counter;
+    }
+
+    entity.pos.x += entity.state & FLAG_MISC1 ? 1 : -1;
+    if (++entity.counter == 87)
+    {
+      entity.counter = 0;
+      Util::toggle(entity.state, FLAG_MISC1);
+    }
+  }
+
+  if (ab.everyXFrames(10))
+  {
+    ++entity.frame %= 2;
+    if (entity.state & FLAG_MISC1)
+    {
+      entity.frame += 2;
+    }
+  }
+}
+
 void updateFlyer(Entity& entity)
 {
   if (!(entity.state & FLAG_MISC1) && entity.pos.x - Player::pos.x < 72)
@@ -351,6 +387,24 @@ void updateFlyer(Entity& entity)
   }
 }
 
+void updateProjectileBone(Entity& entity)
+{
+  --entity.pos.x;
+  entity.pos.y += entity.counter - 2;
+  if (entity.counter < 8 && ab.everyXFrames(10))
+  {
+    ++entity.counter;
+  }
+  if (entity.pos.y > 68)
+  {
+    entity.state = 0;
+  }
+  if (ab.everyXFrames(8))
+  {
+    ++entity.frame %= 2;
+  }
+}
+
 void Entities::update()
 {
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
@@ -369,7 +423,8 @@ void Entities::update()
             entity.state |= --hurtCounter;
           }
         }
-        else
+
+        if (!(entity.state & MASK_HURT))
         {
           switch (entity.type)
           {
@@ -407,21 +462,11 @@ void Entities::update()
             case ENTITY_FLYER_SKULL:
               updateFlyer(entity);
               break;
+            case ENTITY_BOSS_1:
+              updateBoss1(entity);
+              break;
             case ENTITY_PROJECTILE_BONE:
-              --entity.pos.x;
-              entity.pos.y += entity.counter - 2;
-              if (entity.counter < 8 && ab.everyXFrames(10))
-              {
-                ++entity.counter;
-              }
-              if (entity.pos.y > 68)
-              {
-                entity.state = 0;
-              }
-              if (ab.everyXFrames(8))
-              {
-                ++entity.frame %= 2;
-              }
+              updateProjectileBone(entity);
               break;
           }
         }
@@ -458,31 +503,58 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
                             x, y, width, height))
       {
         hit = true;
-        if (entity.hp <= value)
+
+        bool hurt = true;
+        if (entity.type == ENTITY_BOSS_1)
         {
-          if (entity.type == ENTITY_CANDLE_COIN)
+          // special case: boss1 can only be hit from the back
+          if (entity.state & FLAG_MISC1)
           {
-            // special case: CANDLE_COIN spawns a COIN
-            entity.type = ENTITY_PICKUP_COIN;
-          }
-          else if (entity.type == ENTITY_CANDLE_POWERUP)
-          {
-            // special case: CANDLE_POWERUP spawns an HEART or KNIFE
-            entity.type = Player::hp == PLAYER_MAX_HP ? ENTITY_PICKUP_KNIFE : ENTITY_PICKUP_HEART;
+            hurt = Player::pos.x < entity.pos.x;
           }
           else
           {
-            entity.state &= ~FLAG_ALIVE;
+            hurt = Player::pos.x > entity.pos.x;
           }
-          entity.counter = 0;
-          entity.frame = 0;
-          sound.tone(NOTE_CS3H, 30);
+          if (hurt)
+          {
+            entity.state |= FLAG_MISC2; // use flag MISC2 to tell the boss he has been hurt and should revert
+          }
+          else
+          {
+            sound.tone(NOTE_G2, 15);
+          }
         }
-        else
+
+        if (hurt)
         {
-          entity.hp -= value;
-          entity.state |= MASK_HURT;
-          sound.tone(NOTE_CS3H, 15);
+          if (entity.hp <= value)
+          {
+            if (entity.type == ENTITY_CANDLE_COIN)
+            {
+              // special case: CANDLE_COIN spawns a COIN
+              entity.type = ENTITY_PICKUP_COIN;
+            }
+            else if (entity.type == ENTITY_CANDLE_POWERUP)
+            {
+              // special case: CANDLE_POWERUP spawns an HEART or KNIFE
+              entity.type = Player::hp == PLAYER_MAX_HP ? ENTITY_PICKUP_KNIFE : ENTITY_PICKUP_HEART;
+            }
+            else
+            {
+              entity.state &= ~FLAG_ALIVE;
+            }
+            entity.counter = 0;
+            entity.frame = 0;
+            entity.hp = 0;
+            sound.tone(NOTE_CS3H, 30);
+          }
+          else
+          {
+            entity.hp -= value;
+            entity.state |= MASK_HURT;
+            sound.tone(NOTE_CS3H, 15);
+          }
         }
       }
     }
