@@ -127,7 +127,7 @@ void loopTitle()
 
     drawMenuOption(TITLE_OPTION_PLAY, text_play);
     drawMenuOption(TITLE_OPTION_HELP, text_help);
-    drawMenuOption(TITLE_OPTION_SFX, ab.audio.enabled() ? text_sfx_off : text_sfx_on);
+    drawMenuOption(TITLE_OPTION_SFX, ab.audio.enabled() ? text_sfx_on : text_sfx_off);
   }
   sprites.drawOverwrite(36, 5 + titleLeftOffset, title_left, 0);
   sprites.drawOverwrite(69, 5 + titleRightOffset, title_right, 0);  
