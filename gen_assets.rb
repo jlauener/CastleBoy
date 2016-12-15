@@ -43,15 +43,23 @@ class MapData
   MAX_HEIGHT = 8
   MAX_ENTITIES = 32
   PER_LINE = 8
+    
+  TILED_TILE_ID_MIN = 0
+  TILED_TILE_ID_MAX = 3
+  TILED_ENTITY_ID_MIN = 8
+  TILED_ENTITY_ID_MAX = 24
+  TILED_PLAYER_ID = 25  
   
-  TILE_ID_MAX = 4
+  TILE_EMPTY = 0
+  TILE_PROP = 1
+  TILE_MISC = 2
+  TILE_GROUND = 3
+  MAX_RLE_TILE = [64, 1, 4, 64]
+  RLE_SIZE = [6, 0, 2, 6]  
   
-  ENTITY_OFFSET = 4
-  ENTITY_PLAYER = 17
-  ENTITY_ID_MAX = 16
-  ENTITY_FALLING_TILE = 1
+  ENTITY_FALLING_TILE = 0
   
-  ENTITY_SKULL = 9
+  ENTITY_SKULL = 8
   ENTITY_SKULL_X_OFFSET = 7
   
   TYPE_INDOOR_NAME = "indoor"
@@ -72,9 +80,11 @@ class MapData
   attr :playerX
   attr :playerY
   attr :entityCount
-  attr :tileData
-  attr :entityData
+  attr :tileMap
+  attr :entityMap
   attr :size  
+  attr :tileDataSize
+  attr :tileDataSizeRLE
   attr :mapType  
   attr :mapTypeStr
 
@@ -82,11 +92,8 @@ class MapData
     jsonHash = JSON.parse(File.read(fileName))
     @name = File.basename(fileName,".*")
     @width = jsonHash["width"]
-    @height = jsonHash["height"]
-    @tileData = jsonHash["layers"][0]["data"]
-    @entityData = jsonHash["layers"][1]["data"]
+    @height = jsonHash["height"]    
     @size = 0
-
     if @width > MAX_WIDTH
       raise "Map #{@name} is too wide, max is #{MAX_WIDTH}, current is #{@width}."
     end
@@ -95,28 +102,20 @@ class MapData
       raise "Map #{@name} is too high, max is #{MAX_HEIGHT}, current is #{@height}."
     end
     
-    # first pass: apply offset and find player
+    @tileDataSize = (@width * @height) / 4
+    
+    propData = jsonHash["layers"][0]["data"]
+    mainData = jsonHash["layers"][1]["data"]      
+    
+    # find player start
     playerFound = false
     for iy in 0...@height
-      for ix in 0...@width
-        if @tileData[iy * @width + ix] > TILE_ID_MAX
-          raise "Map #{@name} has invalid tile id #{@tileData[iy * @width + ix]} at #{ix},#{iy}."
-        end
-        
-        entity = @entityData[iy * @width + ix]
-        if entity > 0
-          entity -= ENTITY_OFFSET                
-          if entity == ENTITY_PLAYER
-            @playerX = ix
-            @playerY = iy          
-            playerFound = true;
-            @entityData[iy * @width + ix] = 0
-          else
-            if entity < 0 or entity > ENTITY_ID_MAX
-              raise "Map #{@name} has invalid entity id #{entity} at #{ix},#{iy}."
-            end
-            @entityData[iy * @width + ix] = entity
-          end
+      for ix in 0...@width        
+        if mainData[iy * @width + ix] == TILED_PLAYER_ID
+          @playerX = ix
+          @playerY = iy          
+          playerFound = true;
+          mainData[iy * @width + ix] = 0                    
         end
       end
     end
@@ -124,17 +123,49 @@ class MapData
       raise "Map #{@name} has no player starting position."
     end
     
-    #second pass: merge falling tiles and count entities
+    # extract tile and entity map
+    @tileMap = []
+    @entityMap = []
+    for iy in 0...@height
+      for ix in 0...@width
+        mainId = mainData[iy * @width + ix]      
+        if mainId < TILED_TILE_ID_MIN
+          raise "Map #{@name} has invalid tile ID #{mainId} in main layer at #{ix},#{iy}."
+        elsif mainId == 0
+          @tileMap[iy * @width + ix] = 0
+          @entityMap[iy * @width + ix] = -1        
+        elsif mainId <= TILED_TILE_ID_MAX
+          @tileMap[iy * @width + ix] = mainId
+          @entityMap[iy * @width + ix] = -1
+        elsif mainId >= TILED_ENTITY_ID_MIN and mainId <= TILED_ENTITY_ID_MAX
+          @tileMap[iy * @width + ix] = 0
+          @entityMap[iy * @width + ix] = mainId - TILED_ENTITY_ID_MIN - 1
+        else
+          raise "Map #{@name} has invalid tile ID #{mainId} in main layer at #{ix},#{iy}."
+        end
+        
+        if @tileMap[iy * @width + ix] == 0
+          propId = propData[iy * @width + ix]      
+          if propId < TILED_TILE_ID_MIN or propId > TILED_TILE_ID_MAX
+            raise "Map #{@name} has invalid tile ID #{propId} in prop layer at #{ix},#{iy}."
+          else
+            @tileMap[iy * @width + ix] = propId
+          end
+        end
+      end
+    end
+    
+    #merge falling tiles and count entities
     @entityCount = 0
     for iy in 0...@height
       for ix in 0...@width      
-        entity = @entityData[iy * @width + ix]       
-        if entity > 0
+        entity = @entityMap[iy * @width + ix]       
+        if entity >= 0
           if entity == ENTITY_FALLING_TILE
-            if @entityData[iy * @width + ix + 1] != ENTITY_FALLING_TILE
+            if @entityMap[iy * @width + ix + 1] != ENTITY_FALLING_TILE
               raise "Map #{@name} has invalid falling tile at #{ix},#{iy}. Must go in pair"
             end
-            @entityData[iy * @width + ix + 1] = 0
+            @entityMap[iy * @width + ix + 1] = 0
           end
           @entityCount += 1
         end
@@ -156,14 +187,16 @@ class MapData
     else
       raise "Map #{@name} has an invalid type '#{@mapTypeStr}'."
     end
-  end
-
+    
+    simulateRLE()
+  end  
+  
   def code_header
     o = "// name: #{@name}\n"
     o << "// type: #{@mapTypeStr}\n"
     o << "// size: #{@width}x#{@height}\n"
     o << "//\n"
-    @tileData.each_with_index do |tile, i|
+    @tileMap.each_with_index do |tile, i|
       o << "// " if i % @width == 0
       o << tile.to_s
       o << "\n" if (i + 1) % @width == 0
@@ -195,10 +228,8 @@ class MapData
     count = 0
     for ix in 0...@width
       for iy in 0...@height
-        tile = tileData[iy * @width + ix]
-        if tile < 4
-          byte += tile << count;
-        end
+        tile = @tileMap[iy * @width + ix]
+        byte += tile << count;        
         count += 2
 
         if count == 8
@@ -223,14 +254,14 @@ class MapData
     total = 0
     for ix in 0...@width
       for iy in 0...@height
-        entity = @entityData[iy * @width + ix]
-        if entity > 0
+        entity = @entityMap[iy * @width + ix]
+        if entity >= 0
           x = ix
           y = iy
           if entity == ENTITY_SKULL
             x += ENTITY_SKULL_X_OFFSET
           end
-          add_byte(o, y + ((entity - 1) << 4)).add_byte(o, x)
+          add_byte(o, y + (entity << 4)).add_byte(o, x)
           total += 2
           o << "\n" if total % PER_LINE == 0          
         end
@@ -238,6 +269,28 @@ class MapData
     end
     o << "\n"
     o
+  end
+  
+  def simulateRLE
+    @tileDataSizeRLE = 0
+    currentTile = -1
+    currentTileCount = 0
+    for iy in 0...@height
+      for ix in 0...@width      
+        tile = @tileMap[iy * @width + ix]
+        if tile == currentTile and currentTileCount < MAX_RLE_TILE[tile]
+          #puts "added tile #{ix},#{iy}"
+          currentTileCount += 1
+        elsif currentTile != -1
+          #puts "finished RLE block of #{currentTileCount}"
+          @tileDataSizeRLE += 2 + RLE_SIZE[currentTile]
+          currentTileCount = 0          
+        end
+        currentTile = tile
+      end
+    end
+    
+    @tileDataSizeRLE /= 8
   end
 
   def to_s
@@ -263,7 +316,7 @@ files = Dir.glob("./map/**/*.json")
 files.each do |fileName|
   mapData = MapData.new(fileName)
   out = mapData.to_s
-  puts "#{mapData.name}: #{mapData.width}x#{mapData.height} tiles #{mapData.entityCount} entities #{mapData.size} bytes"
+  puts "#{mapData.name}: #{mapData.width}x#{mapData.height} (#{mapData.entityCount} entities) size=#{mapData.size}bytes tileData=#{mapData.tileDataSize} tileDataRLE=#{mapData.tileDataSizeRLE}"
   assets.files << out
 end
 puts "\n"

@@ -150,8 +150,8 @@ void Menu::loop()
       break;
     case STATE_STAGE_INTRO:
       sprites.drawOverwrite(46, 22, text_stage, 0);
-      Util::drawNumber(69, 22, Game::stageIndex / 3 + 1, ALIGN_LEFT);
-      Util::drawNumber(76, 22, Game::stageIndex % 3 + 1, ALIGN_LEFT);
+      Util::drawNumber(69, 22, Game::stageIndex / LEVEL_PER_STAGE + 1, ALIGN_LEFT);
+      Util::drawNumber(76, 22, Game::stageIndex % LEVEL_PER_STAGE + 1, ALIGN_LEFT);
       if(Game::hasPlayerDied)
       {
         sprites.drawOverwrite(52, 38, ui_life_count, 0);

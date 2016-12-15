@@ -5,7 +5,8 @@
 #include "player.h"
 #include "assets.h"
 
-// TODO refactor damage and collide (let's wait for falling blocks)
+// TODO refactor damage and collide (let's wait for falling blocks) ?
+// TODO handling of hurt, can be handled by entity update so we can delegate specific code instead of hacking in damage function
 
 #define DIE_ANIM_ORIGIN_X 4
 #define DIE_ANIM_ORIGIN_Y 10
@@ -46,8 +47,8 @@
 // 1010 ??? 0x0A
 // 1011 ??? 0x0B
 // 1100 ??? 0x0C
-// 1101 boss 1
-#define ENTITY_BOSS_1 0x0D
+// 1101 boss knight
+#define ENTITY_BOSS_KNIGHT 0x0D
 // 1110 boss 2 0x0E
 // 1111 boss 3 0x0F
 
@@ -189,13 +190,13 @@ const EntityData data[] =
     0, // hp
     NULL // sprite
   },
-  // 1101 boss 1
+  // 1101 boss knight
   {
     8, 26, // hitbox x, y
     16, 26, // hitbox width, height
     12, 32, // sprite origin x, y
     BOSS_MAX_HP, // hp
-    entity_boss1_plus_mask // sprite
+    entity_boss_knight_plus_mask // sprite
   },
   // 1110 reserved boss 2
   {
@@ -282,6 +283,13 @@ Entity* Entities::add(uint8_t type, int16_t x, int8_t y)
 
 void updateSkeleton(Entity& entity)
 {
+  if (entity.state & MASK_HURT)
+  {
+    // hurt
+    entity.frame = 5;
+    return;
+  }
+  
   if (ab.everyXFrames(3))
   {
     if (entity.state & FLAG_MISC2)
@@ -318,10 +326,12 @@ void updateSkeleton(Entity& entity)
 
   if (entity.state & FLAG_MISC2)
   {
+    // throwing
     entity.frame = 4;
   }
   else if (ab.everyXFrames(8))
   {
+    // normal
     ++entity.frame %= 2;
     if (entity.hp > 2)
     {
@@ -331,8 +341,14 @@ void updateSkeleton(Entity& entity)
   }
 }
 
-void updateBoss1(Entity& entity)
+void updateBossKnight(Entity& entity)
 {
+  if (entity.state & MASK_HURT)
+  {
+    // hurt  
+    return;
+  }
+  
   if (ab.everyXFrames(4))
   {
     if (entity.state & FLAG_MISC2)
@@ -363,6 +379,12 @@ void updateBoss1(Entity& entity)
 
 void updateFlyer(Entity& entity)
 {
+  if (entity.state & MASK_HURT)
+  {
+    // hurt  
+    return;
+  }
+  
   if (!(entity.state & FLAG_MISC1) && entity.pos.x - Player::pos.x < 72)
   {
     entity.state |= FLAG_MISC1;
@@ -424,51 +446,48 @@ void Entities::update()
           }
         }
 
-        if (!(entity.state & MASK_HURT))
+        switch (entity.type)
         {
-          switch (entity.type)
-          {
-            case ENTITY_FALLING_TILE:
-              if (entity.state & FLAG_MISC1)
+          case ENTITY_FALLING_TILE:
+            if (entity.state & FLAG_MISC1)
+            {
+              if (++entity.counter == 30)
               {
-                if (++entity.counter == 30)
-                {
-                  entity.state = 0;
-                }
+                entity.state = 0;
               }
-              break;
-            case ENTITY_CANDLE_COIN:
-            case ENTITY_CANDLE_POWERUP:
-              if (ab.everyXFrames(8))
-              {
-                ++entity.frame %= 2;
-              }
-              break;
-            case ENTITY_PICKUP_COIN:
-            case ENTITY_PICKUP_HEART:
-            case ENTITY_PICKUP_KNIFE:
-              Game::moveY(entity.pos, 2, data[entity.type].hitbox);
-              if (entity.type != ENTITY_PICKUP_KNIFE && ab.everyXFrames(12))
-              {
-                ++entity.frame %= 2;
-              }
-              break;
-            case ENTITY_SKELETON_SIMPLE:
-            case ENTITY_SKELETON_THROW:
-            case ENTITY_SKELETON_ARMORED:
-            case ENTITY_SKELETON_THROW_ARMORED:
-              updateSkeleton(entity);
-              break;
-            case ENTITY_FLYER_SKULL:
-              updateFlyer(entity);
-              break;
-            case ENTITY_BOSS_1:
-              updateBoss1(entity);
-              break;
-            case ENTITY_PROJECTILE_BONE:
-              updateProjectileBone(entity);
-              break;
-          }
+            }
+            break;
+          case ENTITY_CANDLE_COIN:
+          case ENTITY_CANDLE_POWERUP:
+            if (ab.everyXFrames(8))
+            {
+              ++entity.frame %= 2;
+            }
+            break;
+          case ENTITY_PICKUP_COIN:
+          case ENTITY_PICKUP_HEART:
+          case ENTITY_PICKUP_KNIFE:
+            Game::moveY(entity.pos, 2, data[entity.type].hitbox);
+            if (entity.type != ENTITY_PICKUP_KNIFE && ab.everyXFrames(12))
+            {
+              ++entity.frame %= 2;
+            }
+            break;
+          case ENTITY_SKELETON_SIMPLE:
+          case ENTITY_SKELETON_THROW:
+          case ENTITY_SKELETON_ARMORED:
+          case ENTITY_SKELETON_THROW_ARMORED:
+            updateSkeleton(entity);
+            break;
+          case ENTITY_FLYER_SKULL:
+            updateFlyer(entity);
+            break;
+          case ENTITY_BOSS_KNIGHT:
+            updateBossKnight(entity);
+            break;
+          case ENTITY_PROJECTILE_BONE:
+            updateProjectileBone(entity);
+            break;
         }
       }
       else
@@ -505,17 +524,10 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
         hit = true;
 
         bool hurt = true;
-        if (entity.type == ENTITY_BOSS_1)
+        if (entity.type == ENTITY_BOSS_KNIGHT)
         {
           // special case: boss1 can only be hit from the back
-          if (entity.state & FLAG_MISC1)
-          {
-            hurt = Player::pos.x < entity.pos.x;
-          }
-          else
-          {
-            hurt = Player::pos.x > entity.pos.x;
-          }
+          hurt = entity.state & FLAG_MISC1 ? Player::pos.x < entity.pos.x : Player::pos.x > entity.pos.x;
           if (hurt)
           {
             entity.state |= FLAG_MISC2; // use flag MISC2 to tell the boss he has been hurt and should revert
