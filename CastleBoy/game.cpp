@@ -63,6 +63,11 @@ void Game::loop()
     }
     return;
   }
+
+  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.pressed(LEFT_BUTTON))
+  {
+    play(stage_test);
+  }
 #endif
 
   // update
@@ -138,14 +143,14 @@ void Game::loop()
   }
 
   // update camera
-  if (Player::pos.x < cameraX + CAMERA_BUFFER)
+  if (Player::pos.x < cameraX + CAMERA_LEFT_BUFFER)
   {
-    cameraX = Player::pos.x - CAMERA_BUFFER;
+    cameraX = Player::pos.x - CAMERA_LEFT_BUFFER;
     if (cameraX < 0) cameraX = 0;
   }
-  else if (Player::pos.x > cameraX + 128 - CAMERA_BUFFER)
+  else if (Player::pos.x > cameraX + 128 - CAMERA_RIGHT_BUFFER)
   {
-    cameraX = Player::pos.x - 128 + CAMERA_BUFFER;
+    cameraX = Player::pos.x - 128 + CAMERA_RIGHT_BUFFER;
     if (cameraX > Map::width * TILE_WIDTH - 128) cameraX = Map::width * TILE_WIDTH - 128;
   }
 

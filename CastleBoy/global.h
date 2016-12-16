@@ -12,7 +12,7 @@ extern uint8_t flashCounter;
 //#define DEBUG_LOG // enable to show debug logs (LOG_DEBUG)
 //#define DEBUG_CPU // enable to display cpu load
 //#define DEBUG_RAM // enable to display RAM usage
-#define DEBUG_CHEAT // enable to reset level with A+B+down
+//#define DEBUG_CHEAT // enable to reset level with A+B+down
 //#define DEBUG_HITBOX // enable to show hitboxes
 
 #define FPS 60
@@ -28,20 +28,26 @@ extern uint8_t flashCounter;
 #define GAME_STARTING_LIFE 3
 #define GAME_STARTING_TIME 12000 // frames (200 secs)
 #define BOSS_MAX_HP 12
+#define CAMERA_LEFT_BUFFER 24
+#define CAMERA_RIGHT_BUFFER 86
 
 // player
 #define PLAYER_JUMP_GRAVITY_F 190 // 0.18
 #define PLAYER_FALL_GRAVITY_F 190 // 0.18
 #define PLAYER_JUMP_FORCE_F 3100 // 3.0
-//#define PLAYER_LEVITATE_DURATION 3s
-#define PLAYER_KNOCKBACK_DURATION 24
-#define PLAYER_KNOCKBACK_FAST 18
+#define PLAYER_LEVITATE_DURATION 3 // frames
+#define PLAYER_KNOCKBACK_DURATION 24 //frames
+#define PLAYER_KNOCKBACK_FAST 18 // frames
 #define PLAYER_INVINCIBLE_DURATION 120
 #define PLAYER_SPEED_NORMAL 2 // every 2 frames
 #define PLAYER_SPEED_DUCK 4 // every 4 frames
 #define PLAYER_SPEED_KNOCKBACK_NORMAL 2 // every 2 frames
 #define PLAYER_SPEED_KNOCKBACK_FAST 1 // every 1 frame
 #define PLAYER_MAX_HP 5
+
+// entities
+#define ENTITY_FALLING_TILE_DURATION 40
+#define ENTITY_FALLING_TILE_HALF_DURATION 20
 
 // game state
 #define STATE_TITLE 0
@@ -79,8 +85,6 @@ extern uint8_t flashCounter;
 #define HALF_TILE_HEIGHT 4
 #define MAP_WIDTH_MAX 16
 #define MAP_HEIGHT_MAX 6
-
-#define CAMERA_BUFFER 64
 
 struct Vec
 {

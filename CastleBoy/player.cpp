@@ -58,7 +58,7 @@ bool knifeAttack;
 bool jumping;
 bool ducking;
 uint8_t knockbackCounter;
-//uint8_t levitateCounter;
+uint8_t levitateCounter;
 uint8_t invincibleCounter;
 bool flipped;
 bool walkFrame;
@@ -84,7 +84,7 @@ void Player::init(int16_t x, int8_t y)
   visible = true;
   knockbackCounter = 0;
   invincibleCounter = 0;
-  //levitateCounter = 0;
+  levitateCounter = 0;
   velocityX = 0;
   velocityYf = 0;
   knife = false;
@@ -172,19 +172,19 @@ void Player::update()
   const Box& hitbox = ducking ? duckHitbox : normalHitbox;
 
   // vertical movement: levitation (middle of jump)
-  //if (levitateCounter > 0)
-  // {
-  //   --levitateCounter;
-  // }
+  if (levitateCounter > 0)
+  {
+    --levitateCounter;
+  }
   // vertical movement: jump
-  if (jumping)
+  else if (jumping)
   {
     velocityYf += PLAYER_JUMP_GRAVITY_F;
     if (velocityYf >= 0)
     {
       velocityYf = 0;
       jumping = false;
-      //levitateCounter = PLAYER_LEVITATE_DURATION;
+      levitateCounter = PLAYER_LEVITATE_DURATION;
     }
     else
     {
@@ -263,7 +263,7 @@ void Player::update()
       }
       else
       {
-        Entities::damage(pos.x + (flipped ? -24 : 0), pos.y - (ducking ? 4 : 12), 24, 2, 2);
+        Entities::damage(pos.x + (flipped ? -24 : 0), pos.y - (ducking ? 4 : 11), 24, 2, 2);
 #ifdef DEBUG_HITBOX
         ab.fillRect(pos.x + (flipped ? -24 : 0) - Game::cameraX, pos.y - (ducking ? 4 : 12), 24, 2, WHITE);
 #endif
@@ -306,14 +306,14 @@ void Player::update()
     velocityX = flipped ? 1 : -1;
     knockbackCounter = PLAYER_KNOCKBACK_DURATION;
     jumping = false;
-    //levitateCounter = 0;
+    levitateCounter = 0;
     attackCounter = 0;
     if (--hp > 0)
     {
-     // alive = false;
-   // }
-    //else
-    //{
+      // alive = false;
+      // }
+      //else
+      //{
       invincibleCounter = PLAYER_INVINCIBLE_DURATION;
     }
     flashCounter = 2;

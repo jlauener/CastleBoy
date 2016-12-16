@@ -141,9 +141,9 @@ const EntityData data[] =
     6, 14, // hitbox width, height
     8, 16, // sprite origin x, y
     6, // hp
-    entity_skeleton_plus_mask // sprite
+    entity_skeleton_armored_plus_mask // sprite
   },
-  // 0111 skeleton: throw armored
+  // 0111 skeleton: throw armored (TO BE REMOVED?)
   {
     3, 14, // hitbox x, y
     6, 14, // hitbox width, height
@@ -193,8 +193,8 @@ const EntityData data[] =
   },
   // 1101 boss knight
   {
-    8, 26, // hitbox x, y
-    16, 26, // hitbox width, height
+    6, 25, // hitbox x, y
+    12, 25, // hitbox width, height
     12, 32, // sprite origin x, y
     BOSS_MAX_HP, // hp
     entity_boss_knight_plus_mask // sprite
@@ -313,7 +313,7 @@ void updateSkeleton(Entity& entity)
         }
         else
         {
-          if (entity.type & SKELETON_THROW_FLAG && entity.pos.x - Player::pos.x < 72)
+          if (entity.type & SKELETON_THROW_FLAG && entity.pos.x - Player::pos.x < 94)
           {
             // start throwing bone
             entity.state |= FLAG_MISC2;
@@ -327,17 +327,12 @@ void updateSkeleton(Entity& entity)
   if (entity.state & FLAG_MISC2)
   {
     // throwing
-    entity.frame = 4;
+    entity.frame = 3;
   }
   else if (ab.everyXFrames(8))
   {
     // normal
-    ++entity.frame %= 2;
-    if (entity.hp > 2)
-    {
-      // use armored frame
-      entity.frame += 2;
-    }
+    entity.frame = entity.frame == 2 ? 1 : 2;
   }
 }
 
@@ -369,10 +364,10 @@ void updateBossKnight(Entity& entity)
 
   if (ab.everyXFrames(10))
   {
-    ++entity.frame %= 2;
+    entity.frame = entity.frame == 2 ? 1 : 2;
     if (entity.state & FLAG_MISC1)
     {
-      entity.frame += 2;
+      entity.frame += 4;
     }
   }
 }
@@ -385,7 +380,7 @@ void updateFlyer(Entity& entity)
   //    return;
   //  }
 
-  if (!(entity.state & FLAG_MISC1) && entity.pos.x - Player::pos.x < 72)
+  if (!(entity.state & FLAG_MISC1) && entity.pos.x - Player::pos.x < 90)
   {
     entity.state |= FLAG_MISC1;
   }
@@ -458,9 +453,13 @@ void Entities::update()
           case ENTITY_FALLING_TILE:
             if (entity.state & FLAG_MISC1)
             {
-              if (++entity.counter == 30)
+              if (++entity.counter == ENTITY_FALLING_TILE_DURATION)
               {
                 entity.state = 0;
+              }
+              else if (entity.counter == ENTITY_FALLING_TILE_HALF_DURATION)
+              {
+                entity.frame = 1;
               }
             }
             break;
@@ -547,26 +546,39 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
       {
         hit = true;
 
-        bool hurt = true;
+        bool damage = true;
         if (entity.type == ENTITY_BOSS_KNIGHT)
         {
           // special case: boss1 can only be hit from the back
-          hurt = entity.state & FLAG_MISC1 ? Player::pos.x < entity.pos.x : Player::pos.x > entity.pos.x;
-          if (hurt)
+          damage = entity.state & FLAG_MISC1 ? Player::pos.x < entity.pos.x : Player::pos.x > entity.pos.x;
+          if (damage)
           {
             entity.state |= FLAG_MISC2; // use flag MISC2 to tell the boss he has been hurt and should revert
+            entity.frame = 0;
           }
           else
           {
-            sound.tone(NOTE_G2, 15);
+            entity.frame = 3;
+            sound.tone(NOTE_GS2, 15);
+          }
+
+          if (entity.state & FLAG_MISC1)
+          {
+            entity.frame += 4;
           }
         }
-        else if (entity.type == ENTITY_SKELETON_SIMPLE || entity.type == ENTITY_SKELETON_THROW)
+        else
         {
-          entity.frame = 5;
+          entity.frame = 0;
         }
+        //else if (entity.type == ENTITY_SKELETON_SIMPLE || entity.type == ENTITY_SKELETON_THROW )
+       // {
+       //  entity.frame = 5;
+       // }
 
-        if (hurt)
+        entity.state |= MASK_HURT;
+
+        if (damage)
         {
           if (entity.hp <= value)
           {
@@ -591,11 +603,12 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
             if (entity.type == ENTITY_CANDLE_COIN || entity.type == ENTITY_CANDLE_POWERUP)
             {
               entity.frame = 0;
+              entity.state &= ~MASK_HURT; // FIXME
             }
-            else
-            {
-              entity.state |= MASK_HURT;
-            }
+//            else
+//            {
+//              entity.state |= MASK_HURT;
+//            }
             entity.state &= ~FLAG_ALIVE;
             entity.hp = 0;
             entity.counter = 0;
@@ -606,7 +619,7 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
           {
             entity.hp -= value;
             sound.tone(NOTE_CS3H, 15);
-            entity.state |= MASK_HURT;
+            //entity.state |= MASK_HURT;
           }
         }
       }
@@ -633,7 +646,7 @@ bool Entities::moveCollide(int16_t x, int8_t y, const Box& hitbox)
       {
         collide = true;
         entity.state |= FLAG_MISC1;
-        entity.frame = 1;
+        //entity.frame = 0;
       }
     }
   }

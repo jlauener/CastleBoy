@@ -46,9 +46,10 @@ class MapData
     
   TILED_TILE_ID_MIN = 0
   TILED_TILE_ID_MAX = 3
-  TILED_ENTITY_ID_MIN = 8
-  TILED_ENTITY_ID_MAX = 24
+  TILED_ENTITY_ID_MIN = 9
+  TILED_ENTITY_ID_MAX = 25
   TILED_PLAYER_ID = 25  
+  TILED_FALLING_TILE_ID = 9
   
   TILE_EMPTY = 0
   TILE_PROP = 1
@@ -56,8 +57,6 @@ class MapData
   TILE_GROUND = 3
   MAX_RLE_TILE = [64, 1, 4, 64]
   RLE_SIZE = [6, 0, 2, 6]  
-  
-  ENTITY_FALLING_TILE = 0
   
   ENTITY_SKULL = 8
   ENTITY_SKULL_X_OFFSET = 7
@@ -104,7 +103,7 @@ class MapData
     
     @tileDataSize = (@width * @height) / 4
     
-    propData = jsonHash["layers"][0]["data"]
+    backgroundData = jsonHash["layers"][0]["data"]
     mainData = jsonHash["layers"][1]["data"]      
     
     # find player start
@@ -123,58 +122,57 @@ class MapData
       raise "Map #{@name} has no player starting position."
     end
     
+	#merge falling tiles and count entities
+    for iy in 0...@height
+      for ix in 0...@width
+		if mainData[iy * @width + ix] == TILED_FALLING_TILE_ID
+          if mainData[iy * @width + ix + 1] != TILED_FALLING_TILE_ID
+              raise "Map #{@name} has invalid falling tile at #{ix},#{iy}. Must go in pair"
+          end
+          mainData[iy * @width + ix + 1] = 0
+		  puts "Removed falling tile at #{ix}, #{iy}."
+		end			
+	  end	  
+    end
+	
     # extract tile and entity map
     @tileMap = []
+	@entityCount = 0
     @entityMap = []
     for iy in 0...@height
       for ix in 0...@width
-        mainId = mainData[iy * @width + ix]      
-        if mainId < TILED_TILE_ID_MIN
-          raise "Map #{@name} has invalid tile ID #{mainId} in main layer at #{ix},#{iy}."
-        elsif mainId == 0
+        id = mainData[iy * @width + ix]      
+        if id < TILED_TILE_ID_MIN
+          raise "Map #{@name} has invalid tile ID #{id} in main layer at #{ix},#{iy}."
+        elsif id == 0
           @tileMap[iy * @width + ix] = 0
           @entityMap[iy * @width + ix] = -1        
-        elsif mainId <= TILED_TILE_ID_MAX
-          @tileMap[iy * @width + ix] = mainId
+        elsif id <= TILED_TILE_ID_MAX
+          @tileMap[iy * @width + ix] = id
           @entityMap[iy * @width + ix] = -1
-        elsif mainId >= TILED_ENTITY_ID_MIN and mainId <= TILED_ENTITY_ID_MAX
+        elsif id >= TILED_ENTITY_ID_MIN and id <= TILED_ENTITY_ID_MAX
           @tileMap[iy * @width + ix] = 0
-          @entityMap[iy * @width + ix] = mainId - TILED_ENTITY_ID_MIN - 1
+          @entityMap[iy * @width + ix] = id - TILED_ENTITY_ID_MIN
+		  @entityCount += 1
         else
-          raise "Map #{@name} has invalid tile ID #{mainId} in main layer at #{ix},#{iy}."
+          raise "Map #{@name} has invalid tile ID #{id} in main layer at #{ix},#{iy}."
         end
         
         if @tileMap[iy * @width + ix] == 0
-          propId = propData[iy * @width + ix]      
-          if propId < TILED_TILE_ID_MIN or propId > TILED_TILE_ID_MAX
-            raise "Map #{@name} has invalid tile ID #{propId} in prop layer at #{ix},#{iy}."
+          id = backgroundData[iy * @width + ix]      
+          if id < TILED_TILE_ID_MIN or id > TILED_TILE_ID_MAX
+            raise "Map #{@name} has invalid tile ID #{id} in prop layer at #{ix},#{iy}."
           else
-            @tileMap[iy * @width + ix] = propId
+            @tileMap[iy * @width + ix] = id
           end
         end
       end
     end
-    
-    #merge falling tiles and count entities
-    @entityCount = 0
-    for iy in 0...@height
-      for ix in 0...@width      
-        entity = @entityMap[iy * @width + ix]       
-        if entity >= 0
-          if entity == ENTITY_FALLING_TILE
-            if @entityMap[iy * @width + ix + 1] != ENTITY_FALLING_TILE
-              raise "Map #{@name} has invalid falling tile at #{ix},#{iy}. Must go in pair"
-            end
-            @entityMap[iy * @width + ix + 1] = 0
-          end
-          @entityCount += 1
-        end
-      end
-    end
-    if @entityCount > MAX_ENTITIES
+	if @entityCount > MAX_ENTITIES
       raise "Map #{@name} has too many entities, max is #{MAX_ENTITIES}, current is #{@entityCount}."
     end
     
+	# extract map type (indoor, outdoor, ...)
     @mapTypeStr = jsonHash["properties"]["type"]
     if @mapTypeStr == TYPE_INDOOR_NAME
       @mapType = TYPE_INDOOR_VALUE
