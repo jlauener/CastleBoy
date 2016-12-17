@@ -22,7 +22,8 @@
 // 0000 falling tile
 #define ENTITY_FALLING_TILE 0x00
 
-// 0001 ??? 0x01
+// 0001 fireball vert
+#define ENTITY_FIREBALL_VERT 0x01
 
 // 0010 candle: coin
 // 0011 candle: powerup
@@ -104,13 +105,13 @@ const EntityData data[] =
     0, // hp
     entity_falling_tile_plus_mask // sprite
   },
-  // 0001 ???
+  // 0001 fireball vert
   {
-    0, 0, // hitbox x, y
-    0, 0, // hitbox width, height
-    0, 0, // sprite origin x, y
+    4, 8, // hitbox x, y
+    8, 8, // hitbox width, height
+    4, 8, // sprite origin x, y
     0, // hp
-    NULL // sprite
+    entity_fireball_vert_plus_mask // sprite
   },
   // 0010 candle: coin
   {
@@ -503,6 +504,12 @@ void Entities::update()
               {
                 entity.frame = 1;
               }
+            }
+            break;
+          case ENTITY_FIREBALL_VERT:
+            if (--entity.pos.y == -4)
+            {
+              entity.pos.y = 68;
             }
             break;
           case ENTITY_CANDLE_COIN:

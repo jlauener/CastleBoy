@@ -122,7 +122,7 @@ class MapData
       raise "Map #{@name} has no player starting position."
     end
     
-	#merge falling tiles and count entities
+	#merge falling tiles
     for iy in 0...@height
       for ix in 0...@width
 		if mainData[iy * @width + ix] == TILED_FALLING_TILE_ID
@@ -130,7 +130,6 @@ class MapData
               raise "Map #{@name} has invalid falling tile at #{ix},#{iy}. Must go in pair"
           end
           mainData[iy * @width + ix + 1] = 0
-		  puts "Removed falling tile at #{ix}, #{iy}."
 		end			
 	  end	  
     end
