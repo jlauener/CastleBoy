@@ -35,7 +35,7 @@ extern uint8_t flashCounter;
 #define PLAYER_JUMP_GRAVITY_F 190 // 0.18
 #define PLAYER_FALL_GRAVITY_F 190 // 0.18
 #define PLAYER_JUMP_FORCE_F 3100 // 3.0
-#define PLAYER_LEVITATE_DURATION 3 // frames
+#define PLAYER_LEVITATE_DURATION 4 // frames
 #define PLAYER_KNOCKBACK_DURATION 24 //frames
 #define PLAYER_KNOCKBACK_FAST 18 // frames
 #define PLAYER_INVINCIBLE_DURATION 120

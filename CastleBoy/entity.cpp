@@ -7,6 +7,11 @@
 
 // TODO refactor damage and collide (let's wait for falling blocks) ?
 // TODO handling of hurt, can be handled by entity update so we can delegate specific code instead of hacking in damage function
+// FIXME when entity enter, hurt frame displayed
+// FIXME everyXFrames is not precise enough, maybe each entity should have it's own frame counter?
+// can also fix the fact hurt frame is displayed
+// FIXME candle should not play die anim
+// FIXME flash when hurt -> reduce flash duration
 
 //#define HURT_INVINCIBLE_THRESHOLD 4
 #define DIE_ANIM_ORIGIN_X 4
@@ -17,7 +22,7 @@
 // 0000 falling tile
 #define ENTITY_FALLING_TILE 0x00
 
-// 0001 ???
+// 0001 ??? 0x01
 
 // 0010 candle: coin
 // 0011 candle: powerup
@@ -43,11 +48,14 @@
 
 // 1000 flyer: skull
 #define ENTITY_FLYER_SKULL 0x08
-
 // 1001 flyer: ??? 0x09
-// 1010 ??? 0x0A
+
+// 1010 hurler
+#define ENTITY_HURLER 0x0A
+
 // 1011 ??? 0x0B
 // 1100 ??? 0x0C
+
 // 1101 boss knight
 #define ENTITY_BOSS_KNIGHT 0x0D
 // 1110 boss 2 0x0E
@@ -63,7 +71,8 @@
 
 // projectiles
 // 10011 projectile: bone
-#define ENTITY_PROJECTILE_BONE 0x13
+#define ENTITY_BONE 0x13
+#define ENTITY_FIREBALL_HORIZ 0x14
 
 // state flags
 #define FLAG_PRESENT 0x80
@@ -121,32 +130,32 @@ const EntityData data[] =
   },
   // 0100 skeleton: simple
   {
-    3, 14, // hitbox x, y
-    6, 14, // hitbox width, height
+    3, 16, // hitbox x, y
+    6, 16, // hitbox width, height
     8, 16, // sprite origin x, y
     2, // hp
     entity_skeleton_plus_mask // sprite
   },
   // 0101 skeleton: throw
   {
-    3, 14, // hitbox x, y
-    6, 14, // hitbox width, height
+    3, 16, // hitbox x, y
+    6, 16, // hitbox width, height
     8, 16, // sprite origin x, y
     2, // hp
     entity_skeleton_plus_mask // sprite
   },
   // 0100 skeleton: armored
   {
-    3, 14, // hitbox x, y
-    6, 14, // hitbox width, height
+    3, 16, // hitbox x, y
+    6, 16, // hitbox width, height
     8, 16, // sprite origin x, y
     6, // hp
     entity_skeleton_armored_plus_mask // sprite
   },
   // 0111 skeleton: throw armored (TO BE REMOVED?)
   {
-    3, 14, // hitbox x, y
-    6, 14, // hitbox width, height
+    3, 16, // hitbox x, y
+    6, 16, // hitbox width, height
     8, 16, // sprite origin x, y
     6, // hp
     entity_skeleton_plus_mask // sprite
@@ -167,13 +176,13 @@ const EntityData data[] =
     0, // hp
     NULL // sprite
   },
-  // 1010 ???
+  // 1010 hurler
   {
-    0, 0, // hitbox x, y
-    0, 0, // hitbox width, height
-    0, 0, // sprite origin x, y
-    0, // hp
-    NULL // sprite
+    4, 8, // hitbox x, y
+    8, 8, // hitbox width, height
+    4, 8, // sprite origin x, y
+    4, // hp
+    entity_hurler_plus_mask // sprite
   },
   // 1011 ???
   {
@@ -246,6 +255,14 @@ const EntityData data[] =
     4, 4, // sprite origin x, y
     0, // hp
     entity_bone_plus_mask // sprite
+  },
+  // 10100 projectile: fireball horiz
+  {
+    3, 3, // hitbox x, y
+    6, 6, // hitbox width, height
+    4, 4, // sprite origin x, y
+    0, // hp
+    entity_fireball_horiz_plus_mask // sprite
   }
 };
 
@@ -296,7 +313,7 @@ void updateSkeleton(Entity& entity)
     {
       if (++entity.counter == 10)
       {
-        Entities::add(ENTITY_PROJECTILE_BONE, entity.pos.x, entity.pos.y - 10);
+        Entities::add(ENTITY_BONE, entity.pos.x, entity.pos.y - 10);
         entity.state &= ~FLAG_MISC2;
         entity.counter = 0;
       }
@@ -336,6 +353,59 @@ void updateSkeleton(Entity& entity)
   }
 }
 
+void updateHurler(Entity& entity)
+{
+  //  if (entity.state & MASK_HURT)
+  //  {
+  //    entity.frame = 5;
+  //    return;
+  //  }
+
+  if (ab.everyXFrames(3))
+  {
+    if (entity.counter < 30) entity.counter++;
+    if (entity.counter == 30 && entity.pos.x - Player::pos.x < 94)
+    {
+      Entities::add(ENTITY_FIREBALL_HORIZ, entity.pos.x, entity.pos.y - 4);
+      entity.counter = 0;
+    }
+  }
+
+  entity.frame = entity.counter < 20 ? 1 : 2;
+}
+
+void updateFlyer(Entity& entity)
+{
+  //  if (entity.state & MASK_HURT)
+  //  {
+  //    // hurt
+  //    return;
+  //  }
+
+  if (!(entity.state & FLAG_MISC1) && entity.pos.x - Player::pos.x < 90)
+  {
+    entity.state |= FLAG_MISC1;
+  }
+
+  if (entity.state & FLAG_MISC1)
+  {
+    if (ab.everyXFrames(2))
+    {
+      --entity.pos.x;
+      if (entity.pos.x < -8)
+      {
+        entity.state  = 0;
+      }
+
+      entity.pos.y += ++entity.counter / 20 % 2 ? 1 : -1;
+    }
+    if (ab.everyXFrames(8))
+    {
+      ++entity.frame %= 2;
+    }
+  }
+}
+
 void updateBossKnight(Entity& entity)
 {
   //  if (entity.state & MASK_HURT)
@@ -372,47 +442,19 @@ void updateBossKnight(Entity& entity)
   }
 }
 
-void updateFlyer(Entity& entity)
-{
-  //  if (entity.state & MASK_HURT)
-  //  {
-  //    // hurt
-  //    return;
-  //  }
-
-  if (!(entity.state & FLAG_MISC1) && entity.pos.x - Player::pos.x < 90)
-  {
-    entity.state |= FLAG_MISC1;
-  }
-
-  if (entity.state & FLAG_MISC1)
-  {
-    if (ab.everyXFrames(2))
-    {
-      --entity.pos.x;
-      if (entity.pos.x < -8)
-      {
-        entity.state  = 0;
-      }
-
-      entity.pos.y += ++entity.counter / 20 % 2 ? 1 : -1;
-    }
-    if (ab.everyXFrames(8))
-    {
-      ++entity.frame %= 2;
-    }
-  }
-}
-
-void updateProjectileBone(Entity& entity)
+void updateProjectile(Entity& entity)
 {
   --entity.pos.x;
-  entity.pos.y += entity.counter - 2;
-  if (entity.counter < 8 && ab.everyXFrames(10))
+  if (entity.type == ENTITY_BONE)
   {
-    ++entity.counter;
+    entity.pos.y += entity.counter - 2;
+    if (entity.counter < 8 && ab.everyXFrames(10))
+    {
+      ++entity.counter;
+    }
   }
-  if (entity.pos.y > 68)
+
+  if (entity.pos.y > 68 || entity.pos.x < Game::cameraX - 8)
   {
     entity.state = 0;
   }
@@ -488,11 +530,15 @@ void Entities::update()
           case ENTITY_FLYER_SKULL:
             updateFlyer(entity);
             break;
+          case ENTITY_HURLER:
+            updateHurler(entity);
+            break;
           case ENTITY_BOSS_KNIGHT:
             updateBossKnight(entity);
             break;
-          case ENTITY_PROJECTILE_BONE:
-            updateProjectileBone(entity);
+          case ENTITY_BONE:
+          case ENTITY_FIREBALL_HORIZ:
+            updateProjectile(entity);
             break;
         }
       }
@@ -572,9 +618,9 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
           entity.frame = 0;
         }
         //else if (entity.type == ENTITY_SKELETON_SIMPLE || entity.type == ENTITY_SKELETON_THROW )
-       // {
-       //  entity.frame = 5;
-       // }
+        // {
+        //  entity.frame = 5;
+        // }
 
         entity.state |= MASK_HURT;
 
@@ -605,10 +651,10 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
               entity.frame = 0;
               entity.state &= ~MASK_HURT; // FIXME
             }
-//            else
-//            {
-//              entity.state |= MASK_HURT;
-//            }
+            //            else
+            //            {
+            //              entity.state |= MASK_HURT;
+            //            }
             entity.state &= ~FLAG_ALIVE;
             entity.hp = 0;
             entity.counter = 0;
