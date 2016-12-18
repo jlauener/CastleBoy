@@ -19,11 +19,10 @@
 
 // entity types
 
-// 0000 falling tile
-#define ENTITY_FALLING_TILE 0x00
+// 0000 falling platform
+#define ENTITY_FALLING_PLATFORM 0x00
 
-// 0001 fireball vert
-#define ENTITY_FIREBALL_VERT 0x01
+// 0001 reserver moving platform 0x01
 
 // 0010 candle: coin
 // 0011 candle: knife
@@ -50,7 +49,8 @@
 // 1010 hurler
 #define ENTITY_HURLER 0x0A
 
-// 1011 ??? 0x0B
+// 1011 fireball vert
+#define ENTITY_FIREBALL_VERT 0x0B
 // 1100 ??? 0x0C
 
 // 1101 boss knight
@@ -92,27 +92,27 @@ struct EntityData
 // TODO use PROGMEM?
 const EntityData data[] =
 {
-  // 0000 falling tile
+  // 0000 falling platform
   {
     4, 8, // hitbox x, y
     16, 8, // hitbox width, height
     4, 8, // sprite origin x, y
     0, // hp
-    entity_falling_tile_plus_mask // sprite
+    entity_falling_platform_plus_mask // sprite
   },
-  // 0001 fireball vert
+  // 0001 reserved moving platform
   {
-    4, 8, // hitbox x, y
-    8, 8, // hitbox width, height
-    4, 8, // sprite origin x, y
+    0, 0, // hitbox x, y
+    0, 0, // hitbox width, height
+    0, 0, // sprite origin x, y
     0, // hp
-    entity_fireball_vert_plus_mask // sprite
+    NULL // sprite
   },
   // 0010 candle: coin
   {
     2, 8, // hitbox x, y
     4, 6, // hitbox width, height
-    4, 10, // sprite origin x, y
+    2, 10, // sprite origin x, y
     1, // hp
     entity_candle_plus_mask // sprite
   },
@@ -180,13 +180,13 @@ const EntityData data[] =
     4, // hp
     entity_hurler_plus_mask // sprite
   },
-  // 1011 ???
+  // 1011 fireball vert
   {
-    0, 0, // hitbox x, y
-    0, 0, // hitbox width, height
-    0, 0, // sprite origin x, y
+    2, 2, // hitbox x, y
+    4, 4, // hitbox width, height
+    3, 3, // sprite origin x, y
     0, // hp
-    NULL // sprite
+    entity_fireball_vert_plus_mask // sprite
   },
   // 1100 ???
   {
@@ -246,9 +246,9 @@ const EntityData data[] =
   },
   // 10011 projectile: fireball horiz
   {
-    3, 3, // hitbox x, y
-    6, 6, // hitbox width, height
-    4, 4, // sprite origin x, y
+    2, 2, // hitbox x, y
+    4, 4, // hitbox width, height
+    3, 3, // sprite origin x, y
     0, // hp
     entity_fireball_horiz_plus_mask // sprite
   }
@@ -420,7 +420,7 @@ void updateBossKnight(Entity& entity)
     }
   }
 
-  if (ab.everyXFrames(10))
+  if (ab.everyXFrames(BOSS_KNIGHT_WALK_INTERVAL))
   {
     if (entity.state & FLAG_MISC1)
     {
@@ -483,14 +483,14 @@ void Entities::update()
       {
         switch (entity.type)
         {
-          case ENTITY_FALLING_TILE:
+          case ENTITY_FALLING_PLATFORM:
             if (entity.state & FLAG_MISC1)
             {
-              if (++entity.counter == ENTITY_FALLING_TILE_DURATION)
+              if (++entity.counter == ENTITY_FALLING_PLATFORM_DURATION)
               {
                 entity.state = 0;
               }
-              else if (entity.counter == ENTITY_FALLING_TILE_HALF_DURATION)
+              else if (entity.counter == ENTITY_FALLING_PLATFORM_WARNING)
               {
                 entity.frame = 1;
               }
@@ -500,6 +500,10 @@ void Entities::update()
             if (--entity.pos.y == -4)
             {
               entity.pos.y = 68;
+            }
+            if (ab.everyXFrames(8))
+            {
+              ++entity.frame %= 2;
             }
             break;
           case ENTITY_CANDLE_COIN:
@@ -649,7 +653,7 @@ bool Entities::moveCollide(int16_t x, int8_t y, const Box& hitbox)
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
     Entity& entity = entities[i];
-    if (entity.state & FLAG_ALIVE && entity.type == ENTITY_FALLING_TILE)
+    if (entity.state & FLAG_ALIVE && entity.type == ENTITY_FALLING_PLATFORM)
     {
       const Box& entityHitbox = data[entity.type].hitbox;
       if (Util::collideRect(entity.pos.x - entityHitbox.x,
@@ -682,7 +686,7 @@ Entity* Entities::checkPlayer(int16_t x, int8_t y, uint8_t width, uint8_t height
       {
         switch (entity.type)
         {
-          case ENTITY_FALLING_TILE:
+          case ENTITY_FALLING_PLATFORM:
             // falling tile does nothing
             break;
           case ENTITY_PICKUP_COIN:

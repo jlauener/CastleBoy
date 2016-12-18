@@ -48,8 +48,8 @@ void drawMenuOption(uint8_t index, const uint8_t* sprite)
   sprites.drawOverwrite(64 - halfWidth, 40 + index * 8, sprite, 0);
   if(index == menuIndex)
   {
-    sprites.drawOverwrite(53 - halfWidth, 38 + index * 8, entity_candle, toggle);
-    sprites.drawOverwrite(66 + halfWidth, 38 + index * 8, entity_candle, toggle);
+    sprites.drawOverwrite(55 - halfWidth, 38 + index * 8, entity_candle, toggle);
+    sprites.drawOverwrite(68 + halfWidth, 38 + index * 8, entity_candle, toggle);
   }
 }
 

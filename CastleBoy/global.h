@@ -12,7 +12,7 @@ extern uint8_t flashCounter;
 //#define DEBUG_LOG // enable to show debug logs (LOG_DEBUG)
 //#define DEBUG_CPU // enable to display cpu load
 //#define DEBUG_RAM // enable to display RAM usage
-//#define DEBUG_CHEAT // enable to reset level with A+B+down
+#define DEBUG_CHEAT // enable to reset level with A+B+down
 //#define DEBUG_HITBOX // enable to show hitboxes
 
 #define FPS 60
@@ -46,8 +46,9 @@ extern uint8_t flashCounter;
 #define PLAYER_MAX_HP 5
 
 // entities
-#define ENTITY_FALLING_TILE_DURATION 40
-#define ENTITY_FALLING_TILE_HALF_DURATION 20
+#define ENTITY_FALLING_PLATFORM_DURATION 40
+#define ENTITY_FALLING_PLATFORM_WARNING 12
+#define BOSS_KNIGHT_WALK_INTERVAL 18
 
 // game state
 #define STATE_TITLE 0
