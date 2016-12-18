@@ -281,7 +281,7 @@ void Player::update()
   // knife
   if (knife)
   {
-    knifePosition.x += knifeFlipped ? -2 : 2;
+    knifePosition.x += knifeFlipped ? -3 : 3;
     if (Entities::damage(knifePosition.x - knifeHitbox.x, knifePosition.y - knifeHitbox.y, knifeHitbox.width, knifeHitbox.height, 1))
     {
       knife = false;
@@ -300,7 +300,7 @@ void Player::update()
 
   // check entity collision
   Entity* entity = Entities::checkPlayer(pos.x - hitbox.x, pos.y - hitbox.y, hitbox.width, hitbox.height);
-  if (invincibleCounter == 0 && entity != NULL)
+  if (hp > 0 && invincibleCounter == 0 && entity != NULL)
   {
     flipped = entity->pos.x < pos.x;
     velocityX = flipped ? 1 : -1;
@@ -310,10 +310,6 @@ void Player::update()
     attackCounter = 0;
     if (--hp > 0)
     {
-      // alive = false;
-      // }
-      //else
-      //{
       invincibleCounter = PLAYER_INVINCIBLE_DURATION;
     }
     flashCounter = 2;

@@ -10,7 +10,7 @@
 // FIXME when entity enter, hurt frame displayed
 // FIXME everyXFrames is not precise enough, maybe each entity should have it's own frame counter?
 // can also fix the fact hurt frame is displayed
-// FIXME candle should not play die anim
+// FIXME candle should not play die anim ?
 // FIXME flash when hurt -> reduce flash duration
 
 //#define HURT_INVINCIBLE_THRESHOLD 4
@@ -26,21 +26,17 @@
 #define ENTITY_FIREBALL_VERT 0x01
 
 // 0010 candle: coin
-// 0011 candle: powerup
-//   ||
-//   |+-- coin/powerup flag
-//   +--- candle flag
+// 0011 candle: knife
 #define ENTITY_CANDLE_COIN 0x02
-#define ENTITY_CANDLE_POWERUP 0x03
+#define ENTITY_CANDLE_KNIFE 0x03
 
 // 0100 skeleton: simple
 // 0101 skeleton: throw
 // 0110 skeleton: armored
 // 0111 skeleton: armored + throw
-//  |||
-//  ||+-- throw flag
-//  |+--- armored flag
-//  +---- skeleton flag
+//   ||
+//   |+-- throw flag
+//   +--- armored flag
 #define ENTITY_SKELETON_SIMPLE 0x04
 #define ENTITY_SKELETON_THROW 0x05
 #define ENTITY_SKELETON_ARMORED 0x06
@@ -64,16 +60,15 @@
 
 // pickups
 // 10000 pickup: coin
-// 10001 pickup: heart
-// 10010 pickup: knife
+// 10001 pickup: knife
 #define ENTITY_PICKUP_COIN 0x10
-#define ENTITY_PICKUP_HEART 0x11
-#define ENTITY_PICKUP_KNIFE 0x12
+#define ENTITY_PICKUP_KNIFE 0x11
 
 // projectiles
-// 10011 projectile: bone
-#define ENTITY_BONE 0x13
-#define ENTITY_FIREBALL_HORIZ 0x14
+// 10010 projectile: bone
+#define ENTITY_BONE 0x12
+// 10011 projectile: fireball horiz
+#define ENTITY_FIREBALL_HORIZ 0x13
 
 // state flags
 #define FLAG_PRESENT 0x80
@@ -233,15 +228,7 @@ const EntityData data[] =
     0, // hp
     entity_coin_plus_mask // sprite
   },
-  // 10001 pickup: heart
-  {
-    3, 6, // hitbox x, y
-    6, 6, // hitbox width, height
-    4, 8, // sprite origin x, y
-    0, // hp
-    entity_heart_plus_mask // sprite
-  },
-  // 10010 pickup: knife
+  // 10001 pickup: knife
   {
     4, 6, // hitbox x, y
     8, 6, // hitbox width, height
@@ -249,7 +236,7 @@ const EntityData data[] =
     0, // hp
     entity_knife_plus_mask // sprite
   },
-  // 10011 projectile: bone
+  // 10010 projectile: bone
   {
     3, 3, // hitbox x, y
     6, 6, // hitbox width, height
@@ -257,7 +244,7 @@ const EntityData data[] =
     0, // hp
     entity_bone_plus_mask // sprite
   },
-  // 10100 projectile: fireball horiz
+  // 10011 projectile: fireball horiz
   {
     3, 3, // hitbox x, y
     6, 6, // hitbox width, height
@@ -435,10 +422,13 @@ void updateBossKnight(Entity& entity)
 
   if (ab.everyXFrames(10))
   {
-    entity.frame = entity.frame == 2 ? 1 : 2;
     if (entity.state & FLAG_MISC1)
     {
-      entity.frame += 4;
+      entity.frame = entity.frame == 6 ? 5 : 6;
+    }
+    else
+    {
+      entity.frame = entity.frame == 2 ? 1 : 2;
     }
   }
 }
@@ -513,14 +503,13 @@ void Entities::update()
             }
             break;
           case ENTITY_CANDLE_COIN:
-          case ENTITY_CANDLE_POWERUP:
+          case ENTITY_CANDLE_KNIFE:
             if (ab.everyXFrames(8))
             {
               ++entity.frame %= 2;
             }
             break;
           case ENTITY_PICKUP_COIN:
-          case ENTITY_PICKUP_HEART:
           case ENTITY_PICKUP_KNIFE:
             Game::moveY(entity.pos, 2, data[entity.type].hitbox);
             if (entity.type != ENTITY_PICKUP_KNIFE && ab.everyXFrames(12))
@@ -557,15 +546,15 @@ void Entities::update()
           {
             if (entity.type == ENTITY_CANDLE_COIN)
             {
-              // special case: CANDLE_COIN spawns a COIN
+              // special case: CANDLE_COIN spawns a COIN pickup
               entity.type = ENTITY_PICKUP_COIN;
               entity.state |= FLAG_ALIVE;
               entity.frame = 0;
             }
-            else if (entity.type == ENTITY_CANDLE_POWERUP)
+            else if (entity.type == ENTITY_CANDLE_KNIFE)
             {
-              // special case: CANDLE_POWERUP spawns an HEART or KNIFE
-              entity.type = Player::hp == PLAYER_MAX_HP ? ENTITY_PICKUP_KNIFE : ENTITY_PICKUP_HEART;
+              // special case: CANDLE_KNIFE spawns a KNIFE pickup
+              entity.type = ENTITY_PICKUP_KNIFE;
               entity.state |= FLAG_ALIVE;
               entity.frame = 0;
             }
@@ -624,10 +613,6 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
         {
           entity.frame = 0;
         }
-        //else if (entity.type == ENTITY_SKELETON_SIMPLE || entity.type == ENTITY_SKELETON_THROW )
-        // {
-        //  entity.frame = 5;
-        // }
 
         entity.state |= MASK_HURT;
 
@@ -635,44 +620,20 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
         {
           if (entity.hp <= value)
           {
-            //            if (entity.type == ENTITY_CANDLE_COIN)
-            //            {
-            //              // special case: CANDLE_COIN spawns a COIN
-            //              //entity.type = ENTITY_PICKUP_COIN;
-            //              //entity.state &= ~FLAG_ALIVE;
-            //            }
-            //            else if (entity.type == ENTITY_CANDLE_POWERUP)
-            //            {
-            //              // special case: CANDLE_POWERUP spawns an HEART or KNIFE
-            //              //entity.type = Player::hp == PLAYER_MAX_HP ? ENTITY_PICKUP_KNIFE : ENTITY_PICKUP_HEART;
-            //            }
-            //            else
-            //            {
-            //{
-            //  entity.state &= ~FLAG_ALIVE;
-            //}
-            //entity.counter = 0;
-            //entity.frame = 0;
-            if (entity.type == ENTITY_CANDLE_COIN || entity.type == ENTITY_CANDLE_POWERUP)
+            if (entity.type == ENTITY_CANDLE_COIN || entity.type == ENTITY_CANDLE_KNIFE)
             {
               entity.frame = 0;
               entity.state &= ~MASK_HURT; // FIXME
             }
-            //            else
-            //            {
-            //              entity.state |= MASK_HURT;
-            //            }
             entity.state &= ~FLAG_ALIVE;
             entity.hp = 0;
             entity.counter = 0;
             sound.tone(NOTE_CS3H, 30);
-            // }
           }
           else
           {
             entity.hp -= value;
             sound.tone(NOTE_CS3H, 15);
-            //entity.state |= MASK_HURT;
           }
         }
       }
@@ -699,7 +660,6 @@ bool Entities::moveCollide(int16_t x, int8_t y, const Box& hitbox)
       {
         collide = true;
         entity.state |= FLAG_MISC1;
-        //entity.frame = 0;
       }
     }
   }
@@ -711,7 +671,7 @@ Entity* Entities::checkPlayer(int16_t x, int8_t y, uint8_t width, uint8_t height
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
     Entity& entity = entities[i];
-    if (entity.state & FLAG_ALIVE && !(entity.state & MASK_HURT) && entity.type != ENTITY_CANDLE_COIN && entity.type != ENTITY_CANDLE_POWERUP)
+    if (entity.state & FLAG_ALIVE && !(entity.state & MASK_HURT) && entity.type != ENTITY_CANDLE_COIN && entity.type != ENTITY_CANDLE_KNIFE)
     {
       const Box& entityHitbox = data[entity.type].hitbox;
       if (Util::collideRect(entity.pos.x - entityHitbox.x,
@@ -727,14 +687,6 @@ Entity* Entities::checkPlayer(int16_t x, int8_t y, uint8_t width, uint8_t height
             break;
           case ENTITY_PICKUP_COIN:
             Game::timeLeft += PICKUP_COIN_VALUE;
-            entity.state = 0;
-            sound.tone(NOTE_CS6, 30, NOTE_CS5, 40);
-            break;
-          case ENTITY_PICKUP_HEART:
-            if (Player::hp < PLAYER_MAX_HP)
-            {
-              ++Player::hp;
-            }
             entity.state = 0;
             sound.tone(NOTE_CS6, 30, NOTE_CS5, 40);
             break;
