@@ -16,6 +16,7 @@ const uint8_t* const stages[] = { stage_1_1, stage_1_2, stage_1_3, stage_1_4, st
 uint8_t counter;
 bool flag;
 bool toggle = 0;
+uint8_t toggleSpeed;
 uint8_t menuIndex;
 int8_t titleLeftOffset;
 int8_t titleRightOffset;
@@ -25,6 +26,7 @@ void Menu::showTitle()
 {
   mainState = STATE_TITLE;
   flag = true;
+  toggleSpeed = 20;
   counter = 60;
   menuIndex = TITLE_OPTION_PLAY;
 
@@ -46,7 +48,7 @@ void drawMenuOption(uint8_t index, const uint8_t* sprite)
 {
   uint8_t halfWidth = pgm_read_byte(sprite) / 2;
   sprites.drawOverwrite(64 - halfWidth, 40 + index * 8, sprite, 0);
-  if(index == menuIndex)
+  if (index == menuIndex)
   {
     sprites.drawOverwrite(55 - halfWidth, 38 + index * 8, entity_candle, toggle);
     sprites.drawOverwrite(68 + halfWidth, 38 + index * 8, entity_candle, toggle);
@@ -62,6 +64,12 @@ void loopTitle()
     return;
   }
 #endif
+
+  if (ab.everyXFrames(20))
+  {
+    toggle = !toggle;
+  }
+
 
   if (flag)
   {
@@ -83,36 +91,36 @@ void loopTitle()
     {
       titleLeftOffset = titleLeftOffset == 0 ? 1 : 0;
       titleRightOffset = titleRightOffset == 0 ? 1 : 0;
-    }    
+    }
 
-    if(ab.justPressed(UP_BUTTON) && menuIndex > 0)
+    if (ab.justPressed(UP_BUTTON) && menuIndex > 0)
     {
       --menuIndex;
       sound.tone(NOTE_E6, 15);
     }
 
-    if(ab.justPressed(DOWN_BUTTON) && menuIndex < TITLE_OPTION_MAX)
+    if (ab.justPressed(DOWN_BUTTON) && menuIndex < TITLE_OPTION_MAX)
     {
       ++menuIndex;
       sound.tone(NOTE_E6, 15);
     }
-    
+
     if (ab.justPressed(A_BUTTON))
-    {      
-      switch(menuIndex)
+    {
+      switch (menuIndex)
       {
         case TITLE_OPTION_PLAY:
           mainState = STATE_STAGE_INTRO;
           counter = 100;
           sound.tone(NOTE_CS6, 30);
           break;
-        case TITLE_OPTION_HELP: 
+        case TITLE_OPTION_HELP:
           // TODO
           sound.tone(NOTE_CS6, 30);
           break;
         case TITLE_OPTION_SFX:
-          if(ab.audio.enabled())
-          {            
+          if (ab.audio.enabled())
+          {
             ab.audio.off();
           }
           else
@@ -122,7 +130,7 @@ void loopTitle()
           ab.audio.saveOnOff();
           sound.tone(NOTE_CS6, 30);
           break;
-      }      
+      }
     }
 
     drawMenuOption(TITLE_OPTION_PLAY, text_play);
@@ -130,16 +138,11 @@ void loopTitle()
     drawMenuOption(TITLE_OPTION_SFX, ab.audio.enabled() ? text_sfx_on : text_sfx_off);
   }
   sprites.drawOverwrite(36, 5 + titleLeftOffset, title_left, 0);
-  sprites.drawOverwrite(69, 5 + titleRightOffset, title_right, 0);  
+  sprites.drawOverwrite(69, 5 + titleRightOffset, title_right, 0);
 }
 
 void Menu::loop()
 {
-  if(ab.everyXFrames(20))
-  {
-    toggle = !toggle;
-  }
-  
   switch (mainState)
   {
     case STATE_TITLE:
@@ -152,7 +155,7 @@ void Menu::loop()
       sprites.drawOverwrite(46, 22, text_stage, 0);
       Util::drawNumber(69, 22, Game::stageIndex / LEVEL_PER_STAGE + 1, ALIGN_LEFT);
       Util::drawNumber(76, 22, Game::stageIndex % LEVEL_PER_STAGE + 1, ALIGN_LEFT);
-      if(Game::hasPlayerDied)
+      if (Game::hasPlayerDied)
       {
         sprites.drawOverwrite(52, 38, ui_life_count, 0);
         Util::drawNumber(64, 38, Game::life, ALIGN_LEFT);
@@ -163,15 +166,21 @@ void Menu::loop()
       }
       break;
     case STATE_GAME_OVER:
-      if(Game::timeLeft == 0)
+      if (ab.everyXFrames(16))
       {
-        sprites.drawOverwrite(47, 27, text_time_up, 0);
+        toggle = !toggle;
+      }
+
+      if (Game::timeLeft == 0)
+      {
+        sprites.drawOverwrite(47, 0, text_time_up, 0);
       }
       else
       {
-        sprites.drawOverwrite(47, 27, text_game_over, 0);
+        sprites.drawOverwrite(47, 0, text_game_over, 0);
       }
-      sprites.drawOverwrite(60, 40, entity_skull, toggle);
+      //sprites.drawOverwrite(60, 40, entity_skull, toggle);
+      sprites.drawOverwrite(43, 16, game_over_head, toggle);
       if (ab.justPressed(A_BUTTON))
       {
         Menu::showTitle();
