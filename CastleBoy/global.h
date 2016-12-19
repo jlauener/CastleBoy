@@ -48,7 +48,7 @@ extern uint8_t flashCounter;
 // entities
 #define ENTITY_FALLING_PLATFORM_DURATION 40
 #define ENTITY_FALLING_PLATFORM_WARNING 12
-#define BOSS_KNIGHT_WALK_INTERVAL 18
+#define BOSS_KNIGHT_WALK_INTERVAL 22
 
 // game state
 #define STATE_TITLE 0
