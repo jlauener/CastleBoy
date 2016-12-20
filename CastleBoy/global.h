@@ -95,8 +95,8 @@ struct Vec
 
 struct Box
 {
-  int8_t x;
-  int8_t y;
+  uint8_t x;
+  uint8_t y;
   uint8_t width;
   uint8_t height;
 };
