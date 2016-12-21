@@ -130,7 +130,7 @@ const EntityData data[] =
   {
     3, 16, // hitbox x, y
     6, 16, // hitbox width, height
-    8, 16, // sprite origin x, y
+    6, 16, // sprite origin x, y
     2, // hp
     entity_skeleton_plus_mask // sprite
   },
@@ -138,7 +138,7 @@ const EntityData data[] =
   {
     3, 16, // hitbox x, y
     6, 16, // hitbox width, height
-    8, 16, // sprite origin x, y
+    6, 16, // sprite origin x, y
     2, // hp
     entity_skeleton_plus_mask // sprite
   },
@@ -146,7 +146,7 @@ const EntityData data[] =
   {
     3, 16, // hitbox x, y
     6, 16, // hitbox width, height
-    8, 16, // sprite origin x, y
+    6, 16, // sprite origin x, y
     6, // hp
     entity_skeleton_armored_plus_mask // sprite
   },
