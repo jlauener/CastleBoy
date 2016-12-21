@@ -51,7 +51,9 @@
 
 // 1011 fireball vert
 #define ENTITY_FIREBALL_VERT 0x0B
-// 1100 ??? 0x0C
+
+// 1100 candlestick
+#define ENTITY_CANDLESTICK 0x0C
 
 // 1101 boss knight
 #define ENTITY_BOSS_KNIGHT 0x0D
@@ -188,13 +190,13 @@ const EntityData data[] =
     0, // hp
     entity_fireball_vert_plus_mask // sprite
   },
-  // 1100 ???
+  // 1100 candlestick
   {
-    0, 0, // hitbox x, y
-    0, 0, // hitbox width, height
-    0, 0, // sprite origin x, y
+    5, 4, // hitbox x, y
+    10, 4, // hitbox width, height
+    6, 8, // sprite origin x, y
     0, // hp
-    NULL // sprite
+    entity_candlestick_plus_mask // sprite
   },
   // 1101 boss knight
   {
@@ -449,7 +451,7 @@ void updateProjectile(Entity& entity)
   {
     entity.state = 0;
   }
-  if (ab.everyXFrames(8))
+  if (ab.everyXFrames(12))
   {
     ++entity.frame %= 2;
   }
@@ -501,7 +503,7 @@ void Entities::update()
             {
               entity.pos.y = 68;
             }
-            if (ab.everyXFrames(8))
+            if (ab.everyXFrames(12))
             {
               ++entity.frame %= 2;
             }
@@ -532,6 +534,17 @@ void Entities::update()
             break;
           case ENTITY_HURLER:
             updateHurler(entity);
+            break;
+          case ENTITY_CANDLESTICK:
+            if (entity.pos.x < Player::pos.x + 4)
+            {
+              entity.state |= FLAG_MISC1;
+            }
+            
+            if(entity.state & FLAG_MISC1 && Game::moveY(entity.pos, 1, data[entity.type].hitbox))
+            {
+              entity.state &= ~FLAG_ALIVE;
+            }
             break;
           case ENTITY_BOSS_KNIGHT:
             updateBossKnight(entity);
