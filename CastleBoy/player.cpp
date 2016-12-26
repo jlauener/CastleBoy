@@ -5,9 +5,6 @@
 #include "entity.h"
 #include "assets.h"
 
-#define ATTACK_TOTAL_DURATION 16
-#define ATTACK_CHARGE 10
-
 #define SPRITE_ORIGIN_X 8
 #define SPRITE_ORIGIN_Y 16
 
@@ -127,7 +124,7 @@ void Player::update()
     if (ab.justPressed(B_BUTTON))
     {
       knifeAttack = false;
-      attackCounter = ATTACK_TOTAL_DURATION;
+      attackCounter = PLAYER_ATTACK_TOTAL_DURATION;
       sound.tone(NOTE_GS4, 10);
     }
     else if (ab.justPressed(UP_BUTTON))
@@ -136,7 +133,7 @@ void Player::update()
       {
         --knifeCount;
         knifeAttack = true;
-        attackCounter = ATTACK_TOTAL_DURATION;
+        attackCounter = PLAYER_ATTACK_TOTAL_DURATION;
         sound.tone(NOTE_GS5, 10);
       }
       else
@@ -249,11 +246,11 @@ void Player::update()
   // perform attack
   if (attackCounter > 0)
   {
-    if (--attackCounter <= ATTACK_CHARGE)
+    if (--attackCounter <= PLAYER_ATTACK_CHARGE)
     {
       if (knifeAttack)
       {
-        if (attackCounter == ATTACK_CHARGE)
+        if (attackCounter == PLAYER_ATTACK_CHARGE)
         {
           knife = true;
           knifePosition.x = pos.x + (flipped ? -14 : 6);
@@ -354,7 +351,7 @@ void Player::draw()
     {
       frame = FRAME_ATTACK;
     }
-    else if (attackCounter < ATTACK_CHARGE)
+    else if (attackCounter < PLAYER_ATTACK_CHARGE)
     {
       frame = FRAME_ATTACK;
     }
@@ -378,7 +375,7 @@ void Player::draw()
   {
     sprites.drawPlusMask(pos.x - SPRITE_ORIGIN_X - Game::cameraX, pos.y - SPRITE_ORIGIN_Y, player_plus_mask, frame + (flipped ? FRAME_FLIPPED_OFFSET : 0));
 
-    if (attackCounter != 0 && !knifeAttack && attackCounter < ATTACK_CHARGE)
+    if (attackCounter != 0 && !knifeAttack && attackCounter < PLAYER_ATTACK_CHARGE)
     {
       sprites.drawPlusMask(pos.x + (flipped ? -24 : 8) - Game::cameraX , pos.y - (ducking ? 4 : 12), flipped ? player_attack_left_plus_mask : player_attack_right_plus_mask, 0);
     }

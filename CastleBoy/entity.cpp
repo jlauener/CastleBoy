@@ -78,6 +78,7 @@
 #define FLAG_MISC1 0x20
 #define FLAG_MISC2 0x10
 #define MASK_HURT 0x0F
+#define HURT_DURATION 0x09
 
 namespace
 {
@@ -279,7 +280,7 @@ Entity* Entities::add(uint8_t type, int16_t x, int8_t y)
       entity.pos.y = y;
       entity.hp = data[type].hp;
       entity.state = FLAG_PRESENT | FLAG_ALIVE;
-      entity.frame = 0;
+      entity.frame = entity.hp > 0 ? 1 : 0; // damageable entities have an hurt frame
       entity.counter = 0;
       return &entity;
     }
@@ -391,7 +392,7 @@ void updateFlyer(Entity& entity)
     }
     if (ab.everyXFrames(8))
     {
-      ++entity.frame %= 2;
+      entity.frame = entity.frame == 2 ? 1 : 2;
     }
   }
 }
@@ -466,8 +467,6 @@ void Entities::update()
     {
       if (entity.state & MASK_HURT)
       {
-        //if (ab.everyXFrames(2))
-        //{
         uint8_t hurtCounter = entity.state & MASK_HURT;
         entity.state &= ~MASK_HURT;
         entity.state |= --hurtCounter;
@@ -479,7 +478,6 @@ void Entities::update()
             entity.counter = 0;
           }
         }
-        //}
       }
       else if (entity.state & FLAG_ALIVE)
       {
@@ -540,8 +538,8 @@ void Entities::update()
             {
               entity.state |= FLAG_MISC1;
             }
-            
-            if(entity.state & FLAG_MISC1 && Game::moveY(entity.pos, 1, data[entity.type].hitbox))
+
+            if (entity.state & FLAG_MISC1 && Game::moveY(entity.pos, 1, data[entity.type].hitbox))
             {
               entity.state &= ~FLAG_ALIVE;
             }
@@ -631,7 +629,7 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
           entity.frame = 0;
         }
 
-        entity.state |= MASK_HURT;
+        entity.state |= HURT_DURATION;
 
         if (damage)
         {

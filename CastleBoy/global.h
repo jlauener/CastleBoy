@@ -43,6 +43,8 @@ extern uint8_t flashCounter;
 #define PLAYER_SPEED_DUCK 4 // every 4 frames
 #define PLAYER_SPEED_KNOCKBACK_NORMAL 2 // every 2 frames
 #define PLAYER_SPEED_KNOCKBACK_FAST 1 // every 1 frame
+#define PLAYER_ATTACK_TOTAL_DURATION 14 // frames
+#define PLAYER_ATTACK_CHARGE 8 // frames
 #define PLAYER_MAX_HP 5
 
 // entities
