@@ -639,8 +639,9 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
           {
             if (entity.type == ENTITY_CANDLE_COIN || entity.type == ENTITY_CANDLE_KNIFE)
             {
-              entity.frame = 0;
-              entity.state &= ~MASK_HURT; // FIXME
+              // candles don't have hurt anim and have faster die anim
+              entity.state &= ~MASK_HURT;
+              entity.frame = 1;
             }
             entity.state &= ~FLAG_ALIVE;
             entity.hp = 0;
