@@ -26,25 +26,23 @@
  "orientation":"orthogonal",
  "properties":
     {
-     "type":"garden"
-    },
- "propertytypes":
-    {
-     "type":"string"
+     "type":"outdoor"
     },
  "renderorder":"right-down",
  "tileheight":16,
  "tilesets":[
         {
-         "columns":8,
          "firstgid":1,
          "image":"tiles_outdoor.png",
          "imageheight":64,
          "imagewidth":128,
          "margin":0,
          "name":"tiles",
+         "properties":
+            {
+
+            },
          "spacing":0,
-         "tilecount":32,
          "tileheight":16,
          "tilewidth":16
         }],

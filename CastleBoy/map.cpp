@@ -40,7 +40,7 @@ void Map::init(const uint8_t* source)
   uint8_t temp = pgm_read_byte(++source);
   bool hasBoss = (temp & 0xC0) == 0xC0;
 
-  // rendering style (indoor, outdoor, garden)  
+  // rendering style (indoor, outdoor, garden)
   if (temp & 0x80)
   {
     // indoor
@@ -59,27 +59,29 @@ void Map::init(const uint8_t* source)
   }
   else
   {
-    // outdoor/garden
+    // outdoor/cave
     solidTileIndex = 2;
 
     mainTile = TILE_GROUND;
     mainTileAlt = TILE_GROUND_ALT;
-    mainStartTile = TILE_GROUND_START;
-    mainStartTileAlt = TILE_GROUND_START_ALT;
     miscTile = TILE_WALL;
     miscEndTile = TILE_WALL_END;
-    showBackground = true;
+    endMiscTile = true;
 
     if (temp & 0x40)
     {
       // outdoor
-      endMiscTile = true;
+      mainStartTile = TILE_GROUND_START;
+      mainStartTileAlt = TILE_GROUND_START_ALT;
+      showBackground = true;
       propTile = TILE_GRAVE;
     }
     else
     {
-      // garden
-      endMiscTile = false;
+      // cave
+      mainStartTile = TILE_GROUND;
+      mainStartTileAlt = TILE_GROUND_ALT;
+      showBackground = false;
       propTile = TILE_GRAVE;
     }
   }
@@ -104,7 +106,7 @@ void Map::init(const uint8_t* source)
     uint8_t y = temp & 0x0F;
 
     Entity* entity = Entities::add(entityType, x * TILE_WIDTH + HALF_TILE_WIDTH, y * TILE_HEIGHT + TILE_HEIGHT);
-    if(hasBoss)
+    if (hasBoss)
     {
       boss = entity;
     }

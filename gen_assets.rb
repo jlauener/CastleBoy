@@ -67,8 +67,8 @@ class MapData
   TYPE_OUTDOOR_NAME = "outdoor"
   TYPE_OUTDOOR_VALUE = 0x4
   
-  TYPE_GARDEN_NAME = "garden"
-  TYPE_GARDEN_VALUE = 0x0
+  TYPE_CAVE_NAME = "cave"
+  TYPE_CAVE_VALUE = 0x0
   
   TYPE_BOSS_NAME = "boss"
   TYPE_BOSS_VALUE = 0xC
@@ -177,8 +177,8 @@ class MapData
       @mapType = TYPE_INDOOR_VALUE
     elsif @mapTypeStr == TYPE_OUTDOOR_NAME
       @mapType = TYPE_OUTDOOR_VALUE
-    elsif @mapTypeStr == TYPE_GARDEN_NAME
-      @mapType = TYPE_GARDEN_VALUE
+    elsif @mapTypeStr == TYPE_CAVE_NAME
+      @mapType = TYPE_CAVE_VALUE
     elsif @mapTypeStr == TYPE_BOSS_NAME
       @mapType = TYPE_BOSS_VALUE
     else
