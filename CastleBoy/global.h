@@ -68,7 +68,7 @@ extern uint8_t flashCounter;
 // tile sprite
 #define TILE_WALL 0
 #define TILE_WALL_ALT 1
-#define TILE_WALL_END 2
+#define TILE_SOLID_END 2
 #define TILE_GROUND_START 3
 #define TILE_GROUND 4
 #define TILE_GROUND_START_ALT 5

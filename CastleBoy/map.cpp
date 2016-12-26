@@ -19,10 +19,10 @@ uint8_t mainTile;
 uint8_t mainTileAlt;
 uint8_t mainStartTile;
 uint8_t mainStartTileAlt;
+bool endMainTile;
 uint8_t propTile;
-bool endMiscTile;
 uint8_t miscTile;
-uint8_t miscEndTile;
+bool endMiscTile;
 
 uint8_t getTileAt(uint8_t x, uint8_t y)
 {
@@ -50,10 +50,11 @@ void Map::init(const uint8_t* source)
     mainTileAlt = TILE_WALL_ALT;
     mainStartTile = TILE_WALL;
     mainStartTileAlt = TILE_WALL_ALT;
+    endMainTile = false;
 
-    endMiscTile = false;
     miscTile = TILE_CHAIN;
-
+    endMiscTile = false;
+    
     propTile = TILE_WINDOW;
     showBackground = false;
   }
@@ -64,8 +65,8 @@ void Map::init(const uint8_t* source)
 
     mainTile = TILE_GROUND;
     mainTileAlt = TILE_GROUND_ALT;
+    
     miscTile = TILE_WALL;
-    miscEndTile = TILE_WALL_END;
     endMiscTile = true;
 
     if (temp & 0x40)
@@ -73,6 +74,7 @@ void Map::init(const uint8_t* source)
       // outdoor
       mainStartTile = TILE_GROUND_START;
       mainStartTileAlt = TILE_GROUND_START_ALT;
+      endMainTile = false;
       showBackground = true;
       propTile = TILE_GRAVE;
     }
@@ -81,6 +83,7 @@ void Map::init(const uint8_t* source)
       // cave
       mainStartTile = TILE_GROUND;
       mainStartTileAlt = TILE_GROUND_ALT;
+      endMainTile = true;
       showBackground = false;
       propTile = TILE_GRAVE;
     }
@@ -173,16 +176,18 @@ void Map::draw()
   for (uint8_t ix = start; ix < start + 17; ix++)
   {
     bool isMain = false;
-    bool needToEndMisc = false;
+    bool needToEndTile = false;
+    bool tileEnded = false;
     for (uint8_t iy = 0; iy < height; iy++)
     {
       uint8_t tile = getTileAt(ix, iy);
       if (tile == TILE_DATA_EMPTY)
       {
-        if (needToEndMisc)
+        if (!tileEnded && needToEndTile)
         {
-          tile = miscEndTile;
-          needToEndMisc = false;
+          tile = TILE_SOLID_END;
+          needToEndTile = false;
+          tileEnded = true;
         }
         else
         {
@@ -192,7 +197,10 @@ void Map::draw()
       else if (tile == TILE_DATA_MISC)
       {
         tile = miscTile;
-        needToEndMisc = endMiscTile;
+        if(endMiscTile)
+        {
+          needToEndTile = true;
+        }
         isMain = false;
       }
       else if (tile == TILE_DATA_MAIN)
@@ -209,12 +217,15 @@ void Map::draw()
           tile = useAlt ? mainStartTileAlt : mainStartTile;
           isMain = true;
         }
-        needToEndMisc = false;
+        if(endMainTile)
+        {
+          needToEndTile = true;
+        }
       }
       else // tile == TILE_DATA_PROP
       {
         tile = propTile;
-        needToEndMisc = false;
+        needToEndTile = false;
       }
 
       sprites.drawOverwrite(ix * TILE_WIDTH - Game::cameraX, iy * TILE_HEIGHT, tileset, tile);
