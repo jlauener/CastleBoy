@@ -5,13 +5,9 @@
 #include "player.h"
 #include "assets.h"
 
-// TODO refactor damage and collide (let's wait for falling blocks) ?
 // TODO handling of hurt, can be handled by entity update so we can delegate specific code instead of hacking in damage function
-// FIXME when entity enter, hurt frame displayed
-// FIXME everyXFrames is not precise enough, maybe each entity should have it's own frame counter?
-// can also fix the fact hurt frame is displayed
-// FIXME candle should not play die anim ?
-// FIXME flash when hurt -> reduce flash duration
+// FIXME everyXFrames is not precise enough, maybe each entity should have it's own frame counter? --> at least for bone projectile
+//  +--> sometime not precise for walk anim too.. visible when boss is hurt..
 
 //#define HURT_INVINCIBLE_THRESHOLD 4
 #define DIE_ANIM_ORIGIN_X 4
@@ -201,8 +197,8 @@ const EntityData data[] =
   },
   // 1101 boss knight
   {
-    6, 25, // hitbox x, y
-    12, 25, // hitbox width, height
+    7, 26, // hitbox x, y
+    14, 26, // hitbox width, height
     12, 32, // sprite origin x, y
     BOSS_MAX_HP, // hp
     entity_boss_knight_plus_mask // sprite
@@ -477,6 +473,17 @@ void Entities::update()
             entity.frame = 0;
             entity.counter = 0;
           }
+          else
+          {
+            if(entity.type == ENTITY_BOSS_KNIGHT)
+            {
+              entity.frame = entity.state & FLAG_MISC1 ? 5 : 1; 
+            }
+            else
+            {
+              entity.frame = 1;
+            }
+          }
         }
       }
       else if (entity.state & FLAG_ALIVE)
@@ -616,6 +623,7 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
           else
           {
             entity.frame = 3;
+             entity.state |= MASK_HURT; // when boss resist, stop moving a bit longer than when it's a normal hurt
             sound.tone(NOTE_GS2, 15);
           }
 
