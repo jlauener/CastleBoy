@@ -179,8 +179,11 @@ void Menu::loop()
       {
         sprites.drawOverwrite(47, 0, text_game_over, 0);
       }
-      //sprites.drawOverwrite(60, 40, entity_skull, toggle);
-      sprites.drawOverwrite(43, 16, game_over_head, toggle);
+      sprites.drawOverwrite(43, 16, game_over_head, 0);
+      if(toggle)
+      {
+        sprites.drawOverwrite(58, 41, game_over_head_jaw, 0);
+      }
       if (ab.justPressed(A_BUTTON))
       {
         Menu::showTitle();
