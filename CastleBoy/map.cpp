@@ -183,7 +183,7 @@ void Map::draw()
       {
         if (!tileEnded && needToEndTile)
         {
-          tile = TILE_SOLID_END;
+          tile = ix % 2 == 0 ? TILE_SOLID_END : TILE_SOLID_END_ALT;
           needToEndTile = false;
           tileEnded = true;
         }

@@ -69,13 +69,14 @@ extern uint8_t flashCounter;
 #define TILE_WALL 0
 #define TILE_WALL_ALT 1
 #define TILE_SOLID_END 2
-#define TILE_GROUND_START 3
-#define TILE_GROUND 4
-#define TILE_GROUND_START_ALT 5
-#define TILE_GROUND_ALT 6
-#define TILE_GRAVE 7
-#define TILE_CHAIN 8
-#define TILE_WINDOW 9
+#define TILE_SOLID_END_ALT 3
+#define TILE_GROUND_START 4
+#define TILE_GROUND 5
+#define TILE_GROUND_START_ALT 6
+#define TILE_GROUND_ALT 7
+#define TILE_GRAVE 8
+#define TILE_CHAIN 9
+#define TILE_WINDOW 10
 
 // entity score
 #define PICKUP_COIN_VALUE 180 // frames
