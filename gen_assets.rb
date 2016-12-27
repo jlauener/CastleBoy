@@ -49,7 +49,8 @@ class MapData
   TILED_ENTITY_ID_MIN = 9
   TILED_ENTITY_ID_MAX = 25
   TILED_PLAYER_ID = 25  
-  TILED_FALLING_TILE_ID = 9
+  TILED_FALLING_PLATFORM_ID = 9
+  TILED_MOVING_PLATFORM_ID = 10
   
   TILE_EMPTY = 0
   TILE_PROP = 1
@@ -122,15 +123,21 @@ class MapData
       raise "Map #{@name} has no player starting position."
     end
     
-	#merge falling tiles
+	#merge falling and moving platforms
     for iy in 0...@height
       for ix in 0...@width
-		if mainData[iy * @width + ix] == TILED_FALLING_TILE_ID
-          if mainData[iy * @width + ix + 1] != TILED_FALLING_TILE_ID
-              raise "Map #{@name} has invalid falling tile at #{ix},#{iy}. Must go in pair"
+		if mainData[iy * @width + ix] == TILED_FALLING_PLATFORM_ID
+          if mainData[iy * @width + ix + 1] != TILED_FALLING_PLATFORM_ID
+              raise "Map #{@name} has invalid falling platform at #{ix},#{iy}. 2 expected"
           end
           mainData[iy * @width + ix + 1] = 0
-		end			
+		elsif mainData[iy * @width + ix] == TILED_MOVING_PLATFORM_ID
+          if mainData[iy * @width + ix + 1] != TILED_MOVING_PLATFORM_ID or mainData[iy * @width + ix + 2] != TILED_MOVING_PLATFORM_ID
+              raise "Map #{@name} has invalid moving platform at #{ix},#{iy}. 3 expected"
+          end
+          mainData[iy * @width + ix + 1] = 0
+		  mainData[iy * @width + ix + 2] = 0
+		end
 	  end	  
     end
 	

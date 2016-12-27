@@ -15,10 +15,11 @@
 
 // entity types
 
-// 0000 falling platform
+// 0000 platform: falling
+// 0001 platform: moving
 #define ENTITY_FALLING_PLATFORM 0x00
-
-// 0001 reserver moving platform 0x01
+#define ENTITY_MOVING_PLATFORM 0x01
+#define PLATFORM_MASK 0xFE
 
 // 0010 candle: coin
 // 0011 candle: knife
@@ -91,7 +92,7 @@ struct EntityData
 // TODO use PROGMEM?
 const EntityData data[] =
 {
-  // 0000 falling platform
+  // 0000 platform: falling
   {
     4, 8, // hitbox x, y
     16, 8, // hitbox width, height
@@ -99,13 +100,13 @@ const EntityData data[] =
     0, // hp
     entity_falling_platform_plus_mask // sprite
   },
-  // 0001 reserved moving platform
+  // 0001 platform: moving
   {
-    0, 0, // hitbox x, y
-    0, 0, // hitbox width, height
-    0, 0, // sprite origin x, y
+    4, 8, // hitbox x, y
+    24, 8, // hitbox width, height
+    4, 8, // sprite origin x, y
     0, // hp
-    NULL // sprite
+    entity_moving_platform_plus_mask // sprite
   },
   // 0010 candle: coin
   {
@@ -284,6 +285,26 @@ Entity* Entities::add(uint8_t type, int16_t x, int8_t y)
 
   // FIXME assert?
   return NULL;
+}
+
+void updateMovingPlatform(Entity& entity)
+{
+  if (ab.everyXFrames(3))
+  {
+    entity.pos.x += entity.state & FLAG_MISC1 ? -1 : 1;
+    if (++entity.counter == 23)
+    {
+      entity.counter = 0;
+      if (entity.state & FLAG_MISC1)
+      {
+        entity.state &= ~FLAG_MISC1;
+      }
+      else
+      {
+        entity.state |= FLAG_MISC1;
+      }
+    }
+  }
 }
 
 void updateSkeleton(Entity& entity)
@@ -503,6 +524,9 @@ void Entities::update()
               }
             }
             break;
+          case ENTITY_MOVING_PLATFORM:
+            updateMovingPlatform(entity);
+            break;
           case ENTITY_FIREBALL_VERT:
             if (--entity.pos.y == -4)
             {
@@ -673,7 +697,7 @@ bool Entities::moveCollide(int16_t x, int8_t y, const Box& hitbox)
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
     Entity& entity = entities[i];
-    if (entity.state & FLAG_ALIVE && entity.type == ENTITY_FALLING_PLATFORM)
+    if (entity.state & FLAG_ALIVE && !(entity.type & PLATFORM_MASK))
     {
       const Box& entityHitbox = data[entity.type].hitbox;
       if (Util::collideRect(entity.pos.x - entityHitbox.x,
@@ -683,7 +707,10 @@ bool Entities::moveCollide(int16_t x, int8_t y, const Box& hitbox)
                             x - hitbox.x, y - hitbox.y, hitbox.width, hitbox.height))
       {
         collide = true;
-        entity.state |= FLAG_MISC1;
+        if(entity.type == ENTITY_FALLING_PLATFORM)
+        {
+          entity.state |= FLAG_MISC1;
+        }
       }
     }
   }
@@ -707,7 +734,8 @@ Entity* Entities::checkPlayer(int16_t x, int8_t y, uint8_t width, uint8_t height
         switch (entity.type)
         {
           case ENTITY_FALLING_PLATFORM:
-            // falling tile does nothing
+          case ENTITY_MOVING_PLATFORM:
+            // platforms do nothing
             break;
           case ENTITY_PICKUP_COIN:
             Game::timeLeft += PICKUP_COIN_VALUE;
