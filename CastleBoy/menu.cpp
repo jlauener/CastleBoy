@@ -137,8 +137,8 @@ void loopTitle()
     drawMenuOption(TITLE_OPTION_HELP, text_help);
     drawMenuOption(TITLE_OPTION_SFX, ab.audio.enabled() ? text_sfx_on : text_sfx_off);
   }
-  sprites.drawOverwrite(36, 5 + titleLeftOffset, title_left, 0);
-  sprites.drawOverwrite(69, 5 + titleRightOffset, title_right, 0);
+  sprites.drawOverwrite(36, 2 + titleLeftOffset, title_left, 0);
+  sprites.drawOverwrite(69, 2 + titleRightOffset, title_right, 0);
 }
 
 void Menu::loop()
