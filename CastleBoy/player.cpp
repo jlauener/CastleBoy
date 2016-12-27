@@ -98,7 +98,6 @@ void Player::update()
       velocityX = 0;
       if (hp == 0)
       {
-        LOG_DEBUG(1);
         alive = false;
       }
     }
@@ -271,7 +270,6 @@ void Player::update()
   // check if player falled in a hole
   if (pos.y - SPRITE_ORIGIN_Y > 64)
   {
-    LOG_DEBUG(2);
     alive = false;
   }
 

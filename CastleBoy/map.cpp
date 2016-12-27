@@ -127,7 +127,6 @@ bool Map::collide(int16_t x, int8_t y, const Box& hitbox)
     // cannot get out on the sides, collide
     // WARNING can get out of right side, if we use this for projectile
     // we might need to change this..
-    //LOG_DEBUG("side");
     return true;
   }
 
@@ -139,7 +138,6 @@ bool Map::collide(int16_t x, int8_t y, const Box& hitbox)
   if (ty2 < 0 || ty2 >= height)
   {
     // either higher or lower than map, no collision
-    //LOG_DEBUG("higher or lower");
     return false;
   }
 
