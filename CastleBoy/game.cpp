@@ -65,6 +65,7 @@ void Game::loop()
   {
     if (Map::boss != NULL)
     {
+      ++levelIndex;
       Menu::notifyStageFinished();
       finished = true;
     }
@@ -103,6 +104,7 @@ void Game::loop()
     // finished: boss killed
     else if (Map::boss != NULL && Map::boss->hp == 0)
     {
+      ++levelIndex;
       Menu::notifyStageFinished();
       finished = true;
     }
