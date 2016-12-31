@@ -738,7 +738,7 @@ Entity* Entities::checkPlayer(int16_t x, int8_t y, uint8_t width, uint8_t height
             // platforms do nothing
             break;
           case ENTITY_PICKUP_COIN:
-            Game::timeLeft += PICKUP_COIN_VALUE;
+            //Game::timeLeft += PICKUP_COIN_VALUE;
             entity.state = 0;
             sound.tone(NOTE_CS6, 30, NOTE_CS5, 40);
             break;
