@@ -17,7 +17,7 @@ extern uint8_t flashCounter;
 
 #define FPS 60
 
-#define STAGE_MAX 9
+#define STAGE_MAX 3
 #define LEVEL_PER_STAGE 4
 #define ENTITY_MAX 32
 
@@ -58,6 +58,8 @@ extern uint8_t flashCounter;
 #define STATE_PLAY 2
 #define STATE_GAME_OVER 3
 #define STATE_GAME_FINISHED 4
+#define STATE_STAGE_FINISHED 5
+#define STATE_PLAYER_DIED 6
 
 // map data
 #define TILE_DATA_EMPTY 0

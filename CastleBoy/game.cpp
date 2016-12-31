@@ -9,16 +9,16 @@
 int16_t Game::cameraX;
 uint8_t Game::life;
 uint16_t Game::timeLeft;
-uint8_t Game::stage;
 bool Game::hasPlayerDied = false;
 
 namespace
 {
 const uint8_t* const levels[] = { stage_1_1, stage_1_2, stage_1_4, stage_2_1, stage_2_2, stage_2_3, stage_2_4, stage_3_1, stage_3_4 };
 
+bool finished;
 uint8_t levelIndex;
-uint8_t deathCounter = 0;
-uint8_t finishedCounter = 0;
+//uint8_t deathCounter = 0;
+//uint8_t finishedCounter = 0;
 
 void drawHpBar(int16_t x, int16_t y, uint8_t value, uint8_t max)
 {
@@ -33,16 +33,15 @@ void drawHpBar(int16_t x, int16_t y, uint8_t value, uint8_t max)
 
 void Game::reset()
 {
-  life = GAME_STARTING_LIFE;
   levelIndex = 0;
-  stage = 1;
-  timeLeft = GAME_STARTING_TIME;
+  life = GAME_STARTING_LIFE;
   Player::hp = PLAYER_MAX_HP;
   Player::knifeCount = 0;
 }
 
 void Game::play()
 {
+  finished = false;
   mainState = STATE_PLAY;
   if (hasPlayerDied)
   {
@@ -58,21 +57,31 @@ void Game::loop()
 {
   // debug
 #ifdef DEBUG_CHEAT
-  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.pressed(DOWN_BUTTON))
+  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.justPressed(DOWN_BUTTON))
   {
     play();
     return;
   }
 
-  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.pressed(UP_BUTTON))
+  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.justPressed(UP_BUTTON))
   {
-    finishedCounter = 1;
+    if (Map::boss != NULL)
+    {
+      Menu::notifyStageFinished();
+      finished = true;
+    }
+    else
+    {
+      ++levelIndex;
+      play();
+    }
     return;
   }
 
-  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.pressed(LEFT_BUTTON))
+  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.justPressed(LEFT_BUTTON))
   {
     // TODOplay(stage_test);
+    return;
   }
 #endif
 
@@ -80,81 +89,87 @@ void Game::loop()
   Player::update();
   Entities::update();
 
-  if (timeLeft > 0)
+  if (!finished)
   {
-    --timeLeft;
-  }
-
-  // finished: exit from left
-  if (finishedCounter == 0 && Player::pos.x - 4 /*normalHitbox.x*/ > Map::width * TILE_WIDTH)
-  {
-    finishedCounter = 1;
-  }
-
-  // finished: boss killed
-  if (finishedCounter == 0 && Map::boss != NULL && Map::boss->hp == 0)
-  {
-    finishedCounter = 120;
-  }
-
-  // finished: update counter
-  if (finishedCounter > 0)
-  {
-    if (--finishedCounter == 0)
+    if (timeLeft > 0)
     {
-      if (++levelIndex == STAGE_MAX)
+      --timeLeft;
+    }
+  
+    // finished: exit from left
+    if (Player::pos.x - 4 /*normalHitbox.x*/ > Map::width * TILE_WIDTH)
+    {
+      ++levelIndex;
+      play();
+    }
+    // finished: boss killed
+    else if (Map::boss != NULL && Map::boss->hp == 0)
+    {
+      Menu::notifyStageFinished();
+      finished = true;
+    }
+
+    //  // finished: update counter
+    //  if (finishedCounter > 0)
+    //  {
+    //    if (--finishedCounter == 0)
+    //    {
+    //      if (++levelIndex == STAGE_MAX)
+    //      {
+    //        mainState = STATE_GAME_FINISHED;
+    //      }
+    //      else
+    //      {
+    //        if (Map::boss != NULL)
+    //        {
+    //          ++stage;
+    //          Menu::showStageIntro();
+    //        }
+    //        else
+    //        {
+    //          play();
+    //        }
+    //      }
+    //    }
+    //  }
+
+    // finished: check if player is alive
+    else if (!Player::alive || timeLeft == 0)
+    {
+      Player::knifeCount = 0;
+      if (timeLeft == 0)
       {
-        mainState = STATE_GAME_FINISHED;
+        life = 0;
       }
       else
       {
-        if (Map::boss != NULL)
-        {
-          ++stage;
-          Menu::showStageIntro();
-        }
-        else
-        {
-          play();
-        }
+        --life;
       }
+      Menu::notifyPlayerDied();
+      finished = true;
+
+      //deathCounter = 160;
+      //Menu::playMusic();
+      //sound.tone(NOTE_G3, 100, NOTE_G2, 150, NOTE_G1, 350);
     }
   }
 
-  // game over: check if player is alive
-  if (deathCounter == 0 && (!Player::alive || timeLeft == 0))
-  {
-    Player::knifeCount = 0;
-    if (timeLeft == 0)
-    {
-      Game::life = 0;
-    }
-    else
-    {
-      --Game::life;
-    }
-
-    deathCounter = 160;
-    //Menu::playMusic();
-    sound.tone(NOTE_G3, 100, NOTE_G2, 150, NOTE_G1, 350);
-  }
-
-  // game over: update counter
-  if (deathCounter > 0)
-  {
-    if (--deathCounter == 0)
-    {
-      if (life == 0)
-      {
-        mainState = STATE_GAME_OVER;
-      }
-      else
-      {
-        hasPlayerDied = true;
-        play();
-      }
-    }
-  }
+  //  // game over: update counter
+  //  if (deathCounter > 0)
+  //  {
+  //    if (--deathCounter == 0)
+  //    {
+  //      if (life == 0)
+  //      {
+  //        mainState = STATE_GAME_OVER;
+  //      }
+  //      else
+  //      {
+  //        hasPlayerDied = true;
+  //        play();
+  //      }
+  //    }
+  //  }
 
   // update camera
   if (Player::pos.x < cameraX + CAMERA_LEFT_BUFFER)

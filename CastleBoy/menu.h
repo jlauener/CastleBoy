@@ -6,7 +6,9 @@
 namespace Menu
 {
   void showTitle();
-  void showStageIntro();
+  void notifyPlayerDied();
+  void notifyStageFinished();
+  
   void loop();
 }
 
