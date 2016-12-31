@@ -9,11 +9,14 @@
 int16_t Game::cameraX;
 uint8_t Game::life;
 uint16_t Game::timeLeft;
-uint8_t Game::stageIndex;
+uint8_t Game::stage;
 bool Game::hasPlayerDied = false;
 
 namespace
 {
+const uint8_t* const levels[] = { stage_1_1, stage_1_2, stage_1_4, stage_2_1, stage_2_2, stage_2_3, stage_2_4, stage_3_1, stage_3_4 };
+
+uint8_t levelIndex;
 uint8_t deathCounter = 0;
 uint8_t finishedCounter = 0;
 
@@ -28,7 +31,17 @@ void drawHpBar(int16_t x, int16_t y, uint8_t value, uint8_t max)
 
 }
 
-void Game::play(const uint8_t* source)
+void Game::reset()
+{
+  life = GAME_STARTING_LIFE;
+  levelIndex = 0;
+  stage = 1;
+  timeLeft = GAME_STARTING_TIME;
+  Player::hp = PLAYER_MAX_HP;
+  Player::knifeCount = 0;
+}
+
+void Game::play()
 {
   mainState = STATE_PLAY;
   if (hasPlayerDied)
@@ -37,7 +50,7 @@ void Game::play(const uint8_t* source)
     hasPlayerDied = false;
   }
   Entities::init();
-  Map::init(source);
+  Map::init(levels[levelIndex]);
   cameraX = 0;
 }
 
@@ -47,26 +60,19 @@ void Game::loop()
 #ifdef DEBUG_CHEAT
   if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.pressed(DOWN_BUTTON))
   {
-    Menu::showStageIntro();
+    play();
     return;
   }
 
   if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.pressed(UP_BUTTON))
   {
-    if (++stageIndex == STAGE_MAX)
-    {
-      mainState = STATE_GAME_FINISHED;
-    }
-    else
-    {
-      Menu::showStageIntro();
-    }
+    finishedCounter = 1;
     return;
   }
 
   if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.pressed(LEFT_BUTTON))
   {
-    play(stage_test);
+    // TODOplay(stage_test);
   }
 #endif
 
@@ -96,13 +102,21 @@ void Game::loop()
   {
     if (--finishedCounter == 0)
     {
-      if (++stageIndex == STAGE_MAX)
+      if (++levelIndex == STAGE_MAX)
       {
         mainState = STATE_GAME_FINISHED;
       }
       else
       {
-        Menu::showStageIntro();
+        if (Map::boss != NULL)
+        {
+          ++stage;
+          Menu::showStageIntro();
+        }
+        else
+        {
+          play();
+        }
       }
     }
   }
@@ -137,7 +151,7 @@ void Game::loop()
       else
       {
         hasPlayerDied = true;
-        Menu::showStageIntro();
+        play();
       }
     }
   }

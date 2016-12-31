@@ -7,7 +7,7 @@
 
 uint8_t Map::width;
 bool Map::showBackground;
-Entity* Map::boss;
+Entity* Map::boss = NULL;
 
 namespace
 {
@@ -67,14 +67,14 @@ void Map::init(const uint8_t* source)
     mainTileAlt = TILE_GROUND_ALT;
     
     miscTile = TILE_WALL;
-    endMiscTile = true;
+    endMiscTile = false;
 
     if (temp & 0x40)
     {
       // outdoor
       mainStartTile = TILE_GROUND_START;
       mainStartTileAlt = TILE_GROUND_START_ALT;
-      endMainTile = false;
+      //endMainTile = false;
       showBackground = true;
       propTile = TILE_GRAVE;
     }
@@ -83,10 +83,12 @@ void Map::init(const uint8_t* source)
       // cave
       mainStartTile = TILE_GROUND;
       mainStartTileAlt = TILE_GROUND_ALT;
-      endMainTile = true;
+      //endMainTile = true;
       showBackground = false;
       propTile = TILE_GRAVE;
     }
+
+    endMainTile = true;
   }
 
   // player starting position

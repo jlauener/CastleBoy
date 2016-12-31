@@ -8,10 +8,11 @@ namespace Game
   extern int16_t cameraX;
   extern uint8_t life;
   extern uint16_t timeLeft;
-  extern uint8_t stageIndex;
+  extern uint8_t stage;
   extern bool hasPlayerDied;
-  
-  void play(const uint8_t* source);
+
+  void reset();
+  void play();
   void loop();
 
   // helper

@@ -11,7 +11,6 @@
 
 namespace
 {
-const uint8_t* const stages[] = { stage_1_1, stage_1_2, stage_1_3, stage_1_4, stage_2_1, stage_2_2, stage_2_3, stage_2_4, stage_3_1, stage_3_2, stage_3_3, stage_3_4 };
 
 uint8_t counter;
 bool flag;
@@ -30,18 +29,14 @@ void Menu::showTitle()
   counter = 60;
   menuIndex = TITLE_OPTION_PLAY;
 
-  // reset game
-  Game::life = GAME_STARTING_LIFE;
-  Game::stageIndex = 0;
-  Game::timeLeft = GAME_STARTING_TIME;
-  Player::hp = PLAYER_MAX_HP;
-  Player::knifeCount = 0;
+  Game::reset();
 }
 
 void Menu::showStageIntro()
 {
   mainState = STATE_STAGE_INTRO;
-  counter = 120;
+  counter = 180;
+  flashCounter = 4;
 }
 
 void drawMenuOption(uint8_t index, const uint8_t* sprite)
@@ -152,17 +147,22 @@ void Menu::loop()
       Game::loop();
       break;
     case STATE_STAGE_INTRO:
-      sprites.drawOverwrite(46, 22, text_stage, 0);
-      Util::drawNumber(69, 22, Game::stageIndex / LEVEL_PER_STAGE + 1, ALIGN_LEFT);
-      Util::drawNumber(76, 22, Game::stageIndex % LEVEL_PER_STAGE + 1, ALIGN_LEFT);
-      if (Game::hasPlayerDied)
+    if (ab.everyXFrames(16))
       {
-        sprites.drawOverwrite(52, 38, ui_life_count, 0);
-        Util::drawNumber(64, 38, Game::life, ALIGN_LEFT);
+        toggle = !toggle;
       }
+      sprites.drawOverwrite(52, 18, text_stage, 0);
+      Util::drawNumber(75, 18, Game::stage, ALIGN_LEFT);
+      sprites.drawPlusMask(56, 32, player_plus_mask, toggle ? 2 : 0);
+//      if (Game::hasPlayerDied)
+//      {
+//        sprites.drawOverwrite(52, 38, ui_life_count, 0);
+//        Util::drawNumber(64, 38, Game::life, ALIGN_LEFT);
+//      }
       if (--counter == 0)
       {
-        Game::play(stages[Game::stageIndex]);
+        flashCounter = 4;
+        Game::play();
       }
       break;
     case STATE_GAME_OVER:

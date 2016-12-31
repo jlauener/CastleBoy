@@ -17,7 +17,7 @@ extern uint8_t flashCounter;
 
 #define FPS 60
 
-#define STAGE_MAX 12
+#define STAGE_MAX 9
 #define LEVEL_PER_STAGE 4
 #define ENTITY_MAX 32
 
