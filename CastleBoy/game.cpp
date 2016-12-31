@@ -17,8 +17,6 @@ const uint8_t* const levels[] = { stage_1_1, stage_1_2, stage_1_4, stage_2_1, st
 
 bool finished;
 uint8_t levelIndex;
-//uint8_t deathCounter = 0;
-//uint8_t finishedCounter = 0;
 
 void drawHpBar(int16_t x, int16_t y, uint8_t value, uint8_t max)
 {
@@ -109,33 +107,10 @@ void Game::loop()
       finished = true;
     }
 
-    //  // finished: update counter
-    //  if (finishedCounter > 0)
-    //  {
-    //    if (--finishedCounter == 0)
-    //    {
-    //      if (++levelIndex == STAGE_MAX)
-    //      {
-    //        mainState = STATE_GAME_FINISHED;
-    //      }
-    //      else
-    //      {
-    //        if (Map::boss != NULL)
-    //        {
-    //          ++stage;
-    //          Menu::showStageIntro();
-    //        }
-    //        else
-    //        {
-    //          play();
-    //        }
-    //      }
-    //    }
-    //  }
-
     // finished: check if player is alive
     else if (!Player::alive || timeLeft == 0)
     {
+      Player::alive = false;
       Player::knifeCount = 0;
       if (timeLeft == 0)
       {
@@ -147,30 +122,9 @@ void Game::loop()
       }
       Menu::notifyPlayerDied();
       finished = true;
-
-      //deathCounter = 160;
-      //Menu::playMusic();
-      //sound.tone(NOTE_G3, 100, NOTE_G2, 150, NOTE_G1, 350);
     }
   }
-
-  //  // game over: update counter
-  //  if (deathCounter > 0)
-  //  {
-  //    if (--deathCounter == 0)
-  //    {
-  //      if (life == 0)
-  //      {
-  //        mainState = STATE_GAME_OVER;
-  //      }
-  //      else
-  //      {
-  //        hasPlayerDied = true;
-  //        play();
-  //      }
-  //    }
-  //  }
-
+  
   // update camera
   if (Player::pos.x < cameraX + CAMERA_LEFT_BUFFER)
   {
