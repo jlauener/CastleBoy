@@ -7,7 +7,7 @@ namespace Menu
 {
   void showTitle();
   void notifyPlayerDied();
-  void notifyStageFinished();
+  void notifyLevelFinished();
   
   void loop();
 }

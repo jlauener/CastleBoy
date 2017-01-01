@@ -30,6 +30,7 @@ void Menu::showTitle()
   counter = 60;
   menuIndex = TITLE_OPTION_PLAY;
   stage = 1;
+  Player::hp = PLAYER_MAX_HP;
   Game::reset();
 }
 
@@ -40,17 +41,25 @@ void Menu::notifyPlayerDied()
   sound.tone(NOTE_G3, 100, NOTE_G2, 150, NOTE_G1, 350);
 }
 
-void Menu::notifyStageFinished()
+void Menu::notifyLevelFinished()
 {
-  mainState = STATE_STAGE_FINISHED;
-  counter = 80;
+  if (Map::boss != NULL)
+  {
+    mainState = STATE_STAGE_FINISHED;
+    counter = 80;
+    sound.tone(NOTE_G2, 100, NOTE_G3, 150, NOTE_G4, 350);
+  }
+  else
+  {
+    mainState = STATE_LEVEL_FINISHED;
+    counter = 40;
+  }
 }
 
 void showStageIntro()
 {
   mainState = STATE_STAGE_INTRO;
   counter = 180;
-  flashCounter = 2;
 }
 
 void drawMenuOption(uint8_t index, const uint8_t* sprite)
@@ -171,7 +180,6 @@ void Menu::loop()
       if (--counter == 0)
       {
         Game::timeLeft = GAME_STARTING_TIME;
-        flashCounter = 4;
         Game::play();
       }
       break;
@@ -200,25 +208,70 @@ void Menu::loop()
         Menu::showTitle();
       }
       break;
-    case STATE_STAGE_FINISHED:
-      Game::loop();
-      ab.fillRect(0, 22, 128, 20, BLACK);
+    case STATE_LEVEL_FINISHED:
       if (--counter == 0)
       {
-        if (stage == STAGE_MAX)
+        Game::play();
+      }
+      break;
+    case STATE_STAGE_FINISHED:
+      if (Game::timeLeft > 0)
+      {
+        if (counter > 0)
         {
-          mainState = STATE_GAME_FINISHED;
+          --counter;
         }
         else
         {
-          ++stage;
-          showStageIntro();
+          if (Game::timeLeft > FPS)
+          {
+            Game::timeLeft -= FPS;
+          }
+          else
+          {
+            Game::timeLeft = 0;
+          }
+
+          if (Game::timeLeft == 0)
+          {
+            counter = 20;
+          }
+
+          if (ab.everyXFrames(8))
+          {
+            sound.tone(NOTE_G4, 25);
+          }
         }
       }
+      else if (Player::hp < PLAYER_MAX_HP)
+      {
+        if (--counter == 0)
+        {
+          ++Player::hp;
+          sound.tone(NOTE_G3, 60);
+          counter = 20;
+        }
+      }
+      else
+      {
+        if (--counter == 0)
+        {
+          if (stage == STAGE_MAX)
+          {
+            mainState = STATE_GAME_FINISHED;
+          }
+          else
+          {
+            Player::hp = PLAYER_MAX_HP; // TODO anim + time left anim
+            ++stage;
+            showStageIntro();
+          }
+        }
+      }
+
+      Game::loop();
       break;
     case STATE_PLAYER_DIED:
-      Game::loop();
-
       if (--counter == 0)
       {
         if (Game::life == 0)
@@ -227,37 +280,37 @@ void Menu::loop()
         }
         else
         {
+          Player::hp = PLAYER_MAX_HP;
           Game::play();
         }
+      }
+      else if (counter < 100)
+      {
 
-        flashCounter = 2;
-      }
-
-      if (counter > 100)
-      {
-        break;
-      }
-      
-      ab.fillRect(0, 22, 128, 20, BLACK);
-      if (Game::timeLeft == 0)
-      {
-        sprites.drawOverwrite(47, 29, text_time_up, 0);
-      }
-      else
-      {
-        sprites.drawOverwrite(52, 29, ui_life_count, 0);
-        if (counter > 80)
+        if (Game::timeLeft == 0)
         {
-          Util::drawNumber(64, 29, Game::life + 1, ALIGN_LEFT);
-        }
-        else if (counter > 70)
-        {
-          Util::drawNumber(64, 28, Game::life, ALIGN_LEFT);
+          sprites.drawOverwrite(47, 29, text_time_up, 0);
         }
         else
         {
-          Util::drawNumber(64, 29, Game::life, ALIGN_LEFT);
+          sprites.drawOverwrite(52, 29, ui_life_count, 0);
+          if (counter > 80)
+          {
+            Util::drawNumber(64, 29, Game::life + 1, ALIGN_LEFT);
+          }
+          else if (counter > 70)
+          {
+            Util::drawNumber(64, 28, Game::life, ALIGN_LEFT);
+          }
+          else
+          {
+            Util::drawNumber(64, 29, Game::life, ALIGN_LEFT);
+          }
         }
+      }
+      else
+      {
+        Game::loop();
       }
       break;
   }

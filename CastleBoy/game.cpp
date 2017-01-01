@@ -9,7 +9,6 @@
 int16_t Game::cameraX;
 uint8_t Game::life;
 uint16_t Game::timeLeft;
-bool Game::hasPlayerDied = false;
 
 namespace
 {
@@ -41,11 +40,6 @@ void Game::play()
 {
   finished = false;
   mainState = STATE_PLAY;
-  if (hasPlayerDied)
-  {
-    Player::hp = PLAYER_MAX_HP;
-    hasPlayerDied = false;
-  }
   Entities::init();
   Map::init(levels[levelIndex]);
   cameraX = 0;
@@ -66,7 +60,7 @@ void Game::loop()
     if (Map::boss != NULL)
     {
       ++levelIndex;
-      Menu::notifyStageFinished();
+      Menu::notifyLevelFinished();
       finished = true;
     }
     else
@@ -99,13 +93,14 @@ void Game::loop()
     if (Player::pos.x - 4 /*normalHitbox.x*/ > Map::width * TILE_WIDTH)
     {
       ++levelIndex;
-      play();
+      Menu::notifyLevelFinished();
+      finished = true;
     }
     // finished: boss killed
     else if (Map::boss != NULL && Map::boss->hp == 0)
     {
       ++levelIndex;
-      Menu::notifyStageFinished();
+      Menu::notifyLevelFinished();
       finished = true;
     }
 
