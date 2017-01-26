@@ -293,18 +293,23 @@ void Menu::loop()
         }
         else
         {
-          sprites.drawOverwrite(52, 29, ui_life_count, 0);
+          sprites.drawOverwrite(57, 29, ui_life_count, 0);
           if (counter > 80)
           {
-            Util::drawNumber(64, 29, Game::life + 1, ALIGN_LEFT);
+            Util::drawNumber(69, 29, Game::life + 1, ALIGN_LEFT);
           }
           else if (counter > 70)
           {
-            Util::drawNumber(64, 28, Game::life, ALIGN_LEFT);
+            Util::drawNumber(69, 28, Game::life, ALIGN_LEFT);
           }
           else
           {
-            Util::drawNumber(64, 29, Game::life, ALIGN_LEFT);
+            Util::drawNumber(69, 29, Game::life, ALIGN_LEFT);
+          }
+
+          if(counter == 80)
+          {
+            sound.tone(NOTE_GS3, 15);
           }
         }
       }
