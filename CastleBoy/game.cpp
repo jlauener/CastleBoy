@@ -73,7 +73,11 @@ void Game::loop()
 
   if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.justPressed(LEFT_BUTTON))
   {
-    // TODOplay(stage_test);
+    finished = false;
+    mainState = STATE_PLAY;
+    Entities::init();
+    Map::init(stage_test);
+    cameraX = 0;
     return;
   }
 #endif
@@ -88,7 +92,7 @@ void Game::loop()
     {
       --timeLeft;
     }
-  
+
     // finished: exit from left
     if (Player::pos.x - 4 /*normalHitbox.x*/ > Map::width * TILE_WIDTH)
     {
@@ -121,7 +125,7 @@ void Game::loop()
       finished = true;
     }
   }
-  
+
   // update camera
   if (Player::pos.x < cameraX + CAMERA_LEFT_BUFFER)
   {

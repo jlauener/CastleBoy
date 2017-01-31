@@ -54,7 +54,10 @@
 
 // 1101 boss knight
 #define ENTITY_BOSS_KNIGHT 0x0D
-// 1110 boss 2 0x0E
+
+// 1110 boss harpy
+#define ENTITY_BOSS_HARPY 0x0E
+
 // 1111 boss 3 0x0F
 
 // pickups
@@ -204,13 +207,13 @@ const EntityData data[] =
     BOSS_MAX_HP, // hp
     entity_boss_knight_plus_mask // sprite
   },
-  // 1110 reserved boss 2
+  // 1110 boss harpy
   {
-    0, 0, // hitbox x, y
-    0, 0, // hitbox width, height
-    0, 0, // sprite origin x, y
-    0, // hp
-    NULL // sprite
+    4, 8, // hitbox x, y
+    8, 8, // hitbox width, height
+    4, 8, // sprite origin x, y
+    BOSS_MAX_HP, // hp
+    entity_boss_harpy_plus_mask // sprite
   },
   // 1111 reserved boss 3
   {
@@ -255,6 +258,9 @@ const EntityData data[] =
 };
 
 Entity entities[ENTITY_MAX];
+
+uint8_t bossState;
+uint8_t bossCounter;
 } // unamed
 
 void Entities::init()
@@ -263,6 +269,9 @@ void Entities::init()
   {
     entities[i].state = 0;
   }
+
+  bossState = 0;
+  bossCounter = 0;
 }
 
 Entity* Entities::add(uint8_t type, int16_t x, int8_t y)
@@ -453,6 +462,50 @@ void updateBossKnight(Entity& entity)
   }
 }
 
+void updateBossHarpy(Entity& entity)
+{
+  // fly left
+  // fly right
+  // go down-up left
+
+  // fly right
+  // fly left
+  // go down-up right
+
+  if (ab.everyXFrames(2))
+  {
+    entity.pos.x += entity.state & FLAG_MISC1 ? 1 : -1;
+    if (++entity.counter == 104)
+    {
+      entity.state = entity.state & FLAG_MISC1 ? entity.state & ~FLAG_MISC1 : entity.state | FLAG_MISC1;
+      entity.counter = 0;
+
+      if (++bossState == 3)
+      {
+        bossState = 0;
+      }
+    }
+
+    if (bossState < 2)
+    {
+      // flying
+      if (++bossCounter == 28)
+      {
+        Entities::add(ENTITY_FIREBALL_VERT, entity.pos.x, entity.pos.y);
+        bossCounter = 0;
+      }
+    }
+    else
+    {
+      // attacking
+      if(entity.counter % 4)
+      {
+        entity.pos.y += entity.counter < 52 ? 1 : -1;
+      }
+    }
+  }
+}
+
 void updateProjectile(Entity& entity)
 {
   --entity.pos.x;
@@ -496,9 +549,9 @@ void Entities::update()
           }
           else
           {
-            if(entity.type == ENTITY_BOSS_KNIGHT)
+            if (entity.type == ENTITY_BOSS_KNIGHT)
             {
-              entity.frame = entity.state & FLAG_MISC1 ? 5 : 1; 
+              entity.frame = entity.state & FLAG_MISC1 ? 5 : 1;
             }
             else
             {
@@ -528,9 +581,17 @@ void Entities::update()
             updateMovingPlatform(entity);
             break;
           case ENTITY_FIREBALL_VERT:
-            if (--entity.pos.y == -4)
+            if (++entity.pos.y == 68)
             {
-              entity.pos.y = 68;
+              if (Map::boss != NULL)
+              {
+                // special case: harpy boss throws fireball that don't 'cycle'
+                entity.state = 0;
+              }
+              else
+              {
+                entity.pos.y = -4;
+              }
             }
             if (ab.everyXFrames(12))
             {
@@ -577,6 +638,9 @@ void Entities::update()
             break;
           case ENTITY_BOSS_KNIGHT:
             updateBossKnight(entity);
+            break;
+          case ENTITY_BOSS_HARPY:
+            updateBossHarpy(entity);
             break;
           case ENTITY_BONE:
           case ENTITY_FIREBALL_HORIZ:
@@ -647,7 +711,7 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
           else
           {
             entity.frame = 3;
-             entity.state |= MASK_HURT; // when boss resist, stop moving a bit longer than when it's a normal hurt
+            entity.state |= MASK_HURT; // when boss resist, stop moving a bit longer than when it's a normal hurt
             sound.tone(NOTE_GS2, 15);
           }
 
@@ -707,7 +771,7 @@ bool Entities::moveCollide(int16_t x, int8_t y, const Box& hitbox)
                             x - hitbox.x, y - hitbox.y, hitbox.width, hitbox.height))
       {
         collide = true;
-        if(entity.type == ENTITY_FALLING_PLATFORM)
+        if (entity.type == ENTITY_FALLING_PLATFORM)
         {
           entity.state |= FLAG_MISC1;
         }
