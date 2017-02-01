@@ -261,6 +261,8 @@ Entity entities[ENTITY_MAX];
 
 uint8_t bossState;
 uint8_t bossCounter;
+uint8_t bossPhase;
+
 } // unamed
 
 void Entities::init()
@@ -272,6 +274,7 @@ void Entities::init()
 
   bossState = 0;
   bossCounter = 0;
+  bossPhase = 1;
 }
 
 Entity* Entities::add(uint8_t type, int16_t x, int8_t y)
@@ -464,15 +467,10 @@ void updateBossKnight(Entity& entity)
 
 void updateBossHarpy(Entity& entity)
 {
-  // fly left
-  // fly right
-  // go down-up left
-
-  // fly right
-  // fly left
-  // go down-up right
-
-  if (ab.everyXFrames(2))
+  // FLAG_MISC1 is use for direction (0 going left, 1 going right)
+  // FLAG_MISC2 is use to make harpy invulnerable after being it
+ 
+  if (ab.everyXFrames(4 - bossPhase))
   {
     entity.pos.x += entity.state & FLAG_MISC1 ? 1 : -1;
     if (++entity.counter == 104)
@@ -482,6 +480,19 @@ void updateBossHarpy(Entity& entity)
 
       if (++bossState == 3)
       {
+        if(entity.state & FLAG_MISC2)
+        {
+          // got hurt
+          if(entity.hp == 8)
+          {
+            bossPhase = 2;
+          }
+          else if(entity.hp == 4)
+          {
+            bossPhase = 3;
+          }
+          entity.state &= ~FLAG_MISC2;
+        }
         bossState = 0;
       }
     }
@@ -489,7 +500,7 @@ void updateBossHarpy(Entity& entity)
     if (bossState < 2)
     {
       // flying
-      if (++bossCounter == 28)
+      if (++bossCounter >= 12 + bossPhase * 3)
       {
         Entities::add(ENTITY_FIREBALL_VERT, entity.pos.x, entity.pos.y);
         bossCounter = 0;
@@ -498,10 +509,34 @@ void updateBossHarpy(Entity& entity)
     else
     {
       // attacking
-      if(entity.counter % 4)
+      if (entity.counter % 4)
       {
         entity.pos.y += entity.counter < 52 ? 1 : -1;
       }
+    }
+  }
+
+  if (bossState < 2)
+  {
+    // flying
+    if (ab.everyXFrames(BOSS_HARPY_WALK_INTERVAL / bossPhase))
+    {
+      if (entity.state & FLAG_MISC1)
+      {
+        entity.frame = entity.frame == 6 ? 5 : 6;
+      }
+      else
+      {
+        entity.frame = entity.frame == 2 ? 1 : 2;
+      }
+    }
+  }
+  else
+  {
+    // attacking
+    if(!(entity.state & FLAG_MISC2))
+    {
+      entity.frame = entity.state & FLAG_MISC1 ? 7 : 3;
     }
   }
 }
@@ -551,7 +586,12 @@ void Entities::update()
           {
             if (entity.type == ENTITY_BOSS_KNIGHT)
             {
+              // FIXME maybe this is not needed with proper boss update?
               entity.frame = entity.state & FLAG_MISC1 ? 5 : 1;
+            }
+            else if (entity.type == ENTITY_BOSS_HARPY)
+            {
+              // dont' touch the frame!
             }
             else
             {
@@ -719,13 +759,24 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
           {
             entity.frame += 4;
           }
+          entity.state |= HURT_DURATION;
+        }
+        else if(entity.type == ENTITY_BOSS_HARPY)
+        {
+          // special case: harpy
+          damage = !(entity.state & FLAG_MISC2);
+          if(damage)
+          {
+            entity.frame = entity.state & FLAG_MISC1 ? 4 : 0;
+            entity.state |= FLAG_MISC2;
+            entity.state |= HURT_DURATION;
+          }
         }
         else
         {
           entity.frame = 0;
+          entity.state |= HURT_DURATION;
         }
-
-        entity.state |= HURT_DURATION;
 
         if (damage)
         {
