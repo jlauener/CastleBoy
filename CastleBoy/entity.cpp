@@ -41,7 +41,9 @@
 
 // 1000 flyer: skull
 #define ENTITY_FLYER_SKULL 0x08
-// 1001 flyer: ??? 0x09
+
+// 1001 bird
+#define ENTITY_BIRD 0x09
 
 // 1010 hurler
 #define ENTITY_HURLER 0x0A
@@ -167,13 +169,13 @@ const EntityData data[] =
     1, // hp
     entity_skull_plus_mask // sprite
   },
-  // 1001 reserved flyer 2
+  // 1001 bird
   {
-    0, 0, // hitbox x, y
-    0, 0, // hitbox width, height
-    0, 0, // sprite origin x, y
-    0, // hp
-    NULL // sprite
+    4, 8, // hitbox x, y
+    8, 8, // hitbox width, height
+    4, 8, // sprite origin x, y
+    2, // hp
+    entity_bird_plus_mask // sprite
   },
   // 1010 hurler
   {
@@ -426,14 +428,41 @@ void updateFlyer(Entity& entity)
   }
 }
 
+void updateBird(Entity& entity)
+{
+  // FLAG_MISC1 is used for direction (0 going left, 1 going right)
+
+  if (ab.everyXFrames(2))
+  {
+    entity.pos.x += entity.state & FLAG_MISC1 ? 1 : -1;
+    if (++entity.counter == 104)
+    {
+      entity.state = entity.state & FLAG_MISC1 ? entity.state & ~FLAG_MISC1 : entity.state | FLAG_MISC1;
+      entity.counter = 0;
+    }
+
+    // attacking
+    if (entity.counter % 4)
+    {
+      entity.pos.y += entity.counter < 52 ? 1 : -1;
+    }
+  }
+
+  if (ab.everyXFrames(ENTITY_BIRD_WALK_INTERVAL))
+  {
+    if (entity.state & FLAG_MISC1)
+    {
+      entity.frame = entity.frame == 5 ? 4 : 5;
+    }
+    else
+    {
+      entity.frame = entity.frame == 2 ? 1 : 2;
+    }
+  }
+}
+
 void updateBossKnight(Entity& entity)
 {
-  //  if (entity.state & MASK_HURT)
-  //  {
-  //    // hurt
-  //    return;
-  //  }
-
   if (ab.everyXFrames(4))
   {
     if (entity.state & FLAG_MISC2)
