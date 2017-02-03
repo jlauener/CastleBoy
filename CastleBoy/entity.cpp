@@ -213,7 +213,7 @@ const EntityData data[] =
   {
     4, 8, // hitbox x, y
     8, 8, // hitbox width, height
-    4, 8, // sprite origin x, y
+    6, 8, // sprite origin x, y
     BOSS_MAX_HP, // hp
     entity_boss_harpy_plus_mask // sprite
   },
@@ -498,7 +498,7 @@ void updateBossHarpy(Entity& entity)
 {
   // FLAG_MISC1 is use for direction (0 going left, 1 going right)
   // FLAG_MISC2 is use to make harpy invulnerable after being it
- 
+
   if (ab.everyXFrames(4 - bossPhase))
   {
     entity.pos.x += entity.state & FLAG_MISC1 ? 1 : -1;
@@ -509,14 +509,14 @@ void updateBossHarpy(Entity& entity)
 
       if (++bossState == 3)
       {
-        if(entity.state & FLAG_MISC2)
+        if (entity.state & FLAG_MISC2)
         {
           // got hurt
-          if(entity.hp == 8)
+          if (entity.hp == 8)
           {
             bossPhase = 2;
           }
-          else if(entity.hp == 4)
+          else if (entity.hp == 4)
           {
             bossPhase = 3;
           }
@@ -545,7 +545,7 @@ void updateBossHarpy(Entity& entity)
     }
   }
 
-  if (bossState < 2)
+  if (bossState < 2 || entity.counter >= 52)
   {
     // flying
     if (ab.everyXFrames(BOSS_HARPY_WALK_INTERVAL / bossPhase))
@@ -562,11 +562,8 @@ void updateBossHarpy(Entity& entity)
   }
   else
   {
-    // attacking
-    if(!(entity.state & FLAG_MISC2))
-    {
-      entity.frame = entity.state & FLAG_MISC1 ? 7 : 3;
-    }
+     // going down
+     entity.frame = entity.state & FLAG_MISC1 ? 7 : 3;
   }
 }
 
@@ -620,7 +617,8 @@ void Entities::update()
             }
             else if (entity.type == ENTITY_BOSS_HARPY)
             {
-              // dont' touch the frame!
+              // FIXME maybe this is not needed with proper boss update?
+              entity.frame = entity.state & FLAG_MISC1 ? 7 : 3;
             }
             else
             {
@@ -690,6 +688,9 @@ void Entities::update()
             break;
           case ENTITY_FLYER_SKULL:
             updateFlyer(entity);
+            break;
+          case ENTITY_BIRD:
+            updateBird(entity);
             break;
           case ENTITY_HURLER:
             updateHurler(entity);
@@ -790,11 +791,11 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
           }
           entity.state |= HURT_DURATION;
         }
-        else if(entity.type == ENTITY_BOSS_HARPY)
+        else if (entity.type == ENTITY_BOSS_HARPY)
         {
           // special case: harpy
           damage = !(entity.state & FLAG_MISC2);
-          if(damage)
+          if (damage)
           {
             entity.frame = entity.state & FLAG_MISC1 ? 4 : 0;
             entity.state |= FLAG_MISC2;
