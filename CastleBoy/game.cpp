@@ -119,6 +119,7 @@ void Game::loop()
       }
       else
       {
+        timeLeft += GAME_EXTRA_TIME;
         --life;
       }
       Menu::notifyPlayerDied();

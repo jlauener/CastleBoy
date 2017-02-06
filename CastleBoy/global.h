@@ -26,7 +26,8 @@ extern uint8_t flashCounter;
 
 // game
 #define GAME_STARTING_LIFE 5
-#define GAME_STARTING_TIME 12000 // frames (100 secs)
+#define GAME_STARTING_TIME 15000 // frames (250 secs)
+#define GAME_EXTRA_TIME 900 // frames (15 secs)
 #define BOSS_MAX_HP 12
 #define CAMERA_LEFT_BUFFER 24
 #define CAMERA_RIGHT_BUFFER 86
