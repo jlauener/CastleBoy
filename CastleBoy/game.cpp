@@ -12,7 +12,7 @@ uint16_t Game::timeLeft;
 
 namespace
 {
-const uint8_t* const levels[] = { stage_1_1, stage_1_2, stage_1_4, stage_2_1, stage_2_2, stage_2_3, stage_2_4, stage_3_1, stage_3_4 };
+const uint8_t* const levels[] = { stage_1_1, stage_1_2, stage_1_4, stage_2_1, stage_2_2, stage_2_3, stage_2_4, stage_3_1, stage_3_2, stage_3_4 };
 
 bool finished;
 uint8_t levelIndex;
