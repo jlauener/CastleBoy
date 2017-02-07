@@ -60,7 +60,8 @@
 // 1110 boss harpy
 #define ENTITY_BOSS_HARPY 0x0E
 
-// 1111 boss 3 0x0F
+// 1111 boss final
+#define ENTITY_BOSS_FINAL 0x0F
 
 // pickups
 // 10000 pickup: coin
@@ -217,13 +218,13 @@ const EntityData data[] =
     BOSS_MAX_HP, // hp
     entity_boss_harpy_plus_mask // sprite
   },
-  // 1111 reserved boss 3
+  // 1111 boss final
   {
-    0, 0, // hitbox x, y
-    0, 0, // hitbox width, height
-    0, 0, // sprite origin x, y
-    0, // hp
-    NULL // sprite
+    7, 26, // hitbox x, y
+    14, 26, // hitbox width, height
+    12, 32, // sprite origin x, y
+    BOSS_MAX_HP, // hp
+    entity_boss_knight_plus_mask // sprite
   },
   // 10000 pickup: coin
   {
@@ -562,9 +563,33 @@ void updateBossHarpy(Entity& entity)
   }
   else
   {
-     // going down
-     entity.frame = entity.state & FLAG_MISC1 ? 7 : 3;
+    // going down
+    entity.frame = entity.state & FLAG_MISC1 ? 7 : 3;
   }
+}
+
+void updateBossFinal(Entity& entity)
+{
+  if (entity.hp == 8)
+  {
+    bossPhase = 2;
+  }
+  else if (entity.hp == 4)
+  {
+    bossPhase = 3;
+  }
+
+  if (ab.everyXFrames(4 - bossPhase))
+  {
+    if (++entity.counter == 40)
+    {
+      Entities::add(ENTITY_FIREBALL_HORIZ, entity.pos.x, entity.pos.y - 4 - bossState * 8);
+      entity.counter = 0;
+      ++bossState %= 2;
+    }
+  }
+
+  entity.frame = 1; // TODO
 }
 
 void updateProjectile(Entity& entity)
@@ -712,6 +737,9 @@ void Entities::update()
           case ENTITY_BOSS_HARPY:
             updateBossHarpy(entity);
             break;
+          case ENTITY_BOSS_FINAL:
+            updateBossFinal(entity);
+            break;
           case ENTITY_BONE:
           case ENTITY_FIREBALL_HORIZ:
             updateProjectile(entity);
@@ -802,6 +830,7 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
             entity.state |= HURT_DURATION;
           }
         }
+        // TODO ENTITY_BOSS_FINAL
         else
         {
           entity.frame = 0;
