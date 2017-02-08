@@ -8,6 +8,7 @@
 // TODO handling of hurt, can be handled by entity update so we can delegate specific code instead of hacking in damage function
 // FIXME everyXFrames is not precise enough, maybe each entity should have it's own frame counter? --> at least for bone projectile
 //  +--> sometime not precise for walk anim too.. visible when boss is hurt..
+// TODO can reduce code size by having a global invincible flag?
 
 //#define HURT_INVINCIBLE_THRESHOLD 4
 #define DIE_ANIM_ORIGIN_X 4
@@ -464,6 +465,8 @@ void updateBird(Entity& entity)
 
 void updateBossKnight(Entity& entity)
 {
+  // FLAG_MISC1 is used for direction (0 going left, 1 going right)
+  // FLAG_MISC2 is used to tell the boss is has been hurt
   if (ab.everyXFrames(4))
   {
     if (entity.state & FLAG_MISC2)
@@ -513,13 +516,9 @@ void updateBossHarpy(Entity& entity)
         if (entity.state & FLAG_MISC2)
         {
           // got hurt
-          if (entity.hp == 8)
+          if (entity.hp == 6)
           {
             bossPhase = 2;
-          }
-          else if (entity.hp == 4)
-          {
-            bossPhase = 3;
           }
           entity.state &= ~FLAG_MISC2;
         }
@@ -570,26 +569,56 @@ void updateBossHarpy(Entity& entity)
 
 void updateBossFinal(Entity& entity)
 {
-  if (entity.hp == 8)
+  // FLAG_MISC1 is used to know is boss is charging (0=not charging 1=charging)
+  // FLAG_MISC2 is used to tell the boss has been hurt
+
+  if (entity.hp == 6)
   {
     bossPhase = 2;
   }
-  else if (entity.hp == 4)
+
+  // FIXME with proper hurt update we can get rid of FLAG_MISC and simply check if current frame is 0
+  if (entity.state & FLAG_MISC2)
   {
-    bossPhase = 3;
+    // boss has been hurt
+    entity.state &= ~FLAG_MISC2;
+    entity.state &= ~FLAG_MISC1;
+    bossState = 0;
+    bossCounter = 0;
+    entity.frame = 1;
   }
 
-  if (ab.everyXFrames(4 - bossPhase))
+  if (entity.state & FLAG_MISC1)
   {
-    if (++entity.counter == 40)
+    // charging
+    if(++bossCounter == 160)
     {
-      Entities::add(ENTITY_FIREBALL_HORIZ, entity.pos.x, entity.pos.y - 4 - bossState * 8);
-      entity.counter = 0;
-      ++bossState %= 2;
+      entity.state &= ~FLAG_MISC1;
+      entity.frame = 1;
+      bossCounter = 0;
     }
   }
+  else
+  {
+    // not charging
+    if (ab.everyXFrames(4 - bossPhase))
+    {
+      // TODO entity.frame = entity.counter < 30 ? 1 : 1; // TODO attack frame
+      if (++entity.counter == 16)
+      {
+        Entities::add(ENTITY_FIREBALL_HORIZ, entity.pos.x, entity.pos.y - 4 - bossState * 8);
+        entity.counter = 0;
+        ++bossState %= 2;
 
-  entity.frame = 1; // TODO
+        if (++bossCounter == 8)
+        {
+          entity.state |= FLAG_MISC1; // start charging
+          entity.frame = 2; // TODO charge frame
+          bossCounter = 0;
+        }
+      }
+    }
+  }
 }
 
 void updateProjectile(Entity& entity)
@@ -644,6 +673,11 @@ void Entities::update()
             {
               // FIXME maybe this is not needed with proper boss update?
               entity.frame = entity.state & FLAG_MISC1 ? 7 : 3;
+            }
+            else if (entity.type == ENTITY_BOSS_FINAL)
+            {
+              // FIXME maybe this is not needed with proper boss update?
+              entity.frame = 1;
             }
             else
             {
@@ -821,7 +855,7 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
         }
         else if (entity.type == ENTITY_BOSS_HARPY)
         {
-          // special case: harpy
+          // harpy cannot be hit if FLAG_MISC2 is set
           damage = !(entity.state & FLAG_MISC2);
           if (damage)
           {
@@ -830,7 +864,22 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
             entity.state |= HURT_DURATION;
           }
         }
-        // TODO ENTITY_BOSS_FINAL
+        else if (entity.type == ENTITY_BOSS_FINAL)
+        {
+          // final boss can only be hit if FLAG_MISC1 is set
+          damage = entity.state & FLAG_MISC1;
+          if (damage)
+          {
+            entity.frame = 0;
+            entity.state |= FLAG_MISC2; // use FLAG_MISC2 to tell the boos he has been hurt
+            entity.state |= HURT_DURATION;
+          }
+          else
+          {
+            entity.frame = 3;
+          }
+          entity.state |= HURT_DURATION;
+        }
         else
         {
           entity.frame = 0;
