@@ -500,7 +500,7 @@ void updateBossHarpy(Entity& entity)
   // FLAG_MISC1 is use for direction (0 going left, 1 going right)
   // FLAG_MISC2 is use to make harpy invulnerable after being it
 
-  if (ab.everyXFrames(4 - bossPhase))
+  if (ab.everyXFrames(3 - bossPhase))
   {
     entity.pos.x += entity.state & FLAG_MISC1 ? 1 : -1;
     if (++entity.counter == 104)
