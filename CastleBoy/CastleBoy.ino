@@ -2,6 +2,9 @@
 
 #include "menu.h"
 #include "game.h"
+#include "assets.h"
+
+uint8_t bootCounter = 0;
 
 void setup()
 {
@@ -18,9 +21,17 @@ void loop()
     return;
   }
 
-  ab.poll();
   ab.clearDisplay();
   
+  if(bootCounter < 120)
+  {
+    bootCounter++;
+    sprites.drawOverwrite(49, 14, logo, 0);
+    ab.display();
+    return;
+  }
+
+  ab.poll();
   Menu::loop();
 
 #ifdef DEBUG_LOG
