@@ -603,7 +603,7 @@ void updateBossFinal(Entity& entity)
     // not charging
     if (ab.everyXFrames(4 - bossPhase))
     {
-      // TODO entity.frame = entity.counter < 30 ? 1 : 1; // TODO attack frame
+      entity.frame = entity.counter < 12 ? 1 : 8;
       if (++entity.counter == 16)
       {
         Entities::add(ENTITY_FIREBALL_HORIZ, entity.pos.x, entity.pos.y - 4 - bossState * 8);
@@ -613,7 +613,7 @@ void updateBossFinal(Entity& entity)
         if (++bossCounter == 8)
         {
           entity.state |= FLAG_MISC1; // start charging
-          entity.frame = 2; // TODO charge frame
+          entity.frame = 9;
           bossCounter = 0;
         }
       }
