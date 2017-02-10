@@ -606,7 +606,7 @@ void updateBossFinal(Entity& entity)
       entity.frame = entity.counter < 12 ? 1 : 8;
       if (++entity.counter == 16)
       {
-        Entities::add(ENTITY_FIREBALL_HORIZ, entity.pos.x, entity.pos.y - 4 - bossState * 8);
+        Entities::add(ENTITY_FIREBALL_HORIZ, entity.pos.x, entity.pos.y - 7 - bossState * 8);
         entity.counter = 0;
         ++bossState %= 2;
 
