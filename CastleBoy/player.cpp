@@ -72,13 +72,14 @@ void Player::init(int16_t x, int8_t y)
 {
   pos.x = x;
   pos.y = y;
-  grounded = false;
+  grounded = true;
   attackCounter = 0;
   knifeAttack = false;
   alive = true;
   jumping = false;
   ducking = false;
   visible = true;
+  flipped = false;
   knockbackCounter = 0;
   invincibleCounter = 0;
   levitateCounter = 0;

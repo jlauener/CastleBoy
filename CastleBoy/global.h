@@ -31,7 +31,7 @@ extern uint8_t flashCounter;
 #define BOSS_MAX_HP 12
 #define CAMERA_LEFT_BUFFER 24
 #define CAMERA_RIGHT_BUFFER 86
-#define SCORE_PER_SECOND 10
+#define SCORE_PER_SECOND 5
 #define SCORE_PER_CANDLE 5
 #define SCORE_PER_MONSTER 20
 #define SCORE_PER_COIN 50

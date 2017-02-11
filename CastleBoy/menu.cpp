@@ -273,9 +273,10 @@ void Menu::loop()
       }
 
       Game::loop();
-      ab.fillRect(0,20,128,24, BLACK);
-      // TODO text 'stage cleared'
-      Util::drawNumber(64, 29, Game::score, ALIGN_CENTER);
+      ab.fillRect(0,21,128,22, BLACK);
+      // TODO text 'stage cleared' ?
+      sprites.drawOverwrite(54, 23, text_score, 0);
+      Util::drawNumber(64, 35, Game::score, ALIGN_CENTER);
       break;
     case STATE_PLAYER_DIED:
       if (--counter == 0)
