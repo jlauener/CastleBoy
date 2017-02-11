@@ -9,6 +9,7 @@
 int16_t Game::cameraX;
 uint8_t Game::life;
 uint16_t Game::timeLeft;
+uint16_t Game::score;
 
 namespace
 {
@@ -33,6 +34,7 @@ void Game::reset()
 {
   levelIndex = 0;
   life = GAME_STARTING_LIFE;
+  score = 0;
   Player::hp = PLAYER_MAX_HP;
   Player::knifeCount = 0;
 }

@@ -189,20 +189,22 @@ void Menu::loop()
         toggle = !toggle;
       }
 
-      sprites.drawOverwrite(47, 0, text_game_over, 0);
-      sprites.drawOverwrite(43, 16, game_over_head, 0);
+      sprites.drawOverwrite(54, 0, text_score, 0);
+       Util::drawNumber(64, 58, Game::score, ALIGN_CENTER);
+      sprites.drawOverwrite(43, 13, game_over_head, 0);
       if (toggle)
       {
-        sprites.drawOverwrite(58, 41, game_over_head_jaw, 0);
+        sprites.drawOverwrite(58, 38, game_over_head_jaw, 0);
       }
+      
       if (ab.justPressed(A_BUTTON))
       {
         Menu::showTitle();
       }
       break;
     case STATE_GAME_FINISHED:
-      sprites.drawOverwrite(42, 22, text_final_score, 0);
-      Util::drawNumber(64, 38, Game::timeLeft / FPS, ALIGN_CENTER);
+      sprites.drawOverwrite(54, 22, text_score, 0);
+      Util::drawNumber(64, 58, Game::score, ALIGN_CENTER);
       if (ab.justPressed(A_BUTTON))
       {
         Menu::showTitle();
@@ -226,6 +228,7 @@ void Menu::loop()
           if (Game::timeLeft > FPS)
           {
             Game::timeLeft -= FPS;
+            Game::score += SCORE_PER_SECOND;
           }
           else
           {
@@ -270,6 +273,9 @@ void Menu::loop()
       }
 
       Game::loop();
+      ab.fillRect(0,20,128,24, BLACK);
+      // TODO text 'stage cleared'
+      Util::drawNumber(64, 29, Game::score, ALIGN_CENTER);
       break;
     case STATE_PLAYER_DIED:
       if (--counter == 0)

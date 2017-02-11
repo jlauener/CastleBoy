@@ -898,6 +898,11 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
               // candles don't have hurt anim and have faster die anim
               entity.state &= ~MASK_HURT;
               entity.frame = 1;
+              Game::score += SCORE_PER_CANDLE;
+            }
+            else
+            {
+              Game::score += SCORE_PER_MONSTER;
             }
             entity.state &= ~FLAG_ALIVE;
             entity.hp = 0;
@@ -966,10 +971,12 @@ Entity* Entities::checkPlayer(int16_t x, int8_t y, uint8_t width, uint8_t height
           case ENTITY_PICKUP_COIN:
             //Game::timeLeft += PICKUP_COIN_VALUE;
             entity.state = 0;
+            Game::score += SCORE_PER_COIN;
             sound.tone(NOTE_CS6, 30, NOTE_CS5, 40);
             break;
           case ENTITY_PICKUP_KNIFE:
             Player::knifeCount += PICKUP_KNIFE_VALUE;
+            Game::score += SCORE_PER_KNIFE;
             entity.state = 0;
             sound.tone(NOTE_CS6, 30, NOTE_CS5, 40);
             break;
