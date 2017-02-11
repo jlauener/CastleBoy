@@ -533,6 +533,7 @@ void updateBossHarpy(Entity& entity)
       {
         Entities::add(ENTITY_FIREBALL_VERT, entity.pos.x, entity.pos.y);
         bossCounter = 0;
+        sound.tone(NOTE_G4, 25);
       }
     }
     else
@@ -609,6 +610,7 @@ void updateBossFinal(Entity& entity)
         Entities::add(ENTITY_FIREBALL_HORIZ, entity.pos.x, entity.pos.y - 7 - bossState * 8);
         entity.counter = 0;
         ++bossState %= 2;
+        sound.tone(NOTE_G4, 25);
 
         if (++bossCounter == 8)
         {
@@ -763,6 +765,7 @@ void Entities::update()
             if (entity.state & FLAG_MISC1 && Game::moveY(entity.pos, 1, data[entity.type].hitbox))
             {
               entity.state &= ~FLAG_ALIVE;
+              sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
             }
             break;
           case ENTITY_BOSS_KNIGHT:

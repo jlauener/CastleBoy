@@ -16,6 +16,7 @@ const uint8_t* const levels[] = { stage_1_1, stage_1_2, stage_1_4, stage_2_1, st
 
 bool finished;
 uint8_t levelIndex;
+uint8_t pauseCounter;
 
 void drawHpBar(int16_t x, int16_t y, uint8_t value, uint8_t max)
 {
@@ -43,6 +44,16 @@ void Game::play()
   Entities::init();
   Map::init(levels[levelIndex]);
   cameraX = 0;
+
+  if(Map::boss != NULL)
+  {
+    sound.tone(NOTE_G4, 200, NOTE_G3, 150, NOTE_G2, 500);
+    pauseCounter = 60;
+  }
+  else
+  {
+    pauseCounter = 0;
+  }
 }
 
 void Game::loop()
@@ -83,9 +94,16 @@ void Game::loop()
 #endif
 
   // update
-  Player::update();
-  Entities::update();
-
+  if(pauseCounter > 0)
+  {
+    pauseCounter--;
+  }
+  else
+  {
+    Player::update();
+    Entities::update();
+  }
+  
   if (!finished)
   {
     if (timeLeft > 0)
