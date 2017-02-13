@@ -69,6 +69,7 @@ extern uint8_t flashCounter;
 #define STATE_LEVEL_FINISHED 5
 #define STATE_STAGE_FINISHED 6
 #define STATE_PLAYER_DIED 7
+#define STATE_HELP 8
 
 // map data
 #define TILE_DATA_EMPTY 0
