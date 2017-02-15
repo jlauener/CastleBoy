@@ -32,13 +32,6 @@ void Menu::showTitle()
   Game::reset();
 }
 
-void showHelp()
-{
-  mainState = STATE_HELP;
-  counter = 32;
-  flag = false;
-}
-
 void Menu::notifyPlayerDied()
 {
   mainState = STATE_PLAYER_DIED;
@@ -138,7 +131,9 @@ void loopTitle()
           sound.tone(NOTE_CS6, 30);
           break;
         case TITLE_OPTION_HELP:
-          showHelp();
+          mainState = STATE_HELP;
+          counter = 32;
+          flag = false;
           sound.tone(NOTE_CS6, 30);
           break;
         case TITLE_OPTION_SFX:
@@ -166,7 +161,16 @@ void loopTitle()
 
 void loopHelp()
 {
-  if (ab.everyXFrames(4))
+  if (ab.justPressed(A_BUTTON))
+  {
+    Menu::showTitle();
+    sound.tone(NOTE_E6, 15);
+  }
+}
+
+void loopEnd(bool won)
+{
+    if (ab.everyXFrames(4))
   {
     if (--counter == 0)
     {
@@ -182,11 +186,20 @@ void loopHelp()
   bool shift = flag ? counter < 10 : 0;
   uint8_t offset = flag ? 0 : counter;
 
-  sprites.drawOverwrite(2, 48 + offset / 2, background_mountain, 0);
-  sprites.drawOverwrite(16, 28 + offset, scene_player_back, shift);
-  sprites.drawOverwrite(0, 44 + offset, scene_hill, 0);
-
-  sprites.drawOverwrite(50 + shift, 8 - offset, text_the_end, 0);
+  sprites.drawOverwrite(2, 48 + offset / 2, background_mountain, 0);    
+  sprites.drawOverwrite(0, 44 + offset, end_hill, 0);
+  
+  if(won)
+  {
+    sprites.drawOverwrite(16, 28 + offset, end_player, shift);
+    sprites.drawOverwrite(50 + shift, 8 - offset, text_the_end, 0);
+  }
+  else
+  {
+    sprites.drawOverwrite(16, 28 + offset, tileset, 8);
+    sprites.drawOverwrite(47 + shift, 8 - offset, text_game_over, 0);
+  }
+  
   if (flag)
   {
     sprites.drawOverwrite(54 + shift, 26, text_score, 0);
@@ -228,31 +241,10 @@ void Menu::loop()
       }
       break;
     case STATE_GAME_OVER:
-      if (ab.everyXFrames(16))
-      {
-        toggle = !toggle;
-      }
-
-      sprites.drawOverwrite(54, 0, text_score, 0);
-      Util::drawNumber(64, 58, Game::score, ALIGN_CENTER);
-      sprites.drawOverwrite(43, 13, game_over_head, 0);
-      if (toggle)
-      {
-        sprites.drawOverwrite(58, 38, game_over_head_jaw, 0);
-      }
-
-      if (ab.justPressed(A_BUTTON))
-      {
-        Menu::showTitle();
-      }
+      loopEnd(false);
       break;
     case STATE_GAME_FINISHED:
-      sprites.drawOverwrite(54, 22, text_score, 0);
-      Util::drawNumber(64, 58, Game::score, ALIGN_CENTER);
-      if (ab.justPressed(A_BUTTON))
-      {
-        Menu::showTitle();
-      }
+      loopEnd(true);
       break;
     case STATE_LEVEL_FINISHED:
       if (--counter == 0)

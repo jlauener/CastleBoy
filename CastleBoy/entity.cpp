@@ -40,7 +40,7 @@
 #define ENTITY_SKELETON_THROW_ARMORED 0x07
 #define SKELETON_THROW_FLAG 0x01
 
-// 1000 flyer: skull
+// 1000 skull
 #define ENTITY_FLYER_SKULL 0x08
 
 // 1001 bird
