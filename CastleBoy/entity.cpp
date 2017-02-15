@@ -259,8 +259,9 @@ const EntityData data[] =
 Entity entities[ENTITY_MAX];
 
 uint8_t bossState;
+uint8_t bossState2;
 uint8_t bossCounter;
-uint8_t bossPhase;
+//uint8_t bossPhase;
 
 } // unamed
 
@@ -272,8 +273,9 @@ void Entities::init()
   }
 
   bossState = 0;
+  bossState2 = 0;
   bossCounter = 0;
-  bossPhase = 1;
+ // bossPhase = 1;
 }
 
 Entity* Entities::add(uint8_t type, int16_t x, int8_t y)
@@ -452,6 +454,7 @@ void updateBossKnight(Entity& entity)
 {
   // FLAG_MISC1 is used for direction (0 going left, 1 going right)
   // FLAG_MISC2 is used to tell the boss is has been hurt
+  
   if (ab.everyXFrames(4))
   {
     if (entity.state & FLAG_MISC2)
@@ -487,7 +490,10 @@ void updateBossHarpy(Entity& entity)
 {
   // FLAG_MISC1 is use for direction (0 going left, 1 going right)
   // FLAG_MISC2 is use to make harpy invulnerable after being it
+  // bossState: 0-1 flying 2 attacking
 
+  uint8_t bossPhase = entity.hp <= 6 ? 2 : 1;
+  
   if (ab.everyXFrames(3 - bossPhase))
   {
     entity.pos.x += entity.state & FLAG_MISC1 ? 1 : -1;
@@ -553,15 +559,23 @@ void updateBossHarpy(Entity& entity)
   }
 }
 
+#define P0 0
+#define P1 7
+#define P2 11
+#define P3 15
+
+uint8_t pattern[][4] = {
+{P1, P1, P1, P0},
+{P1, P3, P1, P3},
+{P1, P1, P3, P3}
+};
+ 
 void updateBossFinal(Entity& entity)
 {
   // FLAG_MISC1 is used to know is boss is charging (0=not charging 1=charging)
   // FLAG_MISC2 is used to tell the boss has been hurt
-
-  if (entity.hp == 6)
-  {
-    bossPhase = 2;
-  }
+  // bossState: pattern index
+  // bossState2: current pattern
 
   // FIXME with proper hurt update we can get rid of FLAG_MISC and simply check if current frame is 0
   if (entity.state & FLAG_MISC2)
@@ -587,21 +601,26 @@ void updateBossFinal(Entity& entity)
   else
   {
     // not charging
-    if (ab.everyXFrames(4 - bossPhase))
+    if (ab.everyXFrames(entity.hp <= 6 ? 2 : 3))
     {
-      entity.frame = entity.counter < 12 ? 1 : 8;
-      if (++entity.counter == 16)
+      uint8_t pos = pattern[bossState2][bossState];
+      entity.frame = pos > 0 && entity.counter > 14 ? 8 : 1;
+      if (++entity.counter == 18)
       {
-        Entities::add(ENTITY_FIREBALL_HORIZ, entity.pos.x, entity.pos.y - 7 - bossState * 8);
+        if(pos > 0)
+        {
+          Entities::add(ENTITY_FIREBALL_HORIZ, entity.pos.x, entity.pos.y - pos);
+          sound.tone(NOTE_G4, 25);
+        }
         entity.counter = 0;
-        ++bossState %= 2;
-        sound.tone(NOTE_G4, 25);
+        ++bossState %= 4;
 
         if (++bossCounter == 8)
         {
           entity.state |= FLAG_MISC1; // start charging
           entity.frame = 9;
           bossCounter = 0;
+          ++bossState2 %= 3;
         }
       }
     }
