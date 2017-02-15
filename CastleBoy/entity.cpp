@@ -514,7 +514,7 @@ void updateBossHarpy(Entity& entity)
     if (bossState < 2)
     {
       // flying
-      if (++bossCounter >= 12 + bossPhase * 3)
+      if (++bossCounter >= 14 + bossPhase * 3)
       {
         Entities::add(ENTITY_FIREBALL_VERT, entity.pos.x, entity.pos.y);
         bossCounter = 0;
@@ -913,7 +913,7 @@ bool Entities::moveCollide(int16_t x, int8_t y, const Box& hitbox)
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
     Entity& entity = entities[i];
-    if (entity.state & FLAG_ALIVE && entity.type >= 3 /* not a platform */ )
+    if (entity.state & FLAG_ALIVE && entity.type < 3 /* platform */ )
     {
       const Box& entityHitbox = data[entity.type].hitbox;
       if (Util::collideRect(entity.pos.x - entityHitbox.x,
@@ -964,7 +964,7 @@ Entity* Entities::checkPlayer(int16_t x, int8_t y, uint8_t width, uint8_t height
             Player::knifeCount += PICKUP_KNIFE_VALUE;
             Game::score += SCORE_PER_KNIFE;
             entity.state = 0;
-            sound.tone(NOTE_CS6, 30, NOTE_CS5, 40);
+            sound.tone(NOTE_CS6, 30, NOTE_CS7, 40);
             break;
           default:
             return &entity;

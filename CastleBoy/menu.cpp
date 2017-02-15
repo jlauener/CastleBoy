@@ -132,7 +132,7 @@ void loopTitle()
           break;
         case TITLE_OPTION_HELP:
           mainState = STATE_HELP;
-          counter = 32;
+           counter = 32;
           flag = false;
           sound.tone(NOTE_CS6, 30);
           break;
@@ -176,14 +176,15 @@ void loopEnd(bool won)
     {
       if (!flag)
       {
+        sound.tone(NOTE_CS6, 30, NOTE_CS7, 40);
         flashCounter = 6;
         flag = true;
       }
-      counter = 60;
+      counter = 40;
     }
   }
 
-  bool shift = flag ? counter < 10 : 0;
+  bool shift = (won && flag) ? counter < 20 : 0;
   uint8_t offset = flag ? 0 : counter;
 
   sprites.drawOverwrite(2, 48 + offset / 2, background_mountain, 0);    
@@ -192,12 +193,12 @@ void loopEnd(bool won)
   if(won)
   {
     sprites.drawOverwrite(16, 28 + offset, end_player, shift);
-    sprites.drawOverwrite(50 + shift, 8 - offset, text_the_end, 0);
+    sprites.drawOverwrite(50 - shift, 8 - offset, text_the_end, 0);
   }
   else
   {
-    sprites.drawOverwrite(16, 28 + offset, tileset, 8);
-    sprites.drawOverwrite(47 + shift, 8 - offset, text_game_over, 0);
+    sprites.drawOverwrite(20, 36 + offset, tileset, 8);
+    sprites.drawOverwrite(47, 8 - offset, text_game_over, 0);
   }
   
   if (flag)
@@ -221,7 +222,8 @@ void Menu::loop()
       loopTitle();
       break;
     case STATE_HELP:
-      loopHelp();
+      loopEnd(true);
+      //loopHelp();
       break;
     case STATE_PLAY:
       Game::loop();
@@ -298,6 +300,8 @@ void Menu::loop()
           if (stage == STAGE_MAX)
           {
             mainState = STATE_GAME_FINISHED;
+            counter = 32;
+            flag = false;
           }
           else
           {
@@ -320,6 +324,8 @@ void Menu::loop()
         if (Game::life == 0)
         {
           mainState = STATE_GAME_OVER;
+          counter = 32;
+          flag = false;
         }
         else
         {
