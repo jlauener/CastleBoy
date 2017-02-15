@@ -17,28 +17,23 @@
 // entity types
 
 // 0000 platform: falling
-// 0001 platform: moving
+// 0001 platform: moving right
+// 0010 platform: moving left
 #define ENTITY_FALLING_PLATFORM 0x00
-#define ENTITY_MOVING_PLATFORM 0x01
-#define PLATFORM_MASK 0xFE
+#define ENTITY_MOVING_PLATFORM_RIGHT 0x01
+#define ENTITY_MOVING_PLATFORM_LEFT 0x02
 
-// 0010 candle: coin
-// 0011 candle: knife
-#define ENTITY_CANDLE_COIN 0x02
-#define ENTITY_CANDLE_KNIFE 0x03
+// 0011 candle: coin
+// 0100 candle: knife
+#define ENTITY_CANDLE_COIN 0x03
+#define ENTITY_CANDLE_KNIFE 0x04
 
-// 0100 skeleton: simple
-// 0101 skeleton: throw
-// 0110 skeleton: armored
-// 0111 skeleton: armored + throw
-//   ||
-//   |+-- throw flag
-//   +--- armored flag
-#define ENTITY_SKELETON_SIMPLE 0x04
-#define ENTITY_SKELETON_THROW 0x05
-#define ENTITY_SKELETON_ARMORED 0x06
-#define ENTITY_SKELETON_THROW_ARMORED 0x07
-#define SKELETON_THROW_FLAG 0x01
+// 0101 skeleton: simple
+// 0110 skeleton: throw
+// 0111 skeleton: armored
+#define ENTITY_SKELETON_SIMPLE 0x05
+#define ENTITY_SKELETON_THROW 0x06
+#define ENTITY_SKELETON_ARMORED 0x07
 
 // 1000 skull
 #define ENTITY_FLYER_SKULL 0x08
@@ -96,7 +91,7 @@ struct EntityData
   const uint8_t* sprite;
 };
 
-// TODO use PROGMEM?
+// don't use PROGMEM, we have enough RAM and this reduces code
 const EntityData data[] =
 {
   // 0000 platform: falling
@@ -107,7 +102,7 @@ const EntityData data[] =
     0, // hp
     entity_falling_platform_plus_mask // sprite
   },
-  // 0001 platform: moving
+  // 0001 platform: moving right
   {
     4, 8, // hitbox x, y
     24, 8, // hitbox width, height
@@ -115,7 +110,15 @@ const EntityData data[] =
     0, // hp
     entity_moving_platform_plus_mask // sprite
   },
-  // 0010 candle: coin
+  // 0010 platform: moving left
+  {
+    4, 8, // hitbox x, y
+    24, 8, // hitbox width, height
+    4, 8, // sprite origin x, y
+    0, // hp
+    entity_moving_platform_plus_mask // sprite
+  },
+  // 0011 candle: coin
   {
     2, 8, // hitbox x, y
     4, 6, // hitbox width, height
@@ -123,7 +126,7 @@ const EntityData data[] =
     1, // hp
     entity_candle_plus_mask // sprite
   },
-  // 0011 candle: powerup
+  // 0100 candle: powerup
   {
     2, 8, // hitbox x, y
     4, 6, // hitbox width, height
@@ -131,7 +134,7 @@ const EntityData data[] =
     1, // hp
     entity_candle_plus_mask // sprite
   },
-  // 0100 skeleton: simple
+  // 0101 skeleton: simple
   {
     3, 16, // hitbox x, y
     6, 16, // hitbox width, height
@@ -139,7 +142,7 @@ const EntityData data[] =
     2, // hp
     entity_skeleton_plus_mask // sprite
   },
-  // 0101 skeleton: throw
+  // 0110 skeleton: throw
   {
     3, 16, // hitbox x, y
     6, 16, // hitbox width, height
@@ -147,21 +150,13 @@ const EntityData data[] =
     2, // hp
     entity_skeleton_plus_mask // sprite
   },
-  // 0100 skeleton: armored
+  // 0111 skeleton: armored
   {
     3, 16, // hitbox x, y
     6, 16, // hitbox width, height
     6, 16, // sprite origin x, y
     6, // hp
     entity_skeleton_armored_plus_mask // sprite
-  },
-  // 0111 skeleton: throw armored (TO BE REMOVED?)
-  {
-    3, 16, // hitbox x, y
-    6, 16, // hitbox width, height
-    8, 16, // sprite origin x, y
-    6, // hp
-    entity_skeleton_plus_mask // sprite
   },
   // 1000 flyer: skull
   {
@@ -307,7 +302,15 @@ void updateMovingPlatform(Entity& entity)
 {
   if (ab.everyXFrames(3))
   {
-    entity.pos.x += entity.state & FLAG_MISC1 ? -1 : 1;
+    if(entity.type == ENTITY_MOVING_PLATFORM_RIGHT)
+    {
+      entity.pos.x += entity.state & FLAG_MISC1 ? -1 : 1;
+    }
+    else // entity.type == ENTITY_MOVING_PLATFORM_LEFT
+    {
+      entity.pos.x += entity.state & FLAG_MISC1 ? 1 : -1;
+    }
+    
     if (++entity.counter == 23)
     {
       entity.counter = 0;
@@ -325,12 +328,6 @@ void updateMovingPlatform(Entity& entity)
 
 void updateSkeleton(Entity& entity)
 {
-  //  if (entity.state & MASK_HURT)
-  //  {
-  //    entity.frame = 5;
-  //    return;
-  //  }
-
   if (ab.everyXFrames(3))
   {
     if (entity.state & FLAG_MISC2)
@@ -354,7 +351,7 @@ void updateSkeleton(Entity& entity)
         }
         else
         {
-          if (entity.type & SKELETON_THROW_FLAG && entity.pos.x - Player::pos.x < 94)
+          if (entity.type == ENTITY_SKELETON_THROW && entity.pos.x - Player::pos.x < 94)
           {
             // start throwing bone
             entity.state |= FLAG_MISC2;
@@ -379,12 +376,6 @@ void updateSkeleton(Entity& entity)
 
 void updateHurler(Entity& entity)
 {
-  //  if (entity.state & MASK_HURT)
-  //  {
-  //    entity.frame = 5;
-  //    return;
-  //  }
-
   if (ab.everyXFrames(3))
   {
     if (entity.counter < 30) entity.counter++;
@@ -400,12 +391,6 @@ void updateHurler(Entity& entity)
 
 void updateFlyer(Entity& entity)
 {
-  //  if (entity.state & MASK_HURT)
-  //  {
-  //    // hurt
-  //    return;
-  //  }
-
   if (!(entity.state & FLAG_MISC1) && entity.pos.x - Player::pos.x < 90)
   {
     entity.state |= FLAG_MISC1;
@@ -705,7 +690,8 @@ void Entities::update()
               }
             }
             break;
-          case ENTITY_MOVING_PLATFORM:
+          case ENTITY_MOVING_PLATFORM_LEFT:
+          case ENTITY_MOVING_PLATFORM_RIGHT:
             updateMovingPlatform(entity);
             break;
           case ENTITY_FIREBALL_VERT:
@@ -744,7 +730,6 @@ void Entities::update()
           case ENTITY_SKELETON_SIMPLE:
           case ENTITY_SKELETON_THROW:
           case ENTITY_SKELETON_ARMORED:
-          case ENTITY_SKELETON_THROW_ARMORED:
             updateSkeleton(entity);
             break;
           case ENTITY_FLYER_SKULL:
@@ -928,7 +913,7 @@ bool Entities::moveCollide(int16_t x, int8_t y, const Box& hitbox)
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
     Entity& entity = entities[i];
-    if (entity.state & FLAG_ALIVE && !(entity.type & PLATFORM_MASK))
+    if (entity.state & FLAG_ALIVE && entity.type >= 3 /* not a platform */ )
     {
       const Box& entityHitbox = data[entity.type].hitbox;
       if (Util::collideRect(entity.pos.x - entityHitbox.x,
@@ -965,7 +950,8 @@ Entity* Entities::checkPlayer(int16_t x, int8_t y, uint8_t width, uint8_t height
         switch (entity.type)
         {
           case ENTITY_FALLING_PLATFORM:
-          case ENTITY_MOVING_PLATFORM:
+          case ENTITY_MOVING_PLATFORM_LEFT:
+          case ENTITY_MOVING_PLATFORM_RIGHT:
             // platforms do nothing
             break;
           case ENTITY_PICKUP_COIN:

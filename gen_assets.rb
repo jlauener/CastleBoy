@@ -50,7 +50,8 @@ class MapData
   TILED_ENTITY_ID_MAX = 25
   TILED_PLAYER_ID = 25  
   TILED_FALLING_PLATFORM_ID = 9
-  TILED_MOVING_PLATFORM_ID = 10
+  TILED_MOVING_PLATFORM_RIGHT_ID = 10
+  TILED_MOVING_PLATFORM_LEFT_ID = 11
   
   TILE_EMPTY = 0
   TILE_PROP = 1
@@ -123,27 +124,33 @@ class MapData
       raise "Map #{@name} has no player starting position."
     end
     
-	#merge falling and moving platforms
+  #merge falling and moving platforms
     for iy in 0...@height
       for ix in 0...@width
-		if mainData[iy * @width + ix] == TILED_FALLING_PLATFORM_ID
+        if mainData[iy * @width + ix] == TILED_FALLING_PLATFORM_ID
           if mainData[iy * @width + ix + 1] != TILED_FALLING_PLATFORM_ID
               raise "Map #{@name} has invalid falling platform at #{ix},#{iy}. 2 expected"
           end
           mainData[iy * @width + ix + 1] = 0
-		elsif mainData[iy * @width + ix] == TILED_MOVING_PLATFORM_ID
-          if mainData[iy * @width + ix + 1] != TILED_MOVING_PLATFORM_ID or mainData[iy * @width + ix + 2] != TILED_MOVING_PLATFORM_ID
+        elsif mainData[iy * @width + ix] == TILED_MOVING_PLATFORM_LEFT_ID
+          if mainData[iy * @width + ix + 1] != TILED_MOVING_PLATFORM_LEFT_ID or mainData[iy * @width + ix + 2] != TILED_MOVING_PLATFORM_LEFT_ID
               raise "Map #{@name} has invalid moving platform at #{ix},#{iy}. 3 expected"
           end
           mainData[iy * @width + ix + 1] = 0
-		  mainData[iy * @width + ix + 2] = 0
-		end
-	  end	  
+          mainData[iy * @width + ix + 2] = 0
+        elsif mainData[iy * @width + ix] == TILED_MOVING_PLATFORM_RIGHT_ID
+          if mainData[iy * @width + ix + 1] != TILED_MOVING_PLATFORM_RIGHT_ID or mainData[iy * @width + ix + 2] != TILED_MOVING_PLATFORM_RIGHT_ID
+              raise "Map #{@name} has invalid moving platform at #{ix},#{iy}. 3 expected"
+          end
+          mainData[iy * @width + ix + 1] = 0
+          mainData[iy * @width + ix + 2] = 0
+        end
+      end
     end
-	
+
     # extract tile and entity map
     @tileMap = []
-	@entityCount = 0
+    @entityCount = 0
     @entityMap = []
     for iy in 0...@height
       for ix in 0...@width
