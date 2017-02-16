@@ -25,8 +25,6 @@ uint8_t Player::hp;
 Vec Player::pos;
 bool Player::alive;
 uint8_t Player::knifeCount;
-bool Player::autoMove;
-int16_t Player::autoMoveTarget;
 
 namespace
 {
@@ -72,7 +70,7 @@ bool visible;
 
 void Player::init(int16_t x, int8_t y)
 {
-  pos.x = -16;
+  pos.x = x;
   pos.y = y;
   grounded = true;
   attackCounter = 0;
@@ -88,24 +86,10 @@ void Player::init(int16_t x, int8_t y)
   velocityX = 0;
   velocityYf = 0;
   knife = false;
-
-  autoMove = true;
-  autoMoveTarget = x;
 }
 
 void Player::update()
-{
-  if(autoMove)
-  {
-    flipped = false;
-    pos.x += 1;
-    if(pos.x == autoMoveTarget)
-    {
-      autoMove = false; 
-    }
-    return;
-  }
-  
+{  
   // knockback
   if (knockbackCounter > 0)
   {

@@ -263,19 +263,15 @@ void Menu::loop()
         }
         else
         {
+          Game::score += SCORE_PER_SECOND;
           if (Game::timeLeft > FPS)
           {
             Game::timeLeft -= FPS;
-            Game::score += SCORE_PER_SECOND;
           }
           else
           {
             Game::timeLeft = 0;
-          }
-
-          if (Game::timeLeft == 0)
-          {
-            counter = 20;
+            counter = 60;
           }
 
           if (ab.everyXFrames(8))
@@ -290,40 +286,29 @@ void Menu::loop()
         {
           ++Player::hp;
           sound.tone(NOTE_G3, 60);
-          counter = 20;
+          counter = Player::hp == PLAYER_MAX_HP ? 90 : 20;
         }
       }
-      else if (counter > 0)
+      else if (--counter == 0)
       {
-        if (--counter == 0)
+        if (stage == STAGE_MAX)
         {
-          Player::autoMove = true;
-          Player::autoMoveTarget = Map::width * TILE_WIDTH;
+          mainState = STATE_GAME_FINISHED;
+          counter = 32;
+          flag = false;
         }
-      }
-      else
-      {
-        if (Player::pos.x >= Map::width * TILE_WIDTH)
+        else
         {
-          if (stage == STAGE_MAX)
-          {
-            mainState = STATE_GAME_FINISHED;
-            counter = 32;
-            flag = false;
-          }
-          else
-          {
-            ++stage;
-            showStageIntro();
-          }
+          ++stage;
+          showStageIntro();
         }
       }
 
       Game::loop();
-      ab.fillRect(0, 21, 128, 22, BLACK);
       // TODO text 'stage cleared' ?
       if (Game::timeLeft > 0)
       {
+        ab.fillRect(0, 21, 128, 22, BLACK);
         sprites.drawOverwrite(54, 23, text_score, 0);
         Util::drawNumber(64, 35, Game::score, ALIGN_CENTER);
       }
