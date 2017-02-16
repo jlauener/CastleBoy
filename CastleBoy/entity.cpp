@@ -261,7 +261,6 @@ Entity entities[ENTITY_MAX];
 uint8_t bossState;
 uint8_t bossState2;
 uint8_t bossCounter;
-//uint8_t bossPhase;
 
 } // unamed
 
@@ -559,15 +558,11 @@ void updateBossHarpy(Entity& entity)
   }
 }
 
-#define P0 0
-#define P1 7
-#define P2 11
-#define P3 15
-
-uint8_t pattern[][4] = {
-{P1, P1, P1, P0},
-{P1, P3, P1, P3},
-{P1, P1, P3, P3}
+// FIXME pattern are inverted
+uint8_t pattern[] = {
+0x54, // 1,1,1,0 -> 01010100
+0x66, // 1,2,1,2 -> 01100110
+0x5A  // 1,1,2,2 -> 01011010
 };
  
 void updateBossFinal(Entity& entity)
@@ -603,19 +598,19 @@ void updateBossFinal(Entity& entity)
     // not charging
     if (ab.everyXFrames(entity.hp <= 6 ? 2 : 3))
     {
-      uint8_t pos = pattern[bossState2][bossState];
+      uint8_t pos = (pattern[bossState2] >> (bossState * 2)) & 0x03;
       entity.frame = pos > 0 && entity.counter > 14 ? 8 : 1;
       if (++entity.counter == 18)
       {
         if(pos > 0)
         {
-          Entities::add(ENTITY_FIREBALL_HORIZ, entity.pos.x, entity.pos.y - pos);
+          Entities::add(ENTITY_FIREBALL_HORIZ, entity.pos.x, entity.pos.y - (pos == 1 ? 7 : 15));
           sound.tone(NOTE_G4, 25);
         }
         entity.counter = 0;
         ++bossState %= 4;
 
-        if (++bossCounter == 8)
+        if (++bossCounter == 12)
         {
           entity.state |= FLAG_MISC1; // start charging
           entity.frame = 9;
