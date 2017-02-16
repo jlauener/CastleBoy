@@ -46,9 +46,9 @@ void Game::play()
   Entities::init();
   Map::init(levels[levelIndex]);
   cameraX = 0;
-  pauseCounter = 0;  
+  pauseCounter = 0;
 
-  if(Map::boss != NULL)
+  if (Map::boss != NULL)
   {
     sound.tone(NOTE_G4, 300, NOTE_G3, 300, NOTE_G2, 900);
     pauseCounter = 120;
@@ -93,7 +93,7 @@ void Game::loop()
 #endif
 
   // update
-  if(pauseCounter > 0)
+  if (pauseCounter > 0)
   {
     pauseCounter--;
   }
@@ -102,7 +102,7 @@ void Game::loop()
     Player::update();
     Entities::update();
   }
-  
+
   if (!finished)
   {
     if (timeLeft > 0)
@@ -189,18 +189,15 @@ void Game::loop()
 
 bool Game::moveY(Vec& pos, int8_t dy, const Box& hitbox, bool collideToEntity)
 {
-  if (dy != 0)
+  int8_t sign = dy > 0 ? 1 : -1;
+  while (dy != 0)
   {
-    int8_t sign = dy > 0 ? 1 : -1;
-    while (dy != 0)
+    if (Map::collide(pos.x, pos.y + sign, hitbox) || (collideToEntity && Entities::moveCollide(pos.x, pos.y + sign, hitbox)))
     {
-      if (Map::collide(pos.x, pos.y + sign, hitbox) || (collideToEntity && Entities::moveCollide(pos.x, pos.y + sign, hitbox)))
-      {
-        return true;
-      }
-      pos.y += sign;
-      dy -= sign;
+      return true;
     }
+    pos.y += sign;
+    dy -= sign;
   }
 
   return false;

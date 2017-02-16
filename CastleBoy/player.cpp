@@ -236,7 +236,8 @@ void Player::update()
       )
      )
   {
-    if (!Entities::moveCollide(pos.x + velocityX, pos.y, hitbox) && !Map::collide(pos.x + velocityX, pos.y, hitbox))
+    // moveCollide only hit platform, so don't use it for horizontal movement
+    if (/*!Entities::moveCollide(pos.x + velocityX, pos.y, hitbox) &&*/ !Map::collide(pos.x + velocityX, pos.y, hitbox))
     {
       pos.x += velocityX;
     }
