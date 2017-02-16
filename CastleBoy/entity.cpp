@@ -274,7 +274,6 @@ void Entities::init()
   bossState = 0;
   bossState2 = 0;
   bossCounter = 0;
- // bossPhase = 1;
 }
 
 Entity* Entities::add(uint8_t type, int16_t x, int8_t y)
@@ -303,7 +302,7 @@ void updateMovingPlatform(Entity& entity)
 {
   if (ab.everyXFrames(3))
   {
-    if(entity.type == ENTITY_MOVING_PLATFORM_RIGHT)
+    if (entity.type == ENTITY_MOVING_PLATFORM_RIGHT)
     {
       entity.pos.x += entity.state & FLAG_MISC1 ? -1 : 1;
     }
@@ -311,7 +310,7 @@ void updateMovingPlatform(Entity& entity)
     {
       entity.pos.x += entity.state & FLAG_MISC1 ? 1 : -1;
     }
-    
+
     if (++entity.counter == 23)
     {
       entity.counter = 0;
@@ -419,17 +418,29 @@ void updateFlyer(Entity& entity)
 void updateBird(Entity& entity)
 {
   // FLAG_MISC1 is used for direction (0 going left, 1 going right)
+  // FLAG_MISC2 is used to tell if the bird is idle (0 idle, 1 attacking
 
-  if (ab.everyXFrames(2))
+  if (!(entity.state & FLAG_MISC2))
   {
+    // idle
+    if (++entity.counter == 60)
+    {
+      entity.state |= FLAG_MISC2; // set attacking
+      entity.counter = 0;
+    }
+  }
+  else
+  {
+    // attacking
     entity.pos.x += entity.state & FLAG_MISC1 ? 1 : -1;
     if (++entity.counter == 104)
     {
       entity.state = entity.state & FLAG_MISC1 ? entity.state & ~FLAG_MISC1 : entity.state | FLAG_MISC1;
+      entity.state &= ~FLAG_MISC2; // set idle
       entity.counter = 0;
+      
     }
 
-    // attacking
     if (entity.counter % 4)
     {
       entity.pos.y += entity.counter < 52 ? 1 : -1;
@@ -560,11 +571,11 @@ void updateBossHarpy(Entity& entity)
 
 // FIXME pattern are inverted
 uint8_t pattern[] = {
-0x54, // 1,1,1,0 -> 01010100
-0x66, // 1,2,1,2 -> 01100110
-0x5A  // 1,1,2,2 -> 01011010
+  0x54, // 1,1,1,0 -> 01010100
+  0x66, // 1,2,1,2 -> 01100110
+  0x5A  // 1,1,2,2 -> 01011010
 };
- 
+
 void updateBossFinal(Entity& entity)
 {
   // FLAG_MISC1 is used to know is boss is charging (0=not charging 1=charging)
@@ -586,7 +597,7 @@ void updateBossFinal(Entity& entity)
   if (entity.state & FLAG_MISC1)
   {
     // charging
-    if(++bossCounter == 160)
+    if (++bossCounter == 160)
     {
       entity.state &= ~FLAG_MISC1;
       entity.frame = 1;
@@ -602,7 +613,7 @@ void updateBossFinal(Entity& entity)
       entity.frame = pos > 0 && entity.counter > 14 ? 8 : 1;
       if (++entity.counter == 18)
       {
-        if(pos > 0)
+        if (pos > 0)
         {
           Entities::add(ENTITY_FIREBALL_HORIZ, entity.pos.x, entity.pos.y - (pos == 1 ? 7 : 15));
           sound.tone(NOTE_G4, 25);
