@@ -132,7 +132,7 @@ void loopTitle()
           break;
         case TITLE_OPTION_HELP:
           mainState = STATE_HELP;
-           counter = 32;
+          counter = 32;
           flag = false;
           sound.tone(NOTE_CS6, 30);
           break;
@@ -170,7 +170,7 @@ void loopHelp()
 
 void loopEnd(bool won)
 {
-    if (ab.everyXFrames(4))
+  if (ab.everyXFrames(4))
   {
     if (--counter == 0)
     {
@@ -187,10 +187,10 @@ void loopEnd(bool won)
   bool shift = (won && flag) ? counter < 20 : 0;
   uint8_t offset = flag ? 0 : counter;
 
-  sprites.drawOverwrite(2, 48 + offset / 2, background_mountain, 0);    
+  sprites.drawOverwrite(2, 48 + offset / 2, background_mountain, 0);
   sprites.drawOverwrite(0, 44 + offset, end_hill, 0);
-  
-  if(won)
+
+  if (won)
   {
     sprites.drawOverwrite(16, 28 + offset, end_player, shift);
     sprites.drawOverwrite(50 - shift, 8 - offset, text_the_end, 0);
@@ -200,7 +200,7 @@ void loopEnd(bool won)
     sprites.drawOverwrite(20, 36 + offset, tileset, 8);
     sprites.drawOverwrite(47, 8 - offset, text_game_over, 0);
   }
-  
+
   if (flag)
   {
     sprites.drawOverwrite(54 + shift, 26, text_score, 0);
@@ -293,9 +293,17 @@ void Menu::loop()
           counter = 20;
         }
       }
-      else
+      else if (counter > 0)
       {
         if (--counter == 0)
+        {
+          Player::autoMove = true;
+          Player::autoMoveTarget = Map::width * TILE_WIDTH;
+        }
+      }
+      else
+      {
+        if (Player::pos.x >= Map::width * TILE_WIDTH)
         {
           if (stage == STAGE_MAX)
           {
@@ -305,7 +313,6 @@ void Menu::loop()
           }
           else
           {
-            Player::hp = PLAYER_MAX_HP; // TODO anim + time left anim
             ++stage;
             showStageIntro();
           }
@@ -315,8 +322,11 @@ void Menu::loop()
       Game::loop();
       ab.fillRect(0, 21, 128, 22, BLACK);
       // TODO text 'stage cleared' ?
-      sprites.drawOverwrite(54, 23, text_score, 0);
-      Util::drawNumber(64, 35, Game::score, ALIGN_CENTER);
+      if (Game::timeLeft > 0)
+      {
+        sprites.drawOverwrite(54, 23, text_score, 0);
+        Util::drawNumber(64, 35, Game::score, ALIGN_CENTER);
+      }
       break;
     case STATE_PLAYER_DIED:
       if (--counter == 0)
