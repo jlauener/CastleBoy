@@ -505,9 +505,7 @@ void updateBossHarpy(Entity& entity)
   // FLAG_MISC2 is use to make harpy invulnerable after being it
   // bossState: 0-1 flying 2 attacking
   // bossState2: projectile counter
-
- // uint8_t bossPhase = entity.hp <= 6 ? 2 : 1;
-
+  
   if (ab.everyXFrames(2))
   {
     entity.pos.x += entity.state & FLAG_MISC1 ? 1 : -1;
@@ -530,7 +528,7 @@ void updateBossHarpy(Entity& entity)
     if (bossState < 2)
     {
       // flying
-      if (++bossState2 >= 8 + entity.hp)
+      if (++bossState2 >= 9 + entity.hp)
       {
         Entities::add(ENTITY_FIREBALL_VERT, entity.pos.x, entity.pos.y);
         bossState2 = 0;
