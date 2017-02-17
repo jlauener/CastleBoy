@@ -258,6 +258,7 @@ const EntityData data[] =
 
 Entity entities[ENTITY_MAX];
 
+// TODO merge bossState and bossState2?
 uint8_t bossState;
 uint8_t bossState2;
 uint8_t bossCounter;
@@ -423,8 +424,13 @@ void updateBird(Entity& entity)
   if (!(entity.state & FLAG_MISC2))
   {
     // idle
-    if (++entity.counter == 60)
+    if (entity.counter < 60)
     {
+      ++entity.counter;
+    }
+    else if (Player::pos.x > entity.pos.x - 64 && Player::pos.x < entity.pos.x + 100)
+    {
+      // only start attacking when close to player
       entity.state |= FLAG_MISC2; // set attacking
       entity.counter = 0;
     }
@@ -438,7 +444,7 @@ void updateBird(Entity& entity)
       entity.state = entity.state & FLAG_MISC1 ? entity.state & ~FLAG_MISC1 : entity.state | FLAG_MISC1;
       entity.state &= ~FLAG_MISC2; // set idle
       entity.counter = 0;
-      
+
     }
 
     if (entity.counter % 4)
@@ -464,7 +470,7 @@ void updateBossKnight(Entity& entity)
 {
   // FLAG_MISC1 is used for direction (0 going left, 1 going right)
   // FLAG_MISC2 is used to tell the boss is has been hurt
-  
+
   if (ab.everyXFrames(4))
   {
     if (entity.state & FLAG_MISC2)
@@ -503,7 +509,7 @@ void updateBossHarpy(Entity& entity)
   // bossState: 0-1 flying 2 attacking
 
   uint8_t bossPhase = entity.hp <= 6 ? 2 : 1;
-  
+
   if (ab.everyXFrames(3 - bossPhase))
   {
     entity.pos.x += entity.state & FLAG_MISC1 ? 1 : -1;
