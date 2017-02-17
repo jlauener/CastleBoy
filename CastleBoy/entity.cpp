@@ -258,10 +258,8 @@ const EntityData data[] =
 
 Entity entities[ENTITY_MAX];
 
-// TODO merge bossState and bossState2?
 uint8_t bossState;
 uint8_t bossState2;
-uint8_t bossCounter;
 
 } // unamed
 
@@ -274,7 +272,6 @@ void Entities::init()
 
   bossState = 0;
   bossState2 = 0;
-  bossCounter = 0;
 }
 
 Entity* Entities::add(uint8_t type, int16_t x, int8_t y)
@@ -507,6 +504,7 @@ void updateBossHarpy(Entity& entity)
   // FLAG_MISC1 is use for direction (0 going left, 1 going right)
   // FLAG_MISC2 is use to make harpy invulnerable after being it
   // bossState: 0-1 flying 2 attacking
+  // bossState2: projectile counter
 
   uint8_t bossPhase = entity.hp <= 6 ? 2 : 1;
 
@@ -536,10 +534,10 @@ void updateBossHarpy(Entity& entity)
     if (bossState < 2)
     {
       // flying
-      if (++bossCounter >= 14 + bossPhase * 3)
+      if (++bossState2 >= 14 + bossPhase * 3)
       {
         Entities::add(ENTITY_FIREBALL_VERT, entity.pos.x, entity.pos.y);
-        bossCounter = 0;
+        bossState2 = 0;
         sound.tone(NOTE_G4, 25);
       }
     }
@@ -575,11 +573,15 @@ void updateBossHarpy(Entity& entity)
   }
 }
 
-// FIXME pattern are inverted
-uint8_t pattern[] = {
-  0x54, // 1,1,1,0 -> 01010100
-  0x66, // 1,2,1,2 -> 01100110
-  0x5A  // 1,1,2,2 -> 01011010
+PROGMEM const uint8_t pattern[] = {
+  // easy
+  7, 0, 0, 0,15, 0, 0, 0,
+  7, 7, 0, 0, 7, 7, 0, 0,
+  7, 7, 0, 0,15,15,0, 0,
+  // hard
+  7, 7, 0, 15,15,15, 15, 0,
+  7, 0, 7, 0, 7, 0, 0, 0,
+  7, 0,15, 0, 7, 0,15, 0,
 };
 
 void updateBossFinal(Entity& entity)
@@ -596,44 +598,40 @@ void updateBossFinal(Entity& entity)
     entity.state &= ~FLAG_MISC2;
     entity.state &= ~FLAG_MISC1;
     bossState = 0;
-    bossCounter = 0;
+    entity.counter = 0;
     entity.frame = 1;
   }
 
   if (entity.state & FLAG_MISC1)
   {
     // charging
-    if (++bossCounter == 160)
+    if (++entity.counter == 100)
     {
       entity.state &= ~FLAG_MISC1;
       entity.frame = 1;
-      bossCounter = 0;
+      entity.counter = 0;
     }
   }
   else
   {
     // not charging
-    if (ab.everyXFrames(entity.hp <= 6 ? 2 : 3))
+    uint8_t pos = pgm_read_byte(pattern + bossState2 * 8 + (entity.hp <= 6 ? 24 : 0) + (bossState % 8));
+    entity.frame = pos > 0 && entity.counter > 12 ? 8 : 1;
+    if (++entity.counter == 16)
     {
-      uint8_t pos = (pattern[bossState2] >> (bossState * 2)) & 0x03;
-      entity.frame = pos > 0 && entity.counter > 14 ? 8 : 1;
-      if (++entity.counter == 18)
+      if (pos > 0)
       {
-        if (pos > 0)
-        {
-          Entities::add(ENTITY_FIREBALL_HORIZ, entity.pos.x, entity.pos.y - (pos == 1 ? 7 : 15));
-          sound.tone(NOTE_G4, 25);
-        }
-        entity.counter = 0;
-        ++bossState %= 4;
+        Entities::add(ENTITY_FIREBALL_HORIZ, entity.pos.x, entity.pos.y - pos);
+        sound.tone(NOTE_G4, 25);
+      }
+      entity.counter = 0;
 
-        if (++bossCounter == 12)
-        {
-          entity.state |= FLAG_MISC1; // start charging
-          entity.frame = 9;
-          bossCounter = 0;
-          ++bossState2 %= 3;
-        }
+      if (++bossState == 24)
+      {
+        entity.state |= FLAG_MISC1; // start charging
+        entity.frame = 9;
+        bossState = 0;
+        ++bossState2 %= 3;
       }
     }
   }
