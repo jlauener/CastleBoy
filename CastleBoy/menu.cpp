@@ -17,8 +17,8 @@ uint8_t counter;
 bool flag;
 bool toggle = 0;
 uint8_t menuIndex;
-int8_t titleLeftOffset;
-int8_t titleRightOffset;
+int8_t titleOffset;
+//int8_t titleRightOffset;
 }
 
 void Menu::showTitle()
@@ -89,13 +89,13 @@ void loopTitle()
 
   if (flag)
   {
-    titleLeftOffset = counter * 2;
-    titleRightOffset = -counter * 2;
+    titleOffset = counter * 2;
+    //titleRightOffset = -counter * 2;
 
     if (--counter == 0)
     {
-      titleLeftOffset = 1;
-      titleRightOffset = 0;
+      titleOffset = 1;
+      //titleRightOffset = 0;
       flag = false;
       flashCounter = 6;
       sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
@@ -105,8 +105,9 @@ void loopTitle()
   {
     if (ab.everyXFrames(80))
     {
-      titleLeftOffset = titleLeftOffset == 0 ? 1 : 0;
-      titleRightOffset = titleRightOffset == 0 ? 1 : 0;
+      //titleLeftOffset = titleLeftOffset == 0 ? 1 : 0;
+      //titleRightOffset = titleRightOffset == 0 ? 1 : 0;
+      titleOffset = -titleOffset;
     }
 
     if (ab.justPressed(UP_BUTTON) && menuIndex > 0)
@@ -155,8 +156,8 @@ void loopTitle()
     drawMenuOption(TITLE_OPTION_HELP, text_help);
     drawMenuOption(TITLE_OPTION_SFX, ab.audio.enabled() ? text_sfx_on : text_sfx_off);
   }
-  sprites.drawOverwrite(36, 2 + titleLeftOffset, title_left, 0);
-  sprites.drawOverwrite(69, 2 + titleRightOffset, title_right, 0);
+  sprites.drawOverwrite(36, 2 - titleOffset, title_left, 0);
+  sprites.drawOverwrite(69, 2 + titleOffset, title_right, 0);
 }
 
 void loopHelp()
@@ -222,8 +223,7 @@ void Menu::loop()
       loopTitle();
       break;
     case STATE_HELP:
-      loopEnd(true);
-      //loopHelp();
+      loopHelp();
       break;
     case STATE_PLAY:
       Game::loop();

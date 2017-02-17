@@ -22,7 +22,6 @@ uint8_t mainStartTileAlt;
 bool endMainTile;
 uint8_t propTile;
 uint8_t miscTile;
-bool endMiscTile;
 
 uint8_t getTileAt(uint8_t x, uint8_t y)
 {
@@ -53,8 +52,7 @@ void Map::init(const uint8_t* source)
     endMainTile = false;
 
     miscTile = TILE_CHAIN;
-    endMiscTile = false;
-    
+
     propTile = TILE_WINDOW;
     showBackground = false;
   }
@@ -67,7 +65,6 @@ void Map::init(const uint8_t* source)
     mainTileAlt = TILE_GROUND_ALT;
     
     miscTile = TILE_WALL;
-    endMiscTile = false;
 
     if (temp & 0x40)
     {
@@ -197,10 +194,6 @@ void Map::draw()
       else if (tile == TILE_DATA_MISC)
       {
         tile = miscTile;
-        if(endMiscTile)
-        {
-          needToEndTile = true;
-        }
         isMain = false;
       }
       else if (tile == TILE_DATA_MAIN)
