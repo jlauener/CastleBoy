@@ -506,9 +506,9 @@ void updateBossHarpy(Entity& entity)
   // bossState: 0-1 flying 2 attacking
   // bossState2: projectile counter
 
-  uint8_t bossPhase = entity.hp <= 6 ? 2 : 1;
+ // uint8_t bossPhase = entity.hp <= 6 ? 2 : 1;
 
-  if (ab.everyXFrames(3 - bossPhase))
+  if (ab.everyXFrames(2))
   {
     entity.pos.x += entity.state & FLAG_MISC1 ? 1 : -1;
     if (++entity.counter == 104)
@@ -521,10 +521,6 @@ void updateBossHarpy(Entity& entity)
         if (entity.state & FLAG_MISC2)
         {
           // got hurt
-          if (entity.hp == 6)
-          {
-            bossPhase = 2;
-          }
           entity.state &= ~FLAG_MISC2;
         }
         bossState = 0;
@@ -534,7 +530,7 @@ void updateBossHarpy(Entity& entity)
     if (bossState < 2)
     {
       // flying
-      if (++bossState2 >= 14 + bossPhase * 3)
+      if (++bossState2 >= 8 + entity.hp)
       {
         Entities::add(ENTITY_FIREBALL_VERT, entity.pos.x, entity.pos.y);
         bossState2 = 0;
@@ -554,7 +550,7 @@ void updateBossHarpy(Entity& entity)
   if (bossState < 2 || entity.counter >= 52)
   {
     // flying
-    if (ab.everyXFrames(BOSS_HARPY_WALK_INTERVAL / bossPhase))
+    if (ab.everyXFrames(BOSS_HARPY_WALK_INTERVAL))
     {
       if (entity.state & FLAG_MISC1)
       {
