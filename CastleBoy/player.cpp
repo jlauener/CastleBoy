@@ -198,7 +198,7 @@ void Player::update()
     }
     else
     {
-      grounded = Entities::moveCollide(pos.x, pos.y + 1, hitbox) || Map::collide(pos.x, pos.y + 1, hitbox);
+      grounded = Entities::moveCollide(pos.x, pos.y, 0, 1, hitbox) || Map::collide(pos.x, pos.y + 1, hitbox);
     }
 
     if (grounded)
@@ -236,8 +236,7 @@ void Player::update()
       )
      )
   {
-    // moveCollide only hit platform, so don't use it for horizontal movement
-    if (/*!Entities::moveCollide(pos.x + velocityX, pos.y, hitbox) &&*/ !Map::collide(pos.x + velocityX, pos.y, hitbox))
+    if (!Entities::moveCollide(pos.x, pos.y, velocityX, 0, hitbox) && !Map::collide(pos.x + velocityX, pos.y, hitbox))
     {
       pos.x += velocityX;
     }

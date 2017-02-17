@@ -192,7 +192,7 @@ bool Game::moveY(Vec& pos, int8_t dy, const Box& hitbox, bool collideToEntity)
   int8_t sign = dy > 0 ? 1 : -1;
   while (dy != 0)
   {
-    if (Map::collide(pos.x, pos.y + sign, hitbox) || (collideToEntity && Entities::moveCollide(pos.x, pos.y + sign, hitbox)))
+    if (Map::collide(pos.x, pos.y + sign, hitbox) || (collideToEntity && Entities::moveCollide(pos.x, pos.y, 0, sign, hitbox)))
     {
       return true;
     }

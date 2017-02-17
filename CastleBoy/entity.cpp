@@ -930,8 +930,10 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
   return hit;
 }
 
-bool Entities::moveCollide(int16_t x, int8_t y, const Box& hitbox)
+bool Entities::moveCollide(int16_t x, int8_t y, int8_t offsetX, int8_t offsetY, const Box& hitbox)
 {
+  x += offsetX;
+  y += offsetY;
   bool collide = false;
   for (uint8_t i = 0; i < ENTITY_MAX; i++)
   {
@@ -945,10 +947,23 @@ bool Entities::moveCollide(int16_t x, int8_t y, const Box& hitbox)
                             entityHitbox.height,
                             x - hitbox.x, y - hitbox.y, hitbox.width, hitbox.height))
       {
-        collide = true;
         if (entity.type == ENTITY_FALLING_PLATFORM)
         {
-          entity.state |= FLAG_MISC1;
+          if(offsetY > 0)
+          {
+            // trigger falling platform only if player is going down on it
+            entity.state |= FLAG_MISC1;
+          }
+          collide = true;
+        }
+        else
+        {
+          if(offsetY > 0 && y /* hitbox is on feet */ == (entity.pos.y - entityHitbox.y + 1))
+          {
+            // moving platform collide only if player is going down on it
+            // and player is right on platform
+            collide = true;
+          }
         }
       }
     }
