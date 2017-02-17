@@ -18,7 +18,6 @@ bool flag;
 bool toggle = 0;
 uint8_t menuIndex;
 int8_t titleOffset;
-//int8_t titleRightOffset;
 }
 
 void Menu::showTitle()
@@ -90,7 +89,6 @@ void loopTitle()
   if (flag)
   {
     titleOffset = counter * 2;
-    //titleRightOffset = -counter * 2;
 
     if (--counter == 0)
     {
@@ -105,8 +103,6 @@ void loopTitle()
   {
     if (ab.everyXFrames(80))
     {
-      //titleLeftOffset = titleLeftOffset == 0 ? 1 : 0;
-      //titleRightOffset = titleRightOffset == 0 ? 1 : 0;
       titleOffset = -titleOffset;
     }
 
@@ -293,6 +289,7 @@ void Menu::loop()
       {
         if (stage == STAGE_MAX)
         {
+          Game::score += Game::life * SCORE_PER_LIFE;
           mainState = STATE_GAME_FINISHED;
           counter = 32;
           flag = false;

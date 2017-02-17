@@ -35,7 +35,8 @@ extern uint8_t flashCounter;
 #define SCORE_PER_CANDLE 5
 #define SCORE_PER_MONSTER 20
 #define SCORE_PER_COIN 50
-#define SCORE_PER_KNIFE 50
+#define SCORE_PER_KNIFE 100
+#define SCORE_PER_LIFE 500
 
 // player
 #define PLAYER_JUMP_GRAVITY_F 190 // 0.18
