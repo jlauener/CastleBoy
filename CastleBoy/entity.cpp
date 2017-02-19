@@ -425,7 +425,7 @@ void updateBird(Entity& entity)
     {
       ++entity.counter;
     }
-    else if (Player::pos.x > entity.pos.x - 64 && Player::pos.x < entity.pos.x + 100)
+    else if (Player::pos.x > entity.pos.x - 64 && Player::pos.x < entity.pos.x + 80)
     {
       // only start attacking when close to player
       entity.state |= FLAG_MISC2; // set attacking
