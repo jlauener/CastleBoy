@@ -156,15 +156,6 @@ void loopTitle()
   sprites.drawOverwrite(69, 2 + titleOffset, title_right, 0);
 }
 
-void loopHelp()
-{
-  if (ab.justPressed(A_BUTTON))
-  {
-    Menu::showTitle();
-    sound.tone(NOTE_E6, 15);
-  }
-}
-
 void loopEnd(bool won)
 {
   if (ab.everyXFrames(4))
@@ -219,7 +210,12 @@ void Menu::loop()
       loopTitle();
       break;
     case STATE_HELP:
-      loopHelp();
+      sprites.drawOverwrite(24, 12, help_screen, 0);
+      if (ab.justPressed(A_BUTTON))
+      {
+        Menu::showTitle();
+        sound.tone(NOTE_E6, 15);
+      }
       break;
     case STATE_PLAY:
       Game::loop();
