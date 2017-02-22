@@ -13,7 +13,7 @@ uint16_t Game::score;
 
 namespace
 {
-const uint8_t* const levels[] = { stage_1_1, stage_1_2, stage_1_4, stage_2_1, stage_2_2, stage_2_3, stage_2_4, stage_3_1, stage_3_2, stage_3_4 };
+const uint8_t* const levels[] = { stage_1_1, stage_1_2, stage_1_3, stage_1_4, stage_2_1, stage_2_2, stage_2_3, stage_2_4, stage_3_1, stage_3_2, stage_3_3, stage_3_4 };
 
 bool finished;
 uint8_t levelIndex;
@@ -59,11 +59,11 @@ void Game::loop()
 {
   // debug
 #ifdef DEBUG_CHEAT
-  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.justPressed(DOWN_BUTTON))
-  {
-    play();
-    return;
-  }
+//  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.justPressed(DOWN_BUTTON))
+//  {
+//    play();
+//    return;
+//  }
 
   if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.justPressed(UP_BUTTON))
   {
@@ -81,15 +81,15 @@ void Game::loop()
     return;
   }
 
-  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.justPressed(LEFT_BUTTON))
-  {
-    finished = false;
-    mainState = STATE_PLAY;
-    Entities::init();
-    Map::init(stage_test);
-    cameraX = 0;
-    return;
-  }
+//  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.justPressed(LEFT_BUTTON))
+//  {
+//    finished = false;
+//    mainState = STATE_PLAY;
+//    Entities::init();
+//    Map::init(stage_test);
+//    cameraX = 0;
+//    return;
+//  }
 #endif
 
   // update
