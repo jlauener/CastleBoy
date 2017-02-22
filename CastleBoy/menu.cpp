@@ -245,17 +245,21 @@ void loopGameFinished()
   {
     if (--counter == 0)
     {
-      ++state;
-      if (state == 1)
+      if (state == 0)
       {
         sound.tones(beat_game_finished);
+        state = 1;
         counter = 30;
       }
       else
       {
-        if (state == 7)
+        if (state < 7)
         {
-          flashCounter = 6;
+          ++state;
+          if (state == 7)
+          {
+            flashCounter = 6;
+          }
         }
         counter = 80;
       }
