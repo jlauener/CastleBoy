@@ -14,21 +14,25 @@ namespace
 {
 uint8_t stage;
 uint8_t counter;
-bool flag;
+uint8_t state;
 bool toggle = 0;
 uint8_t menuIndex;
-int8_t titleOffset;
+int8_t offset;
 }
 
 void Menu::showTitle()
 {
   mainState = STATE_TITLE;
-  flag = true;
+  state = 0;
   counter = 60;
   menuIndex = TITLE_OPTION_PLAY;
   stage = 1;
   Player::hp = PLAYER_MAX_HP;
   Game::reset();
+
+  mainState = STATE_GAME_FINISHED;
+  counter = 32;
+  state = 0;
 }
 
 void Menu::notifyPlayerDied()
@@ -86,15 +90,14 @@ void loopTitle()
   }
 
 
-  if (flag)
+  if (state == 0)
   {
-    titleOffset = counter * 2;
+    offset = counter * 2;
 
     if (--counter == 0)
     {
-      titleOffset = 1;
-      //titleRightOffset = 0;
-      flag = false;
+      offset = 1;
+      state = 1;
       flashCounter = 6;
       sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
     }
@@ -103,7 +106,7 @@ void loopTitle()
   {
     if (ab.everyXFrames(80))
     {
-      titleOffset = -titleOffset;
+      offset = -offset;
     }
 
     if (ab.justPressed(UP_BUTTON) && menuIndex > 0)
@@ -129,8 +132,6 @@ void loopTitle()
           break;
         case TITLE_OPTION_HELP:
           mainState = STATE_HELP;
-          counter = 32;
-          flag = false;
           sound.tone(NOTE_CS6, 30);
           break;
         case TITLE_OPTION_SFX:
@@ -152,53 +153,88 @@ void loopTitle()
     drawMenuOption(TITLE_OPTION_HELP, text_help);
     drawMenuOption(TITLE_OPTION_SFX, ab.audio.enabled() ? text_sfx_on : text_sfx_off);
   }
-  sprites.drawOverwrite(36, 2 - titleOffset, title_left, 0);
-  sprites.drawOverwrite(69, 2 + titleOffset, title_right, 0);
+  sprites.drawOverwrite(36, 2 - offset, title_left, 0);
+  sprites.drawOverwrite(69, 2 + offset, title_right, 0);
 }
 
-void loopEnd(bool won)
+void loopGameOver()
 {
   if (ab.everyXFrames(4))
   {
     if (--counter == 0)
     {
-      if (!flag)
+      if (state == 0)
       {
         sound.tone(NOTE_CS6, 30, NOTE_CS7, 40);
         flashCounter = 6;
-        flag = true;
+        state = 1;
       }
       counter = 40;
     }
   }
 
-  bool shift = (won && flag) ? counter < 20 : 0;
-  uint8_t offset = flag ? 0 : counter;
+  uint8_t yOffset = state > 0 ? 0 : counter;
 
-  sprites.drawOverwrite(2, 48 + offset / 2, background_mountain, 0);
-  sprites.drawOverwrite(0, 44 + offset, end_hill, 0);
+  sprites.drawOverwrite(2, 48 + yOffset / 2, background_mountain, 0);
+  sprites.drawOverwrite(0, 44 + yOffset, end_hill, 0);
+  sprites.drawOverwrite(20, 36 + yOffset, tileset, 8);
+  sprites.drawOverwrite(47, 8 - yOffset, text_game_over, 0);
 
-  if (won)
+  if (state == 1)
   {
-    sprites.drawOverwrite(16, 28 + offset, end_player, shift);
-    sprites.drawOverwrite(50 - shift, 8 - offset, text_the_end, 0);
+    sprites.drawOverwrite(54, 26, text_score, 0);
+    Util::drawNumber(64 , 34, Game::score, ALIGN_CENTER);
+
+    if (ab.justPressed(A_BUTTON))
+    {
+      Menu::showTitle();
+      sound.tone(NOTE_E6, 15);
+    }
   }
-  else
+}
+
+void loopGameFinished()
+{
+  if (ab.everyXFrames(4))
   {
-    sprites.drawOverwrite(20, 36 + offset, tileset, 8);
-    sprites.drawOverwrite(47, 8 - offset, text_game_over, 0);
+    if (--counter == 0)
+    {
+      if (state == 0)
+      {
+        state = 1;
+      }
+      else if (state == 1)
+      {
+        sound.tone(NOTE_CS6, 30, NOTE_CS7, 40);
+        flashCounter = 6;
+        state = 2;
+      }
+      counter = 40;
+    }
   }
 
-  if (flag)
+  uint8_t playerFrame = (state > 0 && (counter % 40) < 20) ? 1 : 0;
+  uint8_t yOffset = state > 0 ? 0 : counter;
+
+  sprites.drawOverwrite(2, 48 + yOffset / 2, background_mountain, 0);
+  sprites.drawOverwrite(0, 44 + yOffset, end_hill, 0);
+  sprites.drawPlusMask(16, 28 + yOffset, end_player_plus_mask, playerFrame);
+
+  if(state == 1)
   {
-    sprites.drawOverwrite(54 + shift, 26, text_score, 0);
-    Util::drawNumber(64 + shift, 34, Game::score, ALIGN_CENTER);
+    sprites.drawOverwrite(50, 8 - yOffset + counter, text_the_end, 0);
   }
 
-  if (ab.justPressed(A_BUTTON))
+  if (state == 2)
   {
-    Menu::showTitle();
-    sound.tone(NOTE_E6, 15);
+    sprites.drawOverwrite(54/* + shift*/, 26, text_score, 0);
+    Util::drawNumber(64/* + shift*/, 34, Game::score, ALIGN_CENTER);
+
+    if (ab.justPressed(A_BUTTON))
+    {
+      Menu::showTitle();
+      sound.tone(NOTE_E6, 15);
+    }
   }
 }
 
@@ -235,10 +271,10 @@ void Menu::loop()
       }
       break;
     case STATE_GAME_OVER:
-      loopEnd(false);
+      loopGameOver();
       break;
     case STATE_GAME_FINISHED:
-      loopEnd(true);
+      loopGameFinished();
       break;
     case STATE_LEVEL_FINISHED:
       if (--counter == 0)
@@ -288,7 +324,7 @@ void Menu::loop()
           Game::score += Game::life * SCORE_PER_LIFE;
           mainState = STATE_GAME_FINISHED;
           counter = 32;
-          flag = false;
+          state = 0;
         }
         else
         {
@@ -313,7 +349,7 @@ void Menu::loop()
         {
           mainState = STATE_GAME_OVER;
           counter = 32;
-          flag = false;
+          state = 0;
         }
         else
         {
