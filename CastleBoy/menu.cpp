@@ -18,6 +18,56 @@ uint8_t state;
 bool toggle = 0;
 uint8_t menuIndex;
 int8_t offset;
+
+#define B_X 70
+#define B_XX 140
+#define B_XXXX 280
+
+const uint16_t beat_game_finished[] PROGMEM = {
+  // 1:1 ----------------------------------
+  NOTE_C5,  B_X,
+  NOTE_C4,  B_X,
+  0,        B_XX,
+  NOTE_C2,  B_XXXX,
+
+  // 1:2 -------------
+  0,        B_XX,
+  NOTE_C2,  B_XXXX,
+  0,        B_XX,
+
+  // 1:3 -------------
+  NOTE_C2,  B_XXXX,
+  0,        B_XX,
+  0,        B_XX,
+
+  // 1:4 -------------
+  0,        B_XX,
+  0,        B_XX,
+  NOTE_C4,  B_XXXX,
+
+  // 2:1 ----------------------------------
+  NOTE_C4,  B_X,
+  NOTE_C4,        B_X,
+  NOTE_C2,  B_XXXX,
+  0,        B_XX,
+
+  // 2:2 -------------
+  NOTE_C3,  B_XX,
+  0,        B_XX,
+  NOTE_C2,  B_XXXX,
+
+  // 2:3 -------------
+  0,        B_XX,
+  NOTE_C2,  B_XXXX,
+  0,        B_XX,
+
+  // 3:4 -------------
+  0,        B_XX,
+  0,        B_XX,
+  NOTE_C2,  B_XXXX,
+
+  TONES_REPEAT
+};
 }
 
 void Menu::showTitle()
@@ -29,10 +79,6 @@ void Menu::showTitle()
   stage = 1;
   Player::hp = PLAYER_MAX_HP;
   Game::reset();
-
-  mainState = STATE_GAME_FINISHED;
-  counter = 32;
-  state = 0;
 }
 
 void Menu::notifyPlayerDied()
@@ -195,47 +241,64 @@ void loopGameOver()
 
 void loopGameFinished()
 {
-  if (ab.everyXFrames(4))
+  if (ab.everyXFrames(8))
   {
     if (--counter == 0)
     {
-      if (state == 0)
+      ++state;
+      if (state == 1)
       {
-        state = 1;
+        sound.tones(beat_game_finished);
+        counter = 30;
       }
-      else if (state == 1)
+      else
       {
-        sound.tone(NOTE_CS6, 30, NOTE_CS7, 40);
-        flashCounter = 6;
-        state = 2;
+        if (state == 7)
+        {
+          flashCounter = 6;
+        }
+        counter = 80;
       }
-      counter = 40;
     }
   }
 
-  uint8_t playerFrame = (state > 0 && (counter % 40) < 20) ? 1 : 0;
-  uint8_t yOffset = state > 0 ? 0 : counter;
+  switch (state)
+  {
+    case 2:
+      //sprites.drawOverwrite(50, -10 + counter, text_the_end, 0);
+      sprites.drawOverwrite(36, -32 + counter, title_left, 0);
+      sprites.drawOverwrite(69, -32 + counter, title_right, 0);
+      break;
+    case 3:
+      sprites.drawOverwrite(49, -32 + counter, end_zcpp, 0);
+      break;
+    case 4:
+      sprites.drawOverwrite(44, -32 + counter, end_zappedcow, 0);
+      break;
+    case 5:
+      sprites.drawOverwrite(44, -32 + counter, end_increment, 0);
+      break;
+    case 6:
+      sprites.drawOverwrite(50, 8 + counter, text_the_end, 0);
+      break;
+    case 7:
+      sprites.drawOverwrite(50, 8, text_the_end, 0);
+      sprites.drawOverwrite(54/* + shift*/, 26, text_score, 0);
+      Util::drawNumber(64/* + shift*/, 34, Game::score, ALIGN_CENTER);
 
+      if (ab.justPressed(A_BUTTON))
+      {
+        Menu::showTitle();
+        sound.tone(NOTE_E6, 15);
+      }
+      break;
+  }
+
+  uint8_t playerFrame = (state > 0 && (counter % 20) < 10) ? 1 : 0;
+  uint8_t yOffset = state > 0 ? 0 : counter;
   sprites.drawOverwrite(2, 48 + yOffset / 2, background_mountain, 0);
   sprites.drawOverwrite(0, 44 + yOffset, end_hill, 0);
-  sprites.drawPlusMask(16, 28 + yOffset, end_player_plus_mask, playerFrame);
-
-  if(state == 1)
-  {
-    sprites.drawOverwrite(50, 8 - yOffset + counter, text_the_end, 0);
-  }
-
-  if (state == 2)
-  {
-    sprites.drawOverwrite(54/* + shift*/, 26, text_score, 0);
-    Util::drawNumber(64/* + shift*/, 34, Game::score, ALIGN_CENTER);
-
-    if (ab.justPressed(A_BUTTON))
-    {
-      Menu::showTitle();
-      sound.tone(NOTE_E6, 15);
-    }
-  }
+  sprites.drawOverwrite(16, 28 + yOffset, end_player, playerFrame);
 }
 
 void Menu::loop()
@@ -322,6 +385,7 @@ void Menu::loop()
         if (stage == STAGE_MAX)
         {
           Game::score += Game::life * SCORE_PER_LIFE;
+
           mainState = STATE_GAME_FINISHED;
           counter = 32;
           state = 0;
@@ -334,7 +398,6 @@ void Menu::loop()
       }
 
       Game::loop();
-      // TODO text 'stage cleared' ?
       if (Game::timeLeft > 0)
       {
         ab.fillRect(0, 21, 128, 22, BLACK);
