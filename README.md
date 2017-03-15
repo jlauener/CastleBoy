@@ -4,6 +4,8 @@ Castlevania-like game for the Arduboy.
 
 A game by @ZappedCow and @Increment.
 
+.arduboy file: [castleboy_1_0.arduboy](https://www.dropbox.com/s/vud9h9541ojiecp/castleboy_1_0.arduboy?dl=0)
+
 ## Hacking the game
 
 ### How to regenerate assets
