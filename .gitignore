@@ -1,1 +1,3 @@
 *.hex
+CastleBoy/SDL/x64/
+CastleBoy/SDL/.vs/

@@ -1,19 +1,21 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-#include "Arglib.h"
+#include "TurboLib.h"
 
-extern Arduboy ab;
-extern Sprites sprites;
-extern ArduboyTones sound;
 extern uint8_t mainState;
 extern uint8_t flashCounter;
+
+//#define FPS_COUNTER_ENABLED // enable on screen FPS counter
+//#define LOG_ENABLED  // enable logs to serial monitor (or stdout for SDL target)
 
 //#define DEBUG_LOG // enable to show debug logs (LOG_DEBUG)
 //#define DEBUG_CPU // enable to display cpu load
 //#define DEBUG_RAM // enable to display RAM usage
 //#define DEBUG_CHEAT // enable to reset level with A+B+down
 //#define DEBUG_HITBOX // enable to show hitboxes
+
+//#define PIXEL_SAFE_MODE
 
 #define FPS 60
 
@@ -116,17 +118,6 @@ struct Box
   uint8_t width;
   uint8_t height;
 };
-
-#define ALIGN_LEFT 0
-#define ALIGN_CENTER 1
-#define ALIGN_RIGHT 2
-
-namespace Util
-{
-  void toggle(uint8_t & flags, uint8_t mask);
-  bool collideRect(int16_t x1, int8_t y1, uint8_t width1, uint8_t height1, int16_t x2, int8_t y2, uint8_t width2, uint8_t height2);
-  void drawNumber(int16_t x, int16_t y, uint16_t value, uint8_t align);
-}
 
 #ifdef DEBUG_LOG
 extern int16_t debugValue;

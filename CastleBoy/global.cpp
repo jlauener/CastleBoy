@@ -1,43 +1,41 @@
 #include "global.h"
 
-#include "assets.h"
+//#include "assets.h"
 
-Arduboy ab;
-Sprites sprites(ab);
-ArduboyTones sound(ab.audio.enabled);
 uint8_t mainState;
 uint8_t flashCounter = 0;
 
-void Util::toggle(uint8_t & flags, uint8_t mask)
-{
-  if (flags & mask)
-  {
-    flags &= ~mask;
-  }
-  else
-  {
-    flags |= mask;
-  }
-}
-
-bool Util::collideRect(int16_t x1, int8_t y1, uint8_t width1, uint8_t height1, int16_t x2, int8_t y2, uint8_t width2, uint8_t height2)
-{
-
-  return !(x1            >= x2 + width2  ||
-           x1 + width1   <= x2           ||
-           y1            >= y2 + height2 ||
-           y1 + height1  <= y2);
-}
+//void Util::toggle(uint8_t & flags, uint8_t mask)
+//{
+//  if (flags & mask)
+//  {
+//    flags &= ~mask;
+//  }
+//  else
+//  {
+//    flags |= mask;
+//  }
+//}
+//
+//bool ab::collideRect(int16_t x1, int8_t y1, uint8_t width1, uint8_t height1, int16_t x2, int8_t y2, uint8_t width2, uint8_t height2)
+//{
+//
+//  return !(x1            >= x2 + width2  ||
+//           x1 + width1   <= x2           ||
+//           y1            >= y2 + height2 ||
+//           y1 + height1  <= y2);
+//}
 
 
 // Inspired by TEAMArg's Sirene, stages.h:775
 // But optimized (use of int8_t, use cast instead of for loop)
 // Also use alignment (LEFT, RIGHT, CENTER) instead of zero padding
-void Util::drawNumber(int16_t x, int16_t y, uint16_t value, uint8_t align)
+/*
+void ab::drawNumber(int16_t x, int16_t y, uint16_t value, uint8_t align)
 {
   char buf[10];
   ltoa(value, buf, 10);
-  uint8_t strLength = strlen(buf);
+  uint8_t strLength = (uint8_t)strlen(buf);
   int8_t offset;
   switch (align)
   {
@@ -53,7 +51,7 @@ void Util::drawNumber(int16_t x, int16_t y, uint16_t value, uint8_t align)
   }
 
   // draw the frame
-  ab.fillRect(x + offset - 1, y, 4 * strLength + 1, 7, BLACK);
+  ab::fillRect(x + offset - 1, y, 4 * strLength + 1, 7, BLACK);
 
   // draw the number
   for (uint8_t i = 0; i < strLength; i++)
@@ -64,20 +62,14 @@ void Util::drawNumber(int16_t x, int16_t y, uint16_t value, uint8_t align)
     sprites.drawSelfMasked(x + offset + 4 * i, y, font, digit);
   }
 }
-
-int freeRam()
-{
-  extern int __heap_start, *__brkval;
-  int v;
-  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
-}
+*/
 
 #ifdef DEBUG_LOG
 #include "menu.h"
 int16_t debugValue = 0;
 void drawDebugLog()
 {
-  Util::drawNumber(0, 0, debugValue, ALIGN_LEFT);
+  ab::drawNumber(0, 0, debugValue, ALIGN_LEFT);
 }
 #endif
 
@@ -85,18 +77,25 @@ void drawDebugLog()
 #include "menu.h"
 void drawDebugCpu()
 {
-  Util::drawNumber(128, 0, ab.cpuLoad(), ALIGN_RIGHT);
+  ab::drawNumber(128, 0, ab.cpuLoad(), ALIGN_RIGHT);
 }
 #endif
 
 #ifdef DEBUG_RAM
 #include "menu.h"
+int freeRam()
+{
+  extern int __heap_start, *__brkval;
+  int v;
+  return (int)&v - (__brkval == 0 ? (int)&__heap_start : (int)__brkval);
+}
+
 void drawDebugRam()
 {
   extern int __heap_start, *__brkval;
   int v;
   int ram = (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
 
-  Util::drawNumber(64, 0, ram, ALIGN_CENTER);
+  ab::drawNumber(64, 0, ram, ALIGN_CENTER);
 }
 #endif

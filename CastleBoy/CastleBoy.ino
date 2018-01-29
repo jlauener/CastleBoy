@@ -8,30 +8,26 @@ uint8_t bootCounter = 0;
 
 void setup()
 {
-  ab.start();
-  ab.setFrameRate(FPS);
+  ab::init(FPS);
 
   Menu::showTitle();
 }
 
 void loop()
 {
-  if (!ab.nextFrame())
+  if (!ab::beginUpdate())
   {
     return;
   }
 
-  ab.clearDisplay();
-  
   if(bootCounter < 120)
   {
     bootCounter++;
-    sprites.drawOverwrite(49, 14, logo, 0);
-    ab.display();
+    ab::drawOverwrite(49, 14, logo, 0);
+    ab::endUpdate();
     return;
   }
 
-  ab.poll();
   Menu::loop();
 
 #ifdef DEBUG_LOG
@@ -48,8 +44,8 @@ void loop()
 
   if (flashCounter > 0)
   {
-    ab.fillRect(0, 0, 128, 64, WHITE);
+    ab::fillRect(0, 0, 128, 64, WHITE);
     flashCounter--;
   }
-  ab.display();
+  ab::endUpdate();
 }

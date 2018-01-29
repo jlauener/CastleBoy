@@ -120,30 +120,30 @@ void Player::update()
   // attack
   if (knockbackCounter == 0 && attackCounter == 0)
   {
-    if (ab.justPressed(B_BUTTON))
+    if (ab::wasButtonPressed(B_BUTTON))
     {
       knifeAttack = false;
       attackCounter = PLAYER_ATTACK_TOTAL_DURATION;
-      sound.tone(NOTE_GS4, 10);
+      // sound.tone(NOTE_GS4, 10);
     }
-    else if (ab.justPressed(UP_BUTTON))
+    else if (ab::wasButtonPressed(UP_BUTTON))
     {
       if (knifeCount > 0)
       {
         --knifeCount;
         knifeAttack = true;
         attackCounter = PLAYER_ATTACK_TOTAL_DURATION;
-        sound.tone(NOTE_GS5, 10);
+        // sound.tone(NOTE_GS5, 10);
       }
       else
       {
-        sound.tone(NOTE_G2, 5);
+        // sound.tone(NOTE_G2, 5);
       }
     }
   }
 
   // jump
-  if (knockbackCounter == 0 && !ducking && attackCounter == 0 && grounded && ab.justPressed(A_BUTTON))
+  if (knockbackCounter == 0 && !ducking && attackCounter == 0 && grounded && ab::wasButtonPressed(A_BUTTON))
   {
     // start jumping
     grounded = false;
@@ -156,9 +156,9 @@ void Player::update()
   {
     if (!ducking)
     {
-      ducking = grounded && ab.pressed(DOWN_BUTTON);
+      ducking = grounded && ab::isButtonDown(DOWN_BUTTON);
     }
-    else if (!ab.pressed(DOWN_BUTTON))
+    else if (!ab::isButtonDown(DOWN_BUTTON))
     {
       // only stop ducking if player can stand
       ducking = Map::collide(pos.x, pos.y, normalHitbox);
@@ -210,12 +210,12 @@ void Player::update()
   // horizontal movement: input
   if (knockbackCounter == 0)
   {
-    if (attackCounter == 0 && ab.pressed(LEFT_BUTTON))
+    if (attackCounter == 0 && ab::isButtonDown(LEFT_BUTTON))
     {
       velocityX = -1;
       flipped = true;
     }
-    else if (attackCounter == 0 && ab.pressed(RIGHT_BUTTON))
+    else if (attackCounter == 0 && ab::isButtonDown(RIGHT_BUTTON))
     {
       velocityX = 1;
       flipped = false;
@@ -230,9 +230,9 @@ void Player::update()
   if (velocityX != 0 &&
       (
         // normal speed
-        knockbackCounter == 0 && ab.everyXFrames(ducking ? PLAYER_SPEED_DUCK : PLAYER_SPEED_NORMAL) ||
+        knockbackCounter == 0 && ab::everyXFrames(ducking ? PLAYER_SPEED_DUCK : PLAYER_SPEED_NORMAL) ||
         // knockback speed
-        knockbackCounter > 0 && ab.everyXFrames(knockbackCounter < PLAYER_KNOCKBACK_FAST ? PLAYER_SPEED_KNOCKBACK_NORMAL : PLAYER_SPEED_KNOCKBACK_FAST)
+        knockbackCounter > 0 && ab::everyXFrames(knockbackCounter < PLAYER_KNOCKBACK_FAST ? PLAYER_SPEED_KNOCKBACK_NORMAL : PLAYER_SPEED_KNOCKBACK_FAST)
       )
      )
   {
@@ -261,7 +261,7 @@ void Player::update()
       {
         Entities::damage(pos.x + (flipped ? -24 : 0), pos.y - (ducking ? 4 : 11), 24, 2, 2);
 #ifdef DEBUG_HITBOX
-        ab.fillRect(pos.x + (flipped ? -24 : 0) - Game::cameraX, pos.y - (ducking ? 4 : 12), 24, 2, WHITE);
+        ab::fillRect(pos.x + (flipped ? -24 : 0) - Game::cameraX, pos.y - (ducking ? 4 : 12), 24, 2, WHITE);
 #endif
       }
     }
@@ -308,7 +308,7 @@ void Player::update()
       invincibleCounter = PLAYER_INVINCIBLE_DURATION;
     }
     flashCounter = 2;
-    sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
+    // sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
   }
 }
 
@@ -338,7 +338,7 @@ void Player::draw()
       }
       else
       {
-        if (ab.everyXFrames(WALK_FRAME_RATE))
+        if (ab::everyXFrames(WALK_FRAME_RATE))
         {
           walkFrame = !walkFrame;
         }
@@ -364,29 +364,29 @@ void Player::draw()
     }
   }
 
-  if (ab.everyXFrames(4) && knockbackCounter == 0 && invincibleCounter > 0)
+  if (ab::everyXFrames(4) && knockbackCounter == 0 && invincibleCounter > 0)
   {
     visible = !visible;
   }
 
   if (visible)
   {
-    sprites.drawPlusMask(pos.x - SPRITE_ORIGIN_X - Game::cameraX, pos.y - SPRITE_ORIGIN_Y, player_plus_mask, frame + (flipped ? FRAME_FLIPPED_OFFSET : 0));
+    ab::drawPlusMask(pos.x - SPRITE_ORIGIN_X - Game::cameraX, pos.y - SPRITE_ORIGIN_Y, player_plus_mask, frame + (flipped ? FRAME_FLIPPED_OFFSET : 0));
 
     if (attackCounter != 0 && !knifeAttack && attackCounter < PLAYER_ATTACK_CHARGE)
     {
-      sprites.drawPlusMask(pos.x + (flipped ? -24 : 8) - Game::cameraX , pos.y - (ducking ? 4 : 12), flipped ? player_attack_left_plus_mask : player_attack_right_plus_mask, 0);
+      ab::drawPlusMask(pos.x + (flipped ? -24 : 8) - Game::cameraX , pos.y - (ducking ? 4 : 12), flipped ? player_attack_left_plus_mask : player_attack_right_plus_mask, 0);
     }
   }
 
   if (knife)
   {
-    sprites.drawPlusMask(knifePosition.x - Game::cameraX, knifePosition.y, entity_knife_plus_mask, flipped);
+    ab::drawPlusMask(knifePosition.x - Game::cameraX, knifePosition.y, entity_knife_plus_mask, flipped);
   }
 
 #ifdef DEBUG_HITBOX
   Box hitbox = ducking ? duckHitbox : normalHitbox;
-  ab.fillRect(pos.x - hitbox.x - Game::cameraX, pos.y - hitbox.y, hitbox.width, hitbox.height, WHITE);
+  ab::fillRect(pos.x - hitbox.x - Game::cameraX, pos.y - hitbox.y, hitbox.width, hitbox.height, WHITE);
 #endif
 
 }

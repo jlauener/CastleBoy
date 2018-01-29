@@ -21,10 +21,10 @@ uint8_t pauseCounter;
 
 void drawHpBar(int16_t x, int16_t y, uint8_t value, uint8_t max)
 {
-  ab.fillRect(x, y, 4 * max, 7, BLACK);
+  ab::fillRect(x, y, 4 * max, 7, BLACK);
   for (uint8_t i = 0; i < max; i++)
   {
-    sprites.drawSelfMasked(x + i * 4, y, i < value ? ui_hp_full : ui_hp_empty, 0);
+    ab::drawSelfMasked(x + i * 4, y, i < value ? ui_hp_full : ui_hp_empty, 0);
   }
 }
 
@@ -50,7 +50,7 @@ void Game::play()
 
   if (Map::boss != NULL)
   {
-    sound.tone(NOTE_G4, 300, NOTE_G3, 300, NOTE_G2, 900);
+    // sound.tone(NOTE_G4, 300, NOTE_G3, 300, NOTE_G2, 900);
     pauseCounter = 120;
   }
 }
@@ -59,13 +59,13 @@ void Game::loop()
 {
   // debug
 #ifdef DEBUG_CHEAT
-//  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.justPressed(DOWN_BUTTON))
+//  if (ab::wasButtonPressed(A_BUTTON) && ab::wasButtonPressed(B_BUTTON) && ab::wasButtonPressed(DOWN_BUTTON))
 //  {
 //    play();
 //    return;
 //  }
 
-  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.justPressed(UP_BUTTON))
+  if (ab::wasButtonPressed(A_BUTTON) && ab::wasButtonPressed(B_BUTTON) && ab::wasButtonPressed(UP_BUTTON))
   {
     if (Map::boss != NULL)
     {
@@ -81,7 +81,7 @@ void Game::loop()
     return;
   }
 
-//  if (ab.pressed(A_BUTTON) && ab.pressed(B_BUTTON) && ab.justPressed(LEFT_BUTTON))
+//  if (ab::wasButtonPressed(A_BUTTON) && ab::wasButtonPressed(B_BUTTON) && ab::wasButtonPressed(LEFT_BUTTON))
 //  {
 //    finished = false;
 //    mainState = STATE_PLAY;
@@ -160,7 +160,7 @@ void Game::loop()
   if (Map::showBackground)
   {
     int16_t backgroundOffset = cameraX / 28; // FIXME properly calculate parralax unless all maps have same width
-    sprites.drawOverwrite(16 - backgroundOffset, 4, background_mountain, 0);
+    ab::drawOverwrite(16 - backgroundOffset, 4, background_mountain, 0);
   }
 
   // draw: main
@@ -172,13 +172,13 @@ void Game::loop()
   drawHpBar(0, 0, Player::hp, PLAYER_MAX_HP);
 
   // ui: knife count
-  ab.fillRect(54, 0, 13, 7, BLACK);
-  sprites.drawSelfMasked(55, 0, ui_knife_count, 0);
+  ab::fillRect(54, 0, 13, 7, BLACK);
+  ab::drawSelfMasked(55, 0, ui_knife_count, 0);
 
-  Util::drawNumber(68, 0, Player::knifeCount, ALIGN_LEFT);
+  ab::drawNumber(68, 0, Player::knifeCount, ALIGN_LEFT);
 
   // ui: time left
-  Util::drawNumber(128, 0, timeLeft / FPS, ALIGN_RIGHT);
+  ab::drawNumber(128, 0, timeLeft / FPS, ALIGN_RIGHT);
 
   // ui: boss
   if (Map::boss != NULL)

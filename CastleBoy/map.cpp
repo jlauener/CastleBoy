@@ -154,7 +154,7 @@ bool Map::collide(int16_t x, int8_t y, const Box& hitbox)
       if (getTileAt(ix, iy) >= solidTileIndex)
       {
         // check for rectangle intersection
-        if (Util::collideRect(ix * TILE_WIDTH, iy * TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT, x, y, hitbox.width, hitbox.height))
+        if (ab::collide(ix * TILE_WIDTH, iy * TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT, x, y, hitbox.width, hitbox.height))
         {
           return true;
         }
@@ -221,7 +221,7 @@ void Map::draw()
         needToEndTile = false;
       }
 
-      sprites.drawOverwrite(ix * TILE_WIDTH - Game::cameraX, iy * TILE_HEIGHT, tileset, tile);
+      ab::drawOverwrite(ix * TILE_WIDTH - Game::cameraX, iy * TILE_HEIGHT, tileset, tile);
     }
   }
 }

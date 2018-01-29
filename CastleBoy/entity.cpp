@@ -298,7 +298,7 @@ Entity* Entities::add(uint8_t type, int16_t x, int8_t y)
 
 void updateMovingPlatform(Entity& entity)
 {
-  if (ab.everyXFrames(3))
+  if (ab::everyXFrames(3))
   {
     if (entity.type == ENTITY_MOVING_PLATFORM_RIGHT)
     {
@@ -326,7 +326,7 @@ void updateMovingPlatform(Entity& entity)
 
 void updateSkeleton(Entity& entity)
 {
-  if (ab.everyXFrames(3))
+  if (ab::everyXFrames(3))
   {
     if (entity.state & FLAG_MISC2)
     {
@@ -365,7 +365,7 @@ void updateSkeleton(Entity& entity)
     // throwing
     entity.frame = 3;
   }
-  else if (ab.everyXFrames(8))
+  else if (ab::everyXFrames(8))
   {
     // normal
     entity.frame = entity.frame == 2 ? 1 : 2;
@@ -374,7 +374,7 @@ void updateSkeleton(Entity& entity)
 
 void updateHurler(Entity& entity)
 {
-  if (ab.everyXFrames(3))
+  if (ab::everyXFrames(3))
   {
     if (entity.counter < 30) entity.counter++;
     if (entity.counter == 30 && entity.pos.x - Player::pos.x < 94)
@@ -396,7 +396,7 @@ void updateFlyer(Entity& entity)
 
   if (entity.state & FLAG_MISC1)
   {
-    if (ab.everyXFrames(2))
+    if (ab::everyXFrames(2))
     {
       --entity.pos.x;
       if (entity.pos.x < -8)
@@ -406,7 +406,7 @@ void updateFlyer(Entity& entity)
 
       entity.pos.y += ++entity.counter / 20 % 2 ? 1 : -1;
     }
-    if (ab.everyXFrames(8))
+    if (ab::everyXFrames(8))
     {
       entity.frame = entity.frame == 2 ? 1 : 2;
     }
@@ -450,7 +450,7 @@ void updateBird(Entity& entity)
     }
   }
 
-  if (ab.everyXFrames(ENTITY_BIRD_WALK_INTERVAL))
+  if (ab::everyXFrames(ENTITY_BIRD_WALK_INTERVAL))
   {
     if (entity.state & FLAG_MISC1)
     {
@@ -468,13 +468,13 @@ void updateBossKnight(Entity& entity)
   // FLAG_MISC1 is used for direction (0 going left, 1 going right)
   // FLAG_MISC2 is used to tell the boss is has been hurt
 
-  if (ab.everyXFrames(4))
+  if (ab::everyXFrames(4))
   {
     if (entity.state & FLAG_MISC2)
     {
       // boss got hurt, change direction
       entity.state &= ~FLAG_MISC2;
-      Util::toggle(entity.state, FLAG_MISC1);
+      ab::toggle(entity.state, FLAG_MISC1);
       entity.counter = 87 - entity.counter;
     }
 
@@ -482,11 +482,11 @@ void updateBossKnight(Entity& entity)
     if (++entity.counter == 87)
     {
       entity.counter = 0;
-      Util::toggle(entity.state, FLAG_MISC1);
+      ab::toggle(entity.state, FLAG_MISC1);
     }
   }
 
-  if (ab.everyXFrames(BOSS_KNIGHT_WALK_INTERVAL))
+  if (ab::everyXFrames(BOSS_KNIGHT_WALK_INTERVAL))
   {
     if (entity.state & FLAG_MISC1)
     {
@@ -506,7 +506,7 @@ void updateBossHarpy(Entity& entity)
   // bossState: 0-1 flying 2 attacking
   // bossState2: projectile counter
   
-  if (ab.everyXFrames(2))
+  if (ab::everyXFrames(2))
   {
     entity.pos.x += entity.state & FLAG_MISC1 ? 1 : -1;
     if (++entity.counter == 104)
@@ -532,7 +532,7 @@ void updateBossHarpy(Entity& entity)
       {
         Entities::add(ENTITY_FIREBALL_VERT, entity.pos.x, entity.pos.y);
         bossState2 = 0;
-        sound.tone(NOTE_G4, 25);
+        // sound.tone(NOTE_G4, 25);
       }
     }
     else
@@ -548,7 +548,7 @@ void updateBossHarpy(Entity& entity)
   if (bossState < 2 || entity.counter >= 52)
   {
     // flying
-    if (ab.everyXFrames(BOSS_HARPY_WALK_INTERVAL))
+    if (ab::everyXFrames(BOSS_HARPY_WALK_INTERVAL))
     {
       if (entity.state & FLAG_MISC1)
       {
@@ -616,7 +616,7 @@ void updateBossFinal(Entity& entity)
       if (pos > 0)
       {
         Entities::add(ENTITY_FIREBALL_HORIZ, entity.pos.x, entity.pos.y - pos);
-        sound.tone(NOTE_G4, 25);
+        // sound.tone(NOTE_G4, 25);
       }
       entity.counter = 0;
 
@@ -637,7 +637,7 @@ void updateProjectile(Entity& entity)
   if (entity.type == ENTITY_BONE)
   {
     entity.pos.y += entity.counter - 2;
-    if (entity.counter < 8 && ab.everyXFrames(10))
+    if (entity.counter < 8 && ab::everyXFrames(10))
     {
       ++entity.counter;
     }
@@ -647,7 +647,7 @@ void updateProjectile(Entity& entity)
   {
     entity.state = 0;
   }
-  if (ab.everyXFrames(12))
+  if (ab::everyXFrames(12))
   {
     ++entity.frame %= 2;
   }
@@ -730,14 +730,14 @@ void Entities::update()
                 entity.pos.y = -4;
               }
             }
-            if (ab.everyXFrames(12))
+            if (ab::everyXFrames(12))
             {
               ++entity.frame %= 2;
             }
             break;
           case ENTITY_CANDLE_COIN:
           case ENTITY_CANDLE_KNIFE:
-            if (ab.everyXFrames(8))
+            if (ab::everyXFrames(8))
             {
               ++entity.frame %= 2;
             }
@@ -745,7 +745,7 @@ void Entities::update()
           case ENTITY_PICKUP_COIN:
           case ENTITY_PICKUP_KNIFE:
             Game::moveY(entity.pos, 2, data[entity.type].hitbox);
-            if (entity.type != ENTITY_PICKUP_KNIFE && ab.everyXFrames(12))
+            if (entity.type != ENTITY_PICKUP_KNIFE && ab::everyXFrames(12))
             {
               ++entity.frame %= 2;
             }
@@ -773,7 +773,7 @@ void Entities::update()
             if (entity.state & FLAG_MISC1 && Game::moveY(entity.pos, 1, data[entity.type].hitbox))
             {
               entity.state &= ~FLAG_ALIVE;
-              sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
+              // sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
             }
             break;
           case ENTITY_BOSS_KNIGHT:
@@ -833,7 +833,7 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
     {
       const EntityData& entityData = data[entity.type];
       if (entityData.hp > 0 && // entity with no HP cannot be damaged
-          Util::collideRect(entity.pos.x - entityData.hitbox.x,
+          ab::collide(entity.pos.x - entityData.hitbox.x,
                             entity.pos.y - entityData.hitbox.y,
                             entityData.hitbox.width,
                             entityData.hitbox.height,
@@ -855,7 +855,7 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
           {
             entity.frame = 3;
             entity.state |= MASK_HURT; // when boss resist, stop moving a bit longer than when it's a normal hurt
-            sound.tone(NOTE_GS2, 15);
+            // sound.tone(NOTE_GS2, 15);
           }
 
           if (entity.state & FLAG_MISC1)
@@ -915,12 +915,12 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
             entity.state &= ~FLAG_ALIVE;
             entity.hp = 0;
             entity.counter = 0;
-            sound.tone(NOTE_CS3H, 30);
+            // sound.tone(NOTE_CS3H, 30);
           }
           else
           {
             entity.hp -= value;
-            sound.tone(NOTE_CS3H, 15);
+            // sound.tone(NOTE_CS3H, 15);
           }
         }
       }
@@ -941,7 +941,7 @@ bool Entities::moveCollide(int16_t x, int8_t y, int8_t offsetX, int8_t offsetY, 
     if (entity.state & FLAG_ALIVE && entity.type < 3 /* platform */ )
     {
       const Box& entityHitbox = data[entity.type].hitbox;
-      if (Util::collideRect(entity.pos.x - entityHitbox.x,
+      if (ab::collide(entity.pos.x - entityHitbox.x,
                             entity.pos.y - entityHitbox.y,
                             entityHitbox.width,
                             entityHitbox.height,
@@ -979,7 +979,7 @@ Entity* Entities::checkPlayer(int16_t x, int8_t y, uint8_t width, uint8_t height
     if (entity.state & FLAG_ALIVE && !(entity.state & MASK_HURT) && entity.type != ENTITY_CANDLE_COIN && entity.type != ENTITY_CANDLE_KNIFE)
     {
       const Box& entityHitbox = data[entity.type].hitbox;
-      if (Util::collideRect(entity.pos.x - entityHitbox.x,
+      if (ab::collide(entity.pos.x - entityHitbox.x,
                             entity.pos.y - entityHitbox.y,
                             entityHitbox.width,
                             entityHitbox.height,
@@ -996,13 +996,13 @@ Entity* Entities::checkPlayer(int16_t x, int8_t y, uint8_t width, uint8_t height
             //Game::timeLeft += PICKUP_COIN_VALUE;
             entity.state = 0;
             Game::score += SCORE_PER_COIN;
-            sound.tone(NOTE_CS6, 30, NOTE_CS5, 40);
+            // sound.tone(NOTE_CS6, 30, NOTE_CS5, 40);
             break;
           case ENTITY_PICKUP_KNIFE:
             Player::knifeCount += PICKUP_KNIFE_VALUE;
             Game::score += SCORE_PER_KNIFE;
             entity.state = 0;
-            sound.tone(NOTE_CS6, 30, NOTE_CS7, 40);
+            // sound.tone(NOTE_CS6, 30, NOTE_CS7, 40);
             break;
           default:
             return &entity;
@@ -1022,14 +1022,14 @@ void Entities::draw()
     {
       if (entity.state & FLAG_ALIVE || entity.state & MASK_HURT)
       {
-        sprites.drawPlusMask(entity.pos.x - data[entity.type].spriteOriginX - Game::cameraX, entity.pos.y - data[entity.type].spriteOriginY, data[entity.type].sprite, entity.frame);
+        ab::drawPlusMask(entity.pos.x - data[entity.type].spriteOriginX - Game::cameraX, entity.pos.y - data[entity.type].spriteOriginY, data[entity.type].sprite, entity.frame);
 #ifdef DEBUG_HITBOX
-        ab.fillRect(entity.pos.x - data[entity.type].hitbox.x - Game::cameraX, entity.pos.y - data[entity.type].hitbox.y, data[entity.type].hitbox.width, data[entity.type].hitbox.height, WHITE);
+        ab::fillRect(entity.pos.x - data[entity.type].hitbox.x - Game::cameraX, entity.pos.y - data[entity.type].hitbox.y, data[entity.type].hitbox.width, data[entity.type].hitbox.height, WHITE);
 #endif
       }
       else
       {
-        sprites.drawPlusMask(entity.pos.x - DIE_ANIM_ORIGIN_X - Game::cameraX, entity.pos.y - DIE_ANIM_ORIGIN_Y, fx_destroy_plus_mask, entity.frame);
+        ab::drawPlusMask(entity.pos.x - DIE_ANIM_ORIGIN_X - Game::cameraX, entity.pos.y - DIE_ANIM_ORIGIN_Y, fx_destroy_plus_mask, entity.frame);
       }
     }
   }
