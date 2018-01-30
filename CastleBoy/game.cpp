@@ -50,7 +50,7 @@ void Game::play()
 
   if (Map::boss != NULL)
   {
-    // sound.tone(NOTE_G4, 300, NOTE_G3, 300, NOTE_G2, 900);
+    ab::tone(NOTE_G4, 300, NOTE_G3, 300, NOTE_G2, 900);
     pauseCounter = 120;
   }
 }

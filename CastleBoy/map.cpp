@@ -11,22 +11,22 @@ Entity* Map::boss = NULL;
 
 namespace
 {
-const uint8_t* tilemap;
-uint8_t height;
+  const uint8_t* tilemap;
+  uint8_t height;
 
-uint8_t solidTileIndex;
-uint8_t mainTile;
-uint8_t mainTileAlt;
-uint8_t mainStartTile;
-uint8_t mainStartTileAlt;
-bool endMainTile;
-uint8_t propTile;
-uint8_t miscTile;
+  uint8_t solidTileIndex;
+  uint8_t mainTile;
+  uint8_t mainTileAlt;
+  uint8_t mainStartTile;
+  uint8_t mainStartTileAlt;
+  bool endMainTile;
+  uint8_t propTile;
+  uint8_t miscTile;
 
-uint8_t getTileAt(uint8_t x, uint8_t y)
-{
-  return (pgm_read_byte(tilemap + (x * height + y) / 4) & (0x03 << (y % 4) * 2)) >> (y % 4) * 2;
-}
+  uint8_t getTileAt(uint8_t x, uint8_t y)
+  {
+    return (pgm_read_byte(tilemap + (x * height + y) / 4) & (0x03 << (y % 4) * 2)) >> (y % 4) * 2;
+  }
 
 }  // unamed
 
@@ -63,7 +63,7 @@ void Map::init(const uint8_t* source)
 
     mainTile = TILE_GROUND;
     mainTileAlt = TILE_GROUND_ALT;
-    
+
     miscTile = TILE_WALL;
 
     if (temp & 0x40)
@@ -147,9 +147,9 @@ bool Map::collide(int16_t x, int8_t y, const Box& hitbox)
   if (ty2 >= height) ty2 = height - 1;
 
   // perform hit test on selected tiles
-  for (int16_t ix = tx1; ix <= tx2; ix++)
+  for (uint8_t ix = ((uint8_t)tx1); ix <= tx2; ix++)
   {
-    for (int8_t iy = ty1; iy <= ty2; iy++)
+    for (uint8_t iy = ty1; iy <= ty2; iy++)
     {
       if (getTileAt(ix, iy) >= solidTileIndex)
       {
@@ -198,7 +198,7 @@ void Map::draw()
       }
       else if (tile == TILE_DATA_MAIN)
       {
-        bool useAlt = ix % 2 == 0 && iy % 2 == 1 || ix % 2 == 1 && iy & 2 == 0;
+        bool useAlt = ix % 2 == 0 && iy % 2 == 1 || ix % 2 == 1 && (iy & 2) == 0;
         if (isMain)
         {
           // already started, use normal main tile
@@ -210,7 +210,7 @@ void Map::draw()
           tile = useAlt ? mainStartTileAlt : mainStartTile;
           isMain = true;
         }
-        if(endMainTile)
+        if (endMainTile)
         {
           needToEndTile = true;
         }

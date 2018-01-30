@@ -85,7 +85,7 @@ void Menu::notifyPlayerDied()
 {
   mainState = STATE_PLAYER_DIED;
   counter = 140;
-  // sound.tone(NOTE_G3, 100, NOTE_G2, 150, NOTE_G1, 350);
+  ab::tone(NOTE_G3, 100, NOTE_G2, 150, NOTE_G1, 350);
 }
 
 void Menu::notifyLevelFinished()
@@ -94,7 +94,7 @@ void Menu::notifyLevelFinished()
   {
     mainState = STATE_STAGE_FINISHED;
     counter = 80;
-    // sound.tone(NOTE_G2, 100, NOTE_G3, 150, NOTE_G4, 350);
+    ab::tone(NOTE_G2, 100, NOTE_G3, 150, NOTE_G4, 350);
   }
   else
   {
@@ -145,7 +145,7 @@ void loopTitle()
       offset = 1;
       state = 1;
       flashCounter = 6;
-      // sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
+      ab::tone(NOTE_GS3, 25, NOTE_G3, 15);
     }
   }
   else
@@ -158,13 +158,13 @@ void loopTitle()
     if (ab::wasButtonPressed(UP_BUTTON) && menuIndex > 0)
     {
       --menuIndex;
-      // sound.tone(NOTE_E6, 15);
+      ab::tone(NOTE_E6, 15);
     }
 
     if (ab::wasButtonPressed(DOWN_BUTTON) && menuIndex < TITLE_OPTION_MAX)
     {
       ++menuIndex;
-      // sound.tone(NOTE_E6, 15);
+      ab::tone(NOTE_E6, 15);
     }
 
     if (ab::wasButtonPressed(A_BUTTON))
@@ -174,30 +174,22 @@ void loopTitle()
         case TITLE_OPTION_PLAY:
           mainState = STATE_STAGE_INTRO;
           counter = 100;
-          // sound.tone(NOTE_CS6, 30);
+          ab::tone(NOTE_CS6, 30);
           break;
         case TITLE_OPTION_HELP:
           mainState = STATE_HELP;
-          // sound.tone(NOTE_CS6, 30);
+          ab::tone(NOTE_CS6, 30);
           break;
         case TITLE_OPTION_SFX:
-          /*if (ab.audio.enabled())
-          {
-            ab.audio.off();
-          }
-          else
-          {
-            ab.audio.on();
-          }
-          ab.audio.saveOnOff();*/
-          // sound.tone(NOTE_CS6, 30);
+          ab::toggleSoundEnabled();      
+          ab::tone(NOTE_CS6, 30);
           break;
       }
     }
 
     drawMenuOption(TITLE_OPTION_PLAY, text_play);
     drawMenuOption(TITLE_OPTION_HELP, text_help);
-    drawMenuOption(TITLE_OPTION_SFX, /*ab.audio.enabled() ? text_sfx_on :*/ text_sfx_off);
+    drawMenuOption(TITLE_OPTION_SFX, ab::isSoundEnabled() ? text_sfx_on : text_sfx_off);
   }
   ab::drawOverwrite(36, 2 - offset, title_left);
   ab::drawOverwrite(69, 2 + offset, title_right);
@@ -211,7 +203,7 @@ void loopGameOver()
     {
       if (state == 0)
       {
-        // sound.tone(NOTE_CS6, 30, NOTE_CS7, 40);
+        ab::tone(NOTE_CS6, 30, NOTE_CS7, 40);
         flashCounter = 6;
         state = 1;
       }
@@ -234,7 +226,7 @@ void loopGameOver()
     if (ab::wasButtonPressed(A_BUTTON))
     {
       Menu::showTitle();
-      // sound.tone(NOTE_E6, 15);
+      ab::tone(NOTE_E6, 15);
     }
   }
 }
@@ -269,7 +261,6 @@ void loopGameFinished()
   switch (state)
   {
     case 2:
-      //ab::drawOverwrite(50, -10 + counter, text_the_end, 0);
       ab::drawOverwrite(36, -32 + counter, title_left, 0);
       ab::drawOverwrite(69, -32 + counter, title_right, 0);
       break;
@@ -287,13 +278,13 @@ void loopGameFinished()
       break;
     case 7:
       ab::drawOverwrite(50, 8, text_the_end, 0);
-      ab::drawOverwrite(54/* + shift*/, 26, text_score, 0);
-      ab::drawNumber(64/* + shift*/, 34, Game::score, ALIGN_CENTER);
+      ab::drawOverwrite(54, 26, text_score, 0);
+      ab::drawNumber(64, 34, Game::score, ALIGN_CENTER);
 
       if (ab::wasButtonPressed(A_BUTTON))
       {
         Menu::showTitle();
-        // sound.tone(NOTE_E6, 15);
+        ab::tone(NOTE_E6, 15);
       }
       break;
   }
@@ -317,7 +308,7 @@ void Menu::loop()
       if (ab::wasButtonPressed(A_BUTTON))
       {
         Menu::showTitle();
-        // sound.tone(NOTE_E6, 15);
+        ab::tone(NOTE_E6, 15);
       }
       break;
     case STATE_PLAY:
@@ -371,7 +362,7 @@ void Menu::loop()
 
           if (ab::everyXFrames(8))
           {
-            // sound.tone(NOTE_G4, 25);
+            ab::tone(NOTE_G4, 25);
           }
         }
       }
@@ -380,7 +371,7 @@ void Menu::loop()
         if (--counter == 0)
         {
           ++Player::hp;
-          // sound.tone(NOTE_G3, 60);
+          ab::tone(NOTE_G3, 60);
           counter = Player::hp == PLAYER_MAX_HP ? 90 : 20;
         }
       }
@@ -449,7 +440,7 @@ void Menu::loop()
 
           if (counter == 80)
           {
-            // sound.tone(NOTE_GS3, 15);
+            ab::tone(NOTE_GS3, 15);
           }
         }
       }

@@ -359,7 +359,7 @@ void drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, uint8_t frame, uint
   uint16_t xOffset, ofs;
   int8_t yOffset = abs(y) % 8;
   int8_t sRow = y / 8;
-  uint8_t loop_h, start_h, rendered_width;
+  uint8_t renderHeight, start_h, renderWidth;
 
   if (y < 0 && yOffset > 0) {
     sRow--;
@@ -376,10 +376,10 @@ void drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, uint8_t frame, uint
 
   // if the right side of the render is offscreen skip those loops
   if (x + w > WIDTH - 1) {
-    rendered_width = ((WIDTH - x) - xOffset);
+    renderWidth = ((WIDTH - x) - xOffset);
   }
   else {
-    rendered_width = (w - xOffset);
+    renderWidth = (w - xOffset);
   }
 
   // if the top side of the render is offscreen skip those loops
@@ -390,16 +390,16 @@ void drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, uint8_t frame, uint
     start_h = 0;
   }
 
-  loop_h = h / 8 + (h % 8 > 0 ? 1 : 0); // divide, then round up
+  renderHeight = h / 8 + (h % 8 > 0 ? 1 : 0); // divide, then round up
 
   // if (sRow + loop_h - 1 > (HEIGHT/8)-1)
-  if (sRow + loop_h > (HEIGHT / 8)) {
-    loop_h = (HEIGHT / 8) - sRow;
+  if (sRow + renderHeight > (HEIGHT / 8)) {
+    renderHeight = (HEIGHT / 8) - sRow;
   }
 
   // prepare variables for loops later so we can compare with 0
   // instead of comparing two variables
-  loop_h -= start_h;
+  renderHeight -= start_h;
 
   sRow += start_h;
   ofs = (sRow * WIDTH) + x + xOffset;
@@ -408,7 +408,7 @@ void drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, uint8_t frame, uint
 
   uint8_t mul_amt = 1 << yOffset;
   uint16_t mask_data;
-  uint16_t bitmap_data;
+  uint16_t bitmapData;
 
   switch (drawMode) {
   case SPRITE_OVERWRITE:
@@ -417,20 +417,20 @@ void drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, uint8_t frame, uint
     mask_data = ~(0xFF * mul_amt);
     // really if yOffset = 0 you have a faster case here that could be
     // optimized
-    for (uint8_t a = 0; a < loop_h; a++) {
-      for (uint8_t iCol = 0; iCol < rendered_width; iCol++) {
-        bitmap_data = pgm_read_byte(bofs) * mul_amt;
-
+    for (uint8_t a = 0; a < renderHeight; a++) {
+      for (uint8_t iCol = 0; iCol < renderWidth; iCol++) {
         if (sRow >= 0) {
+          bitmapData = pgm_read_byte(bofs) * mul_amt;
+
           data = screenBuffer[ofs];
           data &= (uint8_t)(mask_data);
-          data |= (uint8_t)(bitmap_data);
+          data |= (uint8_t)(bitmapData);
           screenBuffer[ofs] = data;
 
           if (yOffset != 0 && sRow < 7) {
             data = screenBuffer[ofs + WIDTH];
             data &= (*((uint8_t *)(&mask_data) + 1));
-            data |= (*((uint8_t *)(&bitmap_data) + 1));
+            data |= (*((uint8_t *)(&bitmapData) + 1));
             screenBuffer[ofs + WIDTH] = data;
           }
         }
@@ -438,51 +438,50 @@ void drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, uint8_t frame, uint
         bofs++;
       }
       sRow++;
-      bofs += w - rendered_width;
-      ofs += WIDTH - rendered_width;
+      bofs += w - renderWidth;
+      ofs += WIDTH - renderWidth;
     }
     break;
 
   case SPRITE_SELF_MASKED:
-    for (uint8_t a = 0; a < loop_h; a++) {
-      for (uint8_t iCol = 0; iCol < rendered_width; iCol++) {
-        bitmap_data = pgm_read_byte(bofs) * mul_amt;
+    for (uint8_t iy = 0; iy < renderHeight; iy++) {
+      for (uint8_t ix = 0; ix < renderWidth; ix++) {
+        bitmapData = pgm_read_byte(bofs) * mul_amt;
         if (sRow >= 0) {
-          screenBuffer[ofs] |= (uint8_t)(bitmap_data);
+          screenBuffer[ofs] |= (uint8_t)(bitmapData);
         }
         if (yOffset != 0 && sRow < 7) {
-          screenBuffer[ofs + WIDTH] |= (*((unsigned char *)(&bitmap_data) + 1));
+          screenBuffer[ofs + WIDTH] |= (*((unsigned char *)(&bitmapData) + 1));
         }
         ofs++;
         bofs++;
       }
       sRow++;
-      bofs += w - rendered_width;
-      ofs += WIDTH - rendered_width;
+      bofs += w - renderWidth;
+      ofs += WIDTH - renderWidth;
     }
     break;
 
   case SPRITE_PLUS_MASK:
-#ifdef SDL_TARGET
-    // we only want to mask the 8 bits of our own sprite, so we can
-    // calculate the mask before the start of the loop
-    mask_data = ~(0xFF * mul_amt);
-    // really if yOffset = 0 you have a faster case here that could be
-    // optimized
-    for (uint8_t a = 0; a < loop_h; a++) {
-      for (uint8_t iCol = 0; iCol < rendered_width; iCol++) {
-        bitmap_data = pgm_read_byte(bofs) * mul_amt;
+    // *2 because we use double the bits (mask + bitmap)
+    bofs = (uint8_t *)(bitmap + ((start_h * w) + xOffset) * 2);
 
+#ifdef SDL_TARGET
+    for (uint8_t iy = 0; iy < renderHeight; iy++) {
+      for (uint8_t ix = 0; ix < renderWidth; ix++) {
         if (sRow >= 0) {
+          bitmapData = pgm_read_byte(bofs) * mul_amt;
+          mask_data = ~(pgm_read_byte(bofs + 1) * mul_amt);
+
           data = screenBuffer[ofs];
           data &= (uint8_t)(mask_data);
-          data |= (uint8_t)(bitmap_data);
+          data |= (uint8_t)(bitmapData);
           screenBuffer[ofs] = data;
 
           if (yOffset != 0 && sRow < 7) {
             data = screenBuffer[ofs + WIDTH];
             data &= (*((uint8_t *)(&mask_data) + 1));
-            data |= (*((uint8_t *)(&bitmap_data) + 1));
+            data |= (*((uint8_t *)(&bitmapData) + 1));
             screenBuffer[ofs + WIDTH] = data;
           }
         }
@@ -490,14 +489,11 @@ void drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, uint8_t frame, uint
         bofs += 2;
       }
       sRow++;
-      bofs += (w - rendered_width) * 2;
-      ofs += WIDTH - rendered_width;
+      bofs += (w - renderWidth) * 2;
+      ofs += WIDTH - renderWidth;
     }
     break;
 #else
-    // *2 because we use double the bits (mask + bitmap)
-    bofs = (uint8_t *)(bitmap + ((start_h * w) + xOffset) * 2);
-
     uint8_t xi = rendered_width; // counter for x loop below
 
     asm volatile(
@@ -661,6 +657,45 @@ void ab::drawNumber(uint8_t x, uint8_t y, uint16_t value, uint8_t align)
   }
 }
 
+// -----------------------------------------------------------------------
+// SOUND
+// -----------------------------------------------------------------------
+bool soundEnabled = true;
+
+void ab::toggleSoundEnabled()
+{
+  soundEnabled = !soundEnabled;
+  // TODO
+  //if (ab.audio.enabled())
+  //{
+  //  ab.audio.off();
+  //}
+  //else
+  //{
+  //  ab.audio.on();
+  //}
+  //ab.audio.saveOnOff();
+}
+
+bool ab::isSoundEnabled()
+{
+  return soundEnabled;
+}
+
+void ab::tone(uint16_t freq, uint16_t dur)
+{
+  // TODO
+}
+
+void ab::tone(uint16_t freq1, uint16_t dur1, uint16_t freq2, uint16_t dur2)
+{
+  // TODO
+}
+
+void ab::tone(uint16_t freq1, uint16_t dur1, uint16_t freq2, uint16_t dur2, uint16_t freq3, uint16_t dur3)
+{
+  // TODO
+}
 
 // -----------------------------------------------------------------------
 // UTILS
@@ -683,13 +718,9 @@ void ab::toggle(uint8_t & flags, uint8_t mask)
   }
 }
 
-bool ab::collide(int16_t x1, int8_t y1, uint8_t width1, uint8_t height1, int16_t x2, int8_t y2, uint8_t width2, uint8_t height2)
+bool ab::collide(int16_t x1, int8_t y1, uint8_t w1, uint8_t h1, int16_t x2, int8_t y2, uint8_t w2, uint8_t h2)
 {
-
-  return !(x1 >= x2 + width2 ||
-    x1 + width1 <= x2 ||
-    y1 >= y2 + height2 ||
-    y1 + height1 <= y2);
+  return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2;
 }
 
 

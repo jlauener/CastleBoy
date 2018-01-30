@@ -8,8 +8,6 @@
 
 #define WINDOW_TITLE "CastleBoy"
 #define WINDOW_SCALE 4
-#define WINDOW_WIDTH WIDTH * WINDOW_SCALE
-#define WINDOW_HEIGHT HEIGHT * WINDOW_SCALE
 
 #define THROW_SDL_ERROR(msg) throw std::exception((std::string(msg) + " Error: " + SDL_GetError()).c_str())
 
@@ -18,6 +16,7 @@ bool quit = false;
 SDL_Window * window;
 SDL_Renderer* renderer;
 SDL_Texture* screenBuffer;
+SDL_Rect screenDestRect;
 
 std::map<SDL_Keycode, uint8_t> buttonMapping;
 uint8_t buttonState;
@@ -86,8 +85,9 @@ void core::boot()
   }
 
   // display
-
-  window = SDL_CreateWindow(WINDOW_TITLE, 400, 400, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
+  int windowWidth = (WIDTH + 2) * WINDOW_SCALE;
+  int windowHeight = (HEIGHT + 2) * WINDOW_SCALE;
+  window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, SDL_WINDOW_SHOWN);
   if (window == nullptr)
   {
     SDL_Quit();
@@ -95,7 +95,12 @@ void core::boot()
     return;
   }
 
-  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED /* | SDL_RENDERER_PRESENTVSYNC*/);
+  screenDestRect.x = WINDOW_SCALE;
+  screenDestRect.y = WINDOW_SCALE;
+  screenDestRect.w = windowWidth - 2 * WINDOW_SCALE;
+  screenDestRect.h = windowHeight - 2 * WINDOW_SCALE;
+
+  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
   if (renderer == nullptr)
   {
     SDL_DestroyWindow(window);
@@ -170,7 +175,10 @@ void core::paintScreen(uint8_t image[])
   }
 
   SDL_UnlockTexture(screenBuffer);
-  SDL_RenderCopy(renderer, screenBuffer, NULL, NULL);
+  SDL_Rect dest;
+  dest.x = WINDOW_SCALE;
+  dest.y = WINDOW_SCALE;  
+  SDL_RenderCopy(renderer, screenBuffer, NULL, &screenDestRect);
   SDL_RenderPresent(renderer);
 }
 

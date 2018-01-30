@@ -124,7 +124,7 @@ void Player::update()
     {
       knifeAttack = false;
       attackCounter = PLAYER_ATTACK_TOTAL_DURATION;
-      // sound.tone(NOTE_GS4, 10);
+      ab::tone(NOTE_GS4, 10);
     }
     else if (ab::wasButtonPressed(UP_BUTTON))
     {
@@ -133,11 +133,11 @@ void Player::update()
         --knifeCount;
         knifeAttack = true;
         attackCounter = PLAYER_ATTACK_TOTAL_DURATION;
-        // sound.tone(NOTE_GS5, 10);
+        ab::tone(NOTE_GS5, 10);
       }
       else
       {
-        // sound.tone(NOTE_G2, 5);
+        ab::tone(NOTE_G2, 5);
       }
     }
   }
@@ -191,7 +191,7 @@ void Player::update()
   else
   {
     velocityYf += PLAYER_FALL_GRAVITY_F;
-    int16_t offsetY = velocityYf / F_PRECISION;
+    int8_t offsetY = velocityYf / F_PRECISION;
     if (offsetY > 0)
     {
       grounded = Game::moveY(pos, offsetY, hitbox, true);
@@ -308,7 +308,7 @@ void Player::update()
       invincibleCounter = PLAYER_INVINCIBLE_DURATION;
     }
     flashCounter = 2;
-    // sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
+    ab::tone(NOTE_GS3, 25, NOTE_G3, 15);
   }
 }
 

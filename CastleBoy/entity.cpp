@@ -532,7 +532,7 @@ void updateBossHarpy(Entity& entity)
       {
         Entities::add(ENTITY_FIREBALL_VERT, entity.pos.x, entity.pos.y);
         bossState2 = 0;
-        // sound.tone(NOTE_G4, 25);
+        ab::tone(NOTE_G4, 25);
       }
     }
     else
@@ -616,7 +616,7 @@ void updateBossFinal(Entity& entity)
       if (pos > 0)
       {
         Entities::add(ENTITY_FIREBALL_HORIZ, entity.pos.x, entity.pos.y - pos);
-        // sound.tone(NOTE_G4, 25);
+        ab::tone(NOTE_G4, 25);
       }
       entity.counter = 0;
 
@@ -773,7 +773,7 @@ void Entities::update()
             if (entity.state & FLAG_MISC1 && Game::moveY(entity.pos, 1, data[entity.type].hitbox))
             {
               entity.state &= ~FLAG_ALIVE;
-              // sound.tone(NOTE_GS3, 25, NOTE_G3, 15);
+              ab::tone(NOTE_GS3, 25, NOTE_G3, 15);
             }
             break;
           case ENTITY_BOSS_KNIGHT:
@@ -855,7 +855,7 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
           {
             entity.frame = 3;
             entity.state |= MASK_HURT; // when boss resist, stop moving a bit longer than when it's a normal hurt
-            // sound.tone(NOTE_GS2, 15);
+            ab::tone(NOTE_GS2, 15);
           }
 
           if (entity.state & FLAG_MISC1)
@@ -915,12 +915,12 @@ bool Entities::damage(int16_t x, int8_t y, uint8_t width, uint8_t height, uint8_
             entity.state &= ~FLAG_ALIVE;
             entity.hp = 0;
             entity.counter = 0;
-            // sound.tone(NOTE_CS3H, 30);
+            ab::tone(NOTE_CS3, 30); // TODO was NOTE_CS3H, check if disabling high volume is worth it..
           }
           else
           {
             entity.hp -= value;
-            // sound.tone(NOTE_CS3H, 15);
+            ab::tone(NOTE_CS3, 15); // TODO was NOTE_CS3H, check if disabling high volume is worth it..
           }
         }
       }
@@ -996,13 +996,13 @@ Entity* Entities::checkPlayer(int16_t x, int8_t y, uint8_t width, uint8_t height
             //Game::timeLeft += PICKUP_COIN_VALUE;
             entity.state = 0;
             Game::score += SCORE_PER_COIN;
-            // sound.tone(NOTE_CS6, 30, NOTE_CS5, 40);
+            ab::tone(NOTE_CS6, 30, NOTE_CS5, 40);
             break;
           case ENTITY_PICKUP_KNIFE:
             Player::knifeCount += PICKUP_KNIFE_VALUE;
             Game::score += SCORE_PER_KNIFE;
             entity.state = 0;
-            // sound.tone(NOTE_CS6, 30, NOTE_CS7, 40);
+            ab::tone(NOTE_CS6, 30, NOTE_CS7, 40);
             break;
           default:
             return &entity;
