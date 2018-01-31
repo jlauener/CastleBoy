@@ -21,11 +21,12 @@ SDL_Renderer* renderer;
 SDL_Texture* screenBuffer;
 SDL_Rect screenDestRect;
 
-#define BEEPER_AMPLITUDE 1000
+#define BEEPER_AMPLITUDE 4000
 #define BEEPER_FREQUENCY 22050
 SDL_AudioDeviceID beeper;
 uint16_t toneCounter;
 uint16_t toneFrequ;
+void(*onToneFinished)();
 
 void beeperCallback(void *_unused, uint8_t *_stream, int _length)
 {
@@ -34,16 +35,14 @@ void beeperCallback(void *_unused, uint8_t *_stream, int _length)
 
   for (int i = 0; i < length; i++)
   {
-    if (toneCounter == 0)
-    {
-      // TODO play next tone if needed
-    }
-
     if (toneCounter > 0)
     {
       bool low = (toneCounter / toneFrequ) % 2;
       stream[i] = low ? -BEEPER_AMPLITUDE : BEEPER_AMPLITUDE;
-      toneCounter--;
+      if (--toneCounter == 0 && onToneFinished != NULL)
+      {
+        onToneFinished();
+      }
     }
     else
     {
@@ -193,8 +192,8 @@ void core::boot()
   beeperSpec.channels = 1;
   beeperSpec.samples = 2048;
   beeperSpec.callback = beeperCallback;
-  beeperSpec.userdata = NULL;  
-  
+  beeperSpec.userdata = NULL;
+
   beeper = SDL_OpenAudioDevice(NULL, 0, &beeperSpec, NULL, 0);
   if (beeper == NULL)
   {
@@ -247,7 +246,7 @@ void core::paintScreen(uint8_t image[])
   SDL_UnlockTexture(screenBuffer);
   SDL_Rect dest;
   dest.x = WINDOW_SCALE;
-  dest.y = WINDOW_SCALE;  
+  dest.y = WINDOW_SCALE;
   SDL_RenderCopy(renderer, screenBuffer, NULL, &screenDestRect);
   SDL_RenderPresent(renderer);
 }
@@ -265,7 +264,8 @@ uint8_t core::getRandomByte(uint16_t max)
 void core::tone(uint16_t frequency, uint16_t duration, void(*callback)())
 {
   SDL_LockAudioDevice(beeper);
-  toneCounter = duration;
-  toneFrequ = frequency;
+  toneCounter = duration * 6;
+  toneFrequ = BEEPER_FREQUENCY / frequency;
+  onToneFinished = callback;
   SDL_UnlockAudioDevice(beeper);
 }

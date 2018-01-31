@@ -661,32 +661,20 @@ void ab::drawNumber(uint8_t x, uint8_t y, uint16_t value, uint8_t align)
 // SOUND
 // -----------------------------------------------------------------------
 
-class Tone
+struct Tone
 {
   uint16_t frequency;
   uint16_t duration;
 };
 
 Tone tones[3];
+uint8_t nextToneIndex;
 
-size_t toneCount;
-int currentTone;
-
-bool soundEnabled = true;
+bool soundEnabled = true; // TODO read from EPROM/storage
 
 void ab::toggleSoundEnabled()
 {
   soundEnabled = !soundEnabled;
-  // TODO
-  //if (ab.audio.enabled())
-  //{
-  //  ab.audio.off();
-  //}
-  //else
-  //{
-  //  ab.audio.on();
-  //}
-  //ab.audio.saveOnOff();
 }
 
 bool ab::isSoundEnabled()
@@ -696,24 +684,44 @@ bool ab::isSoundEnabled()
 
 void nextTone()
 {
-  // TODO
+  if (nextToneIndex > 0)
+  {
+    nextToneIndex--;
+    core::tone(tones[nextToneIndex].frequency, tones[nextToneIndex].duration, &nextTone);
+  }
 }
 
 void ab::tone(uint16_t freq, uint16_t dur)
 {
-  core::tone(freq, dur, &nextTone);
+  if (soundEnabled)
+  {
+    nextToneIndex = 0;
+    core::tone(freq, dur, &nextTone);
+  }
 }
 
 void ab::tone(uint16_t freq1, uint16_t dur1, uint16_t freq2, uint16_t dur2)
 {
-  // TODO
-  core::tone(freq1, dur1, &nextTone);
+  if (soundEnabled)
+  {
+    nextToneIndex = 1;
+    tones[0].frequency = freq2;
+    tones[0].duration = dur2;
+    core::tone(freq1, dur1, &nextTone);
+  }
 }
 
 void ab::tone(uint16_t freq1, uint16_t dur1, uint16_t freq2, uint16_t dur2, uint16_t freq3, uint16_t dur3)
 {
-  // TODO
-  core::tone(freq1, dur1, &nextTone);
+  if (soundEnabled)
+  {
+    nextToneIndex = 2;
+    tones[1].frequency = freq2;
+    tones[1].duration = dur2;
+    tones[0].frequency = freq3;
+    tones[0].duration = dur3;
+    core::tone(freq1, dur1, &nextTone);
+  }
 }
 
 // -----------------------------------------------------------------------
