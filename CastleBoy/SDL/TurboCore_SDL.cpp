@@ -1,5 +1,8 @@
 #include "TurboCore_SDL.h"
 
+#include <SDL.h>
+#include <SDL_audio.h>
+
 #include <exception>
 #include <string>
 #include <map>
@@ -18,8 +21,49 @@ SDL_Renderer* renderer;
 SDL_Texture* screenBuffer;
 SDL_Rect screenDestRect;
 
+#define BEEPER_AMPLITUDE 1000
+#define BEEPER_FREQUENCY 22050
+SDL_AudioDeviceID beeper;
+uint16_t toneCounter;
+uint16_t toneFrequ;
+
+void beeperCallback(void *_unused, uint8_t *_stream, int _length)
+{
+  int16_t* stream = (int16_t*)_stream;
+  int length = _length / 2; // stream is 16bit
+
+  for (int i = 0; i < length; i++)
+  {
+    if (toneCounter == 0)
+    {
+      // TODO play next tone if needed
+    }
+
+    if (toneCounter > 0)
+    {
+      bool low = (toneCounter / toneFrequ) % 2;
+      stream[i] = low ? -BEEPER_AMPLITUDE : BEEPER_AMPLITUDE;
+      toneCounter--;
+    }
+    else
+    {
+      stream[i] = 0;
+    }
+  }
+}
+
 std::map<SDL_Keycode, uint8_t> buttonMapping;
 uint8_t buttonState;
+
+uint32_t millis()
+{
+  return SDL_GetTicks();
+}
+
+uint32_t micros()
+{
+  return SDL_GetTicks() * 1000;
+}
 
 int SDLrun(void(&setup)(), void(&loop)())
 {
@@ -73,13 +117,18 @@ int SDLrun(void(&setup)(), void(&loop)())
     SDL_DestroyWindow(window);
   }
 
+  if (beeper != NULL)
+  {
+    SDL_CloseAudioDevice(beeper);
+  }
+
   SDL_Quit();
   return 0;
 }
 
 void core::boot()
 {
-  if (SDL_Init(SDL_INIT_VIDEO) != 0)
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0)
   {
     THROW_SDL_ERROR("SDL_Init");
   }
@@ -136,6 +185,27 @@ void core::boot()
   buttonMapping[SDLK_LALT] = B_BUTTON;
   buttonMapping[SDLK_RALT] = B_BUTTON;
 
+  // audio
+
+  SDL_AudioSpec beeperSpec;
+  beeperSpec.freq = BEEPER_FREQUENCY;
+  beeperSpec.format = AUDIO_S16SYS;
+  beeperSpec.channels = 1;
+  beeperSpec.samples = 2048;
+  beeperSpec.callback = beeperCallback;
+  beeperSpec.userdata = NULL;  
+  
+  beeper = SDL_OpenAudioDevice(NULL, 0, &beeperSpec, NULL, 0);
+  if (beeper == NULL)
+  {
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    THROW_SDL_ERROR("SDL_OpenAudioDevice");
+  }
+
+  SDL_PauseAudioDevice(beeper, false);
+
   // random
 
   srand((unsigned int)time(NULL));
@@ -190,4 +260,12 @@ void core::setRGBled(uint8_t red, uint8_t green, uint8_t blue)
 uint8_t core::getRandomByte(uint16_t max)
 {
   return rand() % max;
+}
+
+void core::tone(uint16_t frequency, uint16_t duration, void(*callback)())
+{
+  SDL_LockAudioDevice(beeper);
+  toneCounter = duration;
+  toneFrequ = frequency;
+  SDL_UnlockAudioDevice(beeper);
 }

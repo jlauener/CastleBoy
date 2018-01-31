@@ -6,15 +6,14 @@
 
 #include <cstdint>
 #include <iostream>
-#include <SDL.h>
 
 // maintain code compatiblity with Arduino lib
 #define PROGMEM
 #define pgm_read_byte(addr) (*((const uint8_t*)(addr)))
 #define pgm_read_word(addr) (*((const uint16_t*)(addr)))
 
-#define millis() SDL_GetTicks()
-#define micros() millis() * 1000
+uint32_t millis();
+uint32_t micros();
 
 #define _BV(bit) (1 << (bit))
 #define min(a, b) (a < b ? a : b)
@@ -122,6 +121,8 @@ namespace core
    * \endparblock
    */
   void setRGBled(uint8_t red, uint8_t green, uint8_t blue);
+
+  void tone(uint16_t frequency, uint16_t duration, void (*callback)());
 
   uint8_t getRandomByte(uint16_t max = 256);
 };

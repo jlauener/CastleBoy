@@ -660,6 +660,18 @@ void ab::drawNumber(uint8_t x, uint8_t y, uint16_t value, uint8_t align)
 // -----------------------------------------------------------------------
 // SOUND
 // -----------------------------------------------------------------------
+
+class Tone
+{
+  uint16_t frequency;
+  uint16_t duration;
+};
+
+Tone tones[3];
+
+size_t toneCount;
+int currentTone;
+
 bool soundEnabled = true;
 
 void ab::toggleSoundEnabled()
@@ -682,19 +694,26 @@ bool ab::isSoundEnabled()
   return soundEnabled;
 }
 
-void ab::tone(uint16_t freq, uint16_t dur)
+void nextTone()
 {
   // TODO
+}
+
+void ab::tone(uint16_t freq, uint16_t dur)
+{
+  core::tone(freq, dur, &nextTone);
 }
 
 void ab::tone(uint16_t freq1, uint16_t dur1, uint16_t freq2, uint16_t dur2)
 {
   // TODO
+  core::tone(freq1, dur1, &nextTone);
 }
 
 void ab::tone(uint16_t freq1, uint16_t dur1, uint16_t freq2, uint16_t dur2, uint16_t freq3, uint16_t dur3)
 {
   // TODO
+  core::tone(freq1, dur1, &nextTone);
 }
 
 // -----------------------------------------------------------------------
