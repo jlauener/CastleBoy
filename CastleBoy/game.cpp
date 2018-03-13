@@ -15,6 +15,7 @@ namespace
 {
 const uint8_t* const levels[] = { stage_1_1, stage_1_2, stage_1_3, stage_1_4, stage_2_1, stage_2_2, stage_2_3, stage_2_4, stage_3_1, stage_3_2, stage_3_3, stage_3_4 };
 
+bool paused;
 bool finished;
 uint8_t levelIndex;
 uint8_t pauseCounter;
@@ -41,6 +42,7 @@ void Game::reset()
 
 void Game::play()
 {
+  paused = false;
   finished = false;
   mainState = STATE_PLAY;
   Entities::init();
@@ -91,6 +93,23 @@ void Game::loop()
 //    return;
 //  }
 #endif
+
+  // pause
+  if (paused)
+  {
+    sprites.drawOverwrite((WIDTH / 2) - pgm_read_byte(text_paused) / 2, HEIGHT / 2, text_paused, 0);
+    if (ab.justPressed(B_BUTTON) || ab.justPressed(A_BUTTON))
+    {
+      paused = false;
+    }
+    return;
+  }
+
+  if (ab.pressed(DOWN_BUTTON) && ab.justPressed(A_BUTTON))
+  {
+    paused = true;
+    return;
+  }
 
   // update
   if (pauseCounter > 0)
