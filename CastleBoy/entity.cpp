@@ -296,18 +296,23 @@ Entity* Entities::add(uint8_t type, int16_t x, int8_t y)
   return NULL;
 }
 
+signed char getMovingPlatformDirection(Entity& entity)
+{
+  if (entity.type == ENTITY_MOVING_PLATFORM_RIGHT)
+  {
+    return entity.state & FLAG_MISC1 ? -1 : 1;
+  }
+  else // entity.type == ENTITY_MOVING_PLATFORM_LEFT
+  {
+    return entity.state & FLAG_MISC1 ? 1 : -1;
+  }
+}
+
 void updateMovingPlatform(Entity& entity)
 {
   if (ab.everyXFrames(3))
   {
-    if (entity.type == ENTITY_MOVING_PLATFORM_RIGHT)
-    {
-      entity.pos.x += entity.state & FLAG_MISC1 ? -1 : 1;
-    }
-    else // entity.type == ENTITY_MOVING_PLATFORM_LEFT
-    {
-      entity.pos.x += entity.state & FLAG_MISC1 ? 1 : -1;
-    }
+    entity.pos.x += getMovingPlatformDirection(entity);
 
     if (++entity.counter == 23)
     {
@@ -963,6 +968,10 @@ bool Entities::moveCollide(int16_t x, int8_t y, int8_t offsetX, int8_t offsetY, 
             // moving platform collide only if player is going down on it
             // and player is right on platform
             collide = true;
+            if (ab.everyXFrames(3))
+            {
+              Player::pos.x += getMovingPlatformDirection(entity);
+            }
           }
         }
       }
