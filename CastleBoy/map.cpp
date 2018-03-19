@@ -91,7 +91,7 @@ void Map::init(const uint8_t* source)
   // player starting position
   uint8_t playerY = temp & 0x0F;
   uint8_t playerX = pgm_read_byte(++source);
-  Player::init((playerX * TILE_WIDTH + HALF_TILE_WIDTH) + 1, playerY * TILE_HEIGHT + TILE_HEIGHT);
+  Player::init(playerX * TILE_WIDTH + HALF_TILE_WIDTH, playerY * TILE_HEIGHT + TILE_HEIGHT);
 
   // tile map position
   tilemap = ++source;
@@ -115,12 +115,13 @@ void Map::init(const uint8_t* source)
   }
 }
 
-bool Map::collide(uint16_t x, int8_t y, const Box& hitbox)
+// FIXME can we use uint8_t instead of int16_t ?
+bool Map::collide(int16_t x, int8_t y, const Box& hitbox)
 {
   x -= hitbox.x;
   y -= hitbox.y;
 
-  if (x <= 0 /*|| x + hitbox.width > width * TILE_WIDTH*/)
+  if (x < 0 /*|| x + hitbox.width > width * TILE_WIDTH*/)
   {
     // cannot get out on the sides, collide
     // WARNING can get out of right side, if we use this for projectile
