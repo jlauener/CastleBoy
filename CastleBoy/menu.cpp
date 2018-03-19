@@ -122,6 +122,9 @@ void drawMenuOption(uint8_t index, const uint8_t* sprite)
 
 void loopTitle()
 {
+
+// for some reason this takes too much flash so commented it out...
+/*
 #ifdef DEBUG_CHEAT
   if (ab.pressed(B_BUTTON) && ab.pressed(DOWN_BUTTON))
   {
@@ -129,6 +132,7 @@ void loopTitle()
     return;
   }
 #endif
+*/
 
   if (ab.everyXFrames(20))
   {
