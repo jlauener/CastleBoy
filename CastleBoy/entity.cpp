@@ -298,18 +298,14 @@ Entity* Entities::add(uint8_t type, int16_t x, int8_t y)
 
 char getMovingPlatformDirection(Entity& entity)
 {
-  if (ab.everyXFrames(3))
+  if (entity.type == ENTITY_MOVING_PLATFORM_RIGHT)
   {
-    if (entity.type == ENTITY_MOVING_PLATFORM_RIGHT)
-    {
-      return entity.state & FLAG_MISC1 ? -1 : 1;
-    }
-    else // entity.type == ENTITY_MOVING_PLATFORM_LEFT
-    {
-      return entity.state & FLAG_MISC1 ? 1 : -1;
-    }
+    return entity.state & FLAG_MISC1 ? -1 : 1;
   }
-  return 0;
+  else // entity.type == ENTITY_MOVING_PLATFORM_LEFT
+  {
+    return entity.state & FLAG_MISC1 ? 1 : -1;
+  }
 }
 
 void updateMovingPlatform(Entity& entity)
@@ -972,9 +968,14 @@ bool Entities::moveCollide(int16_t x, int8_t y, int8_t offsetX, int8_t offsetY, 
             // moving platform collide only if player is going down on it
             // and player is right on platform
             collide = true;
-            if (!Map::collide(x, y, hitbox))
+            if(ab.everyXFrames(3))
             {
-              Player::pos.x += getMovingPlatformDirection(entity);
+              // platform moved, push player if he doesn't collide with map
+              int16_t newPlayerX = Player::pos.x + getMovingPlatformDirection(entity);
+              if (!Map::collide(newPlayerX, y, hitbox))
+              {
+                Player::pos.x = newPlayerX;
+              }
             }
           }
         }
