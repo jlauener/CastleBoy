@@ -8,7 +8,7 @@ uint8_t bootCounter = 0;
 
 void setup()
 {
-  ab.start();
+  ab.begin();
   ab.setFrameRate(FPS);
 
   Menu::showTitle();
@@ -21,7 +21,7 @@ void loop()
     return;
   }
 
-  ab.clearDisplay();
+  ab.clear();
   
   if(bootCounter < 120)
   {
@@ -31,7 +31,7 @@ void loop()
     return;
   }
 
-  ab.poll();
+  ab.pollButtons();
   Menu::loop();
 
 #ifdef DEBUG_LOG

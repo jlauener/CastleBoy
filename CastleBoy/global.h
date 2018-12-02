@@ -1,9 +1,10 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-#include "Arglib.h"
+#include <Arduboy2.h>
+#include <ArduboyTones.h>
 
-extern Arduboy ab;
+extern Arduboy2Base ab;
 extern Sprites sprites;
 extern ArduboyTones sound;
 extern uint8_t mainState;
